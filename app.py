@@ -1,6 +1,6 @@
 import streamlit as st
 from utils.network_builder import NetworkBuilder
-from utils.save_load_manager import save_project, load_project
+from utils.save_load_manager import SaveLoadManager
 from utils.pressure_temp_converter import PressureTemperatureConverter
 
 st.set_page_config(page_title="Micropipe - Industrial Refrigeration Tool", layout="wide")
