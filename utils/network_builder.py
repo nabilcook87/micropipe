@@ -62,7 +62,7 @@ class NetworkBuilder:
                     updated_circuit["length_m"],
                     updated_circuit["evap_capacity_kw"],
                     updated_circuit["fixed_pipe_size"],
-                    updated_circuit["vertical_rise_m"],
+                    updated_circuit["has_riser"],
                     updated_circuit["fittings_equivalent_length_m"]
                 )
                 updated_circuit["results"] = results
@@ -95,7 +95,7 @@ class NetworkBuilder:
             "length_m": 10.0,
             "evap_capacity_kw": 10.0,
             "fixed_pipe_size": None,
-            "vertical_rise_m": 0.0,
+            "has_riser": False,
             "fittings_equivalent_length_m": 2.0,
             "circuit_notes": "",
             "refrigerant_mass_kg": 0.0
@@ -105,7 +105,7 @@ class NetworkBuilder:
         circuit["name"] = st.text_input("Circuit Name", circuit["name"], key=f"name_{idx}")
         circuit["length_m"] = st.number_input("Straight Length (m)", value=circuit["length_m"], key=f"length_{idx}")
         circuit["evap_capacity_kw"] = st.number_input("Evaporator Capacity (kW)", value=circuit["evap_capacity_kw"], key=f"capacity_{idx}")
-        circuit["vertical_rise_m"] = st.number_input("Vertical Rise (m)", value=circuit["vertical_rise_m"], key=f"rise_{idx}")
+        circuit["has_riser"] = st.checkbox("Riser", value=circuit.get("has_riser", False), key=f"riser_{idx}")
         circuit["fittings_equivalent_length_m"] = st.number_input("Fittings Equivalent Length (m)", value=circuit["fittings_equivalent_length_m"], key=f"fittings_{idx}")
 
         manual_size = st.checkbox("Manually Fix Pipe Size?", value=circuit["fixed_pipe_size"] is not None, key=f"manual_{idx}")
