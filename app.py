@@ -52,7 +52,7 @@ elif tool_selection == "Pressure Drop ↔ Temperature Penalty":
 
     if direction == "ΔP ➞ ΔT":
         delta_p_kpa = st.number_input("Pressure Drop (kPa)", value=20.0)
-        delta_T = converter.delta_p_to_delta_T(refrigerant, T_sat, delta_p_kpa)
+        delta_T = converter.pressure_drop_to_temp_penalty(refrigerant, T_sat, delta_p_kpa)
         st.write(f"**Temperature Penalty:** {delta_T:.3f} K")
 
     else:
