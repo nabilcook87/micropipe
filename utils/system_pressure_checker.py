@@ -1,5 +1,3 @@
-# utils/system_pressure_checker.py
-
 import pandas as pd
 
 # Load pipe rating data only once
@@ -31,21 +29,22 @@ def check_pipe_rating(pipe_row, operating_temp_C, design_pressure_bar):
     design_temp_col = f"{int(round(operating_temp_C))}C"
     available_cols = pipe_row.index
 
+    # Fallback if the exact temp column is not available
     if design_temp_col not in available_cols:
         design_temp_col = closest_temp_column(available_cols, operating_temp_C)
 
     try:
-        val = pipe_row.get(design_temp_col)
-        if pd.isna(val):
+        rating_val = pipe_row.get(design_temp_col)
+        if pd.isna(rating_val):
             return False
-        rating = float(val)
+        rating = float(rating_val)
         return rating * 0.9 >= design_pressure_bar
     except Exception:
         return False
 
 def closest_temp_column(columns, target_temp):
     """
-    Find the closest available temperature column name like '20C' from a list of strings.
+    Find the closest available temperature column name like '50C', '100C', etc.
     """
     temps = []
     for col in columns:
@@ -53,15 +52,15 @@ def closest_temp_column(columns, target_temp):
             temps.append(int(col[:-1]))
 
     if not temps:
-        return "20C"  # fallback
+        return "50C"  # fallback
 
     closest = min(temps, key=lambda x: abs(x - target_temp))
     return f"{closest}C"
 
 def get_pipe_options(material, size_inch):
     """
-    Return a filtered DataFrame for a given pipe material and size,
-    optionally including gauge if present. EN pipes match by closest mm.
+    Return a filtered DataFrame for a given pipe material and size.
+    EN pipes match by closest mm; other materials match exactly by inch.
     """
     df = _pipe_rating_data.copy()
     df = df[df["Material"].str.strip().str.lower() == material.strip().lower()]
