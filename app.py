@@ -27,11 +27,11 @@ def system_pressure_checker_ui():
     st.divider()
 
     # Pipe sizes from the data
-    pipe_sizes = sorted(_pipe_rating_data['Nominal Size (inch)'].unique())
+    pipe_sizes = sorted(_pipe_rating_data['Nominal Size (inch)'].dropna().unique())
     selected_size = st.selectbox("Select Pipe Nominal Size", pipe_sizes)
 
     # Pipe materials
-    materials = sorted(_pipe_rating_data['Material'].unique())
+    materials = sorted(_pipe_rating_data['Material'].dropna().unique())
     selected_material = st.selectbox("Select Pipe Material", materials)
 
     # Filter rows for selected pipe material and size
@@ -50,14 +50,15 @@ def system_pressure_checker_ui():
         pipe_row = matching_pipes.iloc[0]  # fallback for steel
 
     # Choose temperature for rating lookup
-    design_temp_C = st.select_slider("Design Temperature (C)", options=["50", "100", "150"], value="50")
+    design_temp_C = st.select_slider("Design Temperature (C)", options=[50, 100, 150], value=50)
     design_temp_col = f"{design_temp_C}C"
 
     # Input design pressure
     design_pressure_bar = st.number_input("Design Pressure (bar)", min_value=0.0, step=0.5, value=10.0)
+    pipe_row["Design Pressure (bar)"] = design_pressure_bar  # Set for rating check
 
     # Check rating
-    is_rated = check_pipe_rating(pipe_row, int(design_temp_C))
+    is_rated = check_pipe_rating(pipe_row, design_temp_C)
     rated_pressure = pipe_row.get(design_temp_col)
 
     st.divider()
@@ -78,9 +79,7 @@ def system_pressure_checker_ui():
 
     # Show full data row for transparency
     with st.expander("Show Full Pipe Data"):
-        pipe_df = pipe_row.to_frame().T
-        numeric_pipe_df = pipe_df.select_dtypes(include=["number"])
-        st.dataframe(numeric_pipe_df.style.highlight_max(axis=1))
+        st.dataframe(pipe_row.to_frame().T)
 
     with st.expander("BS EN 378 Reference Pressures"):
         st.table(pd.DataFrame({
@@ -126,7 +125,6 @@ elif tool_selection == "Pressure Drop ↔ Temperature Penalty":
         delta_p_kpa = st.number_input("Pressure Drop (kPa)", value=20.0)
         delta_T = converter.pressure_drop_to_temp_penalty(refrigerant, T_sat, delta_p_kpa)
         st.write(f"**Temperature Penalty:** {delta_T:.3f} K")
-
     else:
         delta_T = st.number_input("Temperature Penalty (K)", value=0.5)
         delta_p_kpa = converter.temp_penalty_to_pressure_drop(refrigerant, T_sat, delta_T)
