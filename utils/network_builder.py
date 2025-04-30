@@ -2,7 +2,7 @@ import streamlit as st
 from utils.refrigerant_properties import RefrigerantProperties
 from utils.pipe_sizing import PipeSizer
 from utils.pipe_length_volume_calc import calculate_pipe_volume_liters
-from utils.save_load_manager import save_project
+from utils.save_load_manager import SaveLoadManager
 
 class NetworkBuilder:
     def __init__(self):
@@ -21,7 +21,10 @@ class NetworkBuilder:
     def run(self):
         st.subheader("Pipe Network Configuration")
         self.network_name = st.text_input("Network Name", value=self.network_name)
-        self.network_type = st.selectbox("Network Type", ["Dry Suction", "Wet Suction", "Discharge", "Liquid", "Condenser Drain", "Pumped Refrigerant Liquid"])
+        self.network_type = st.selectbox("Network Type", [
+            "Dry Suction", "Wet Suction", "Discharge", "Liquid",
+            "Condenser Drain", "Pumped Refrigerant Liquid"
+        ])
         self.refrigerant = st.selectbox("Refrigerant", [
             "R404A", "R134a", "R407F", "R744", "R410A",
             "R407C", "R507A", "R448A", "R449A", "R22", "R32", "R454A"
@@ -76,7 +79,7 @@ class NetworkBuilder:
         st.write(f"🔷 **Total Refrigerant Mass in Network:** {total_refrigerant_mass:.2f} kg")
 
         if st.button("Save Project"):
-            save_project(self)
+            SaveLoadManager().save_project(self, self.network_name)
 
     def add_circuit(self):
         self.circuits.append({
