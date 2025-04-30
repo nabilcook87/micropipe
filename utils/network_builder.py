@@ -6,6 +6,10 @@ from utils.save_load_manager import SaveLoadManager
 
 class NetworkBuilder:
     def __init__(self):
+        if "circuits" not in st.session_state:
+            st.session_state.circuits = []
+
+        self.circuits = st.session_state.circuits
         self.network_name = ""
         self.network_type = "Dry Suction"
         self.refrigerant = "R404A"
@@ -14,7 +18,6 @@ class NetworkBuilder:
         self.superheat = 5.0
         self.subcooling = 3.0
         self.max_temp_penalty_K = 1.0
-        self.circuits = []
         self.pipe_sizer = PipeSizer()
         self.refrigerant_props = RefrigerantProperties()
 
@@ -45,7 +48,8 @@ class NetworkBuilder:
 
         for idx, circuit in enumerate(self.circuits):
             st.markdown(f"#### Circuit {idx+1}")
-            self.circuits[idx] = self.edit_circuit(circuit, idx)
+            updated_circuit = self.edit_circuit(circuit, idx)
+            st.session_state.circuits[idx] = updated_circuit
 
             try:
                 results = self.pipe_sizer.size_pipe(
@@ -55,22 +59,22 @@ class NetworkBuilder:
                     self.condensing_temp,
                     self.superheat,
                     self.subcooling,
-                    circuit["length_m"],
-                    circuit["evap_capacity_kw"],
-                    circuit["fixed_pipe_size"],
-                    circuit["vertical_rise_m"],
-                    circuit["fittings_equivalent_length_m"]
+                    updated_circuit["length_m"],
+                    updated_circuit["evap_capacity_kw"],
+                    updated_circuit["fixed_pipe_size"],
+                    updated_circuit["vertical_rise_m"],
+                    updated_circuit["fittings_equivalent_length_m"]
                 )
-                circuit["results"] = results
+                updated_circuit["results"] = results
 
-                volume_liters = calculate_pipe_volume_liters(results["selected_pipe"]["ID_mm"], circuit["length_m"])
+                volume_liters = calculate_pipe_volume_liters(results["selected_pipe"]["ID_mm"], updated_circuit["length_m"])
                 props = self.refrigerant_props.get_properties(self.refrigerant, self.evaporating_temp)
                 density = props["density_vapor"] if self.network_type in ["Dry Suction", "Discharge"] else props["density_liquid"]
-                circuit["refrigerant_mass_kg"] = volume_liters / 1000 * density
-                total_refrigerant_mass += circuit["refrigerant_mass_kg"]
+                updated_circuit["refrigerant_mass_kg"] = volume_liters / 1000 * density
+                total_refrigerant_mass += updated_circuit["refrigerant_mass_kg"]
 
                 st.success(f"✅ Pipe: {results['selected_pipe']['Nominal Size (inch)']} | Velocity: {results['velocity_m_s']:.2f} m/s | ΔP: {results['pressure_drop_total_kpa']:.2f} kPa")
-                st.write(f"🔸 Refrigerant Mass in Pipe: **{circuit['refrigerant_mass_kg']:.2f} kg**")
+                st.write(f"🔸 Refrigerant Mass in Pipe: **{updated_circuit['refrigerant_mass_kg']:.2f} kg**")
 
             except Exception as e:
                 st.error(f"Error: {e}")
@@ -81,8 +85,11 @@ class NetworkBuilder:
         if st.button("Save Project"):
             SaveLoadManager().save_project(self, self.network_name)
 
+        if st.button("Clear All Circuits"):
+            st.session_state.circuits = []
+
     def add_circuit(self):
-        self.circuits.append({
+        st.session_state.circuits.append({
             "name": f"Circuit {len(self.circuits)+1}",
             "pipe_type": self.network_type,
             "length_m": 10.0,
