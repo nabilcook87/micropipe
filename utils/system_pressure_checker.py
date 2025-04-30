@@ -37,3 +37,13 @@ def closest_temp_column(columns, target_temp):
 
     closest = min(temps, key=lambda x: abs(x - target_temp))
     return f"{closest}C"
+
+def get_pipe_options(material, size_inch):
+    """
+    Return a filtered DataFrame for a given pipe material and size,
+    optionally including gauge if present.
+    """
+    df = _pipe_rating_data.copy()
+    df = df[df["Material"].str.strip().str.lower() == material.strip().lower()]
+    df = df[df["Nominal Size (inch)"].astype(str).str.strip() == str(size_inch).strip()]
+    return df
