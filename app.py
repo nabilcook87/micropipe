@@ -77,7 +77,9 @@ def system_pressure_checker_ui():
 
     # Show full data row for transparency
     with st.expander("Show Full Pipe Data"):
-        st.dataframe(pipe_row.to_frame().T.style.highlight_max(axis=1))
+        numeric_pipe_row = pipe_row.select_dtypes(include=["number"])
+        styled = numeric_pipe_row.to_frame().T.style.highlight_max(axis=1)
+        st.dataframe(styled)
 
     with st.expander("BS EN 378 Reference Pressures"):
         st.table(pd.DataFrame({
