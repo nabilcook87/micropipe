@@ -55,10 +55,9 @@ def system_pressure_checker_ui():
 
     # Input design pressure
     design_pressure_bar = st.number_input("Design Pressure (bar)", min_value=0.0, step=0.5, value=10.0)
-    pipe_row["Design Pressure (bar)"] = design_pressure_bar  # Set for rating check
 
-    # Check rating
-    is_rated = check_pipe_rating(pipe_row, design_temp_C)
+    # Check rating using corrected call
+    is_rated = check_pipe_rating(pipe_row, design_temp_C, design_pressure_bar)
     rated_pressure = pipe_row.get(design_temp_col)
 
     st.divider()
