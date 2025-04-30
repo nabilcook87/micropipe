@@ -11,6 +11,9 @@ def check_oil_velocity(network_type, velocity_m_s, is_riser=False):
     Returns:
         (bool, str): Tuple of (is_ok, message)
     """
+    # Ensure network_type is cleanly compared as a string
+    network_type = str(network_type).strip()
+
     if network_type in ["Dry Suction", "Discharge"]:
         if is_riser and velocity_m_s < 7.0:
             return False, "Velocity too low for oil return (vertical riser)"
