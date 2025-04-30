@@ -48,10 +48,9 @@ class PipeSizer:
                 pipe["Friction Factor"] * (total_equiv_length / ID_m) * (density * velocity ** 2 / 2)
             ) / 1000  # kPa
 
-            # Optional: implement pressure drop from riser lift later if vertical height is known
             pressure_drop_total = pressure_drop_fric
 
-            passes_velocity = check_oil_velocity(pipe_type, velocity)
+            passes_velocity = check_oil_velocity(pipe_type, velocity, has_riser)
             rating_ok, _ = check_pipe_rating(pipe["Nominal Size (inch)"], T_cond, pressure_drop_total)
 
             if passes_velocity and rating_ok:
