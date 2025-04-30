@@ -50,14 +50,15 @@ def system_pressure_checker_ui():
         pipe_row = matching_pipes.iloc[0]  # fallback for steel
 
     # Choose temperature for rating lookup
-    design_temp_C = st.select_slider("Design Temperature (C)", options=[50, 100, 150], value=50)
+    design_temp_C = st.select_slider("Design Temperature (C)", options=["50", "100", "150"], value="50")
+    design_temp_col = f"{design_temp_C}C"
 
     # Input design pressure
     design_pressure_bar = st.number_input("Design Pressure (bar)", min_value=0.0, step=0.5, value=10.0)
 
     # Check rating
-    is_rated = check_pipe_rating(pipe_row, design_temp_C)
-    rated_pressure = pipe_row.get(f"{design_temp_C}C", None)
+    is_rated = check_pipe_rating(pipe_row, int(design_temp_C))
+    rated_pressure = pipe_row.get(design_temp_col)
 
     st.divider()
 
@@ -65,7 +66,7 @@ def system_pressure_checker_ui():
 
     with col1:
         st.subheader("Pipe Rating Summary")
-        st.metric("Rated Pressure @ Temp", f"{rated_pressure:.2f} bar" if rated_pressure else "N/A")
+        st.metric("Rated Pressure @ Temp", f"{rated_pressure:.2f} bar" if pd.notna(rated_pressure) else "N/A")
         st.metric("Design Pressure", f"{design_pressure_bar:.2f} bar")
 
     with col2:
