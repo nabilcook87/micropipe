@@ -36,7 +36,10 @@ def check_pipe_rating(pipe_row, operating_temp_C):
         design_temp_col = closest_temp_column(available_cols, operating_temp_C)
 
     try:
-        rating = float(pipe_row[design_temp_col])
+        val = pipe_row.get(design_temp_col)
+        if pd.isna(val):
+            return False
+        rating = float(val)
         return rating * 0.9 >= pipe_row["Design Pressure (bar)"]
     except Exception:
         return False
