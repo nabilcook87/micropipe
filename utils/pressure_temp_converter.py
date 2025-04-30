@@ -32,15 +32,15 @@ class PressureTemperatureConverter:
         """
         Find saturation pressure for a given temperature.
         """
-        return self.refrigerant_props.get_properties(refrigerant, temperature_C)["pressure"]
+        return self.refrigerant_props.get_properties(refrigerant, temperature_C)["pressure_bar"]
 
     def pressure_drop_to_temp_penalty(self, refrigerant, sat_temp_C, pressure_drop_kPa):
         """
         Convert pressure drop (kPa) to temperature penalty (K) at a given saturation temperature.
         """
         delta_T = 0.5  # Small temperature step for numerical differentiation
-        p1 = self.refrigerant_props.get_properties(refrigerant, sat_temp_C)["pressure"] * 100  # bar ➔ kPa
-        p2 = self.refrigerant_props.get_properties(refrigerant, sat_temp_C + delta_T)["pressure"] * 100  # bar ➔ kPa
+        p1 = self.refrigerant_props.get_properties(refrigerant, sat_temp_C)["pressure_bar"] * 100  # bar ➔ kPa
+        p2 = self.refrigerant_props.get_properties(refrigerant, sat_temp_C + delta_T)["pressure_bar"] * 100  # bar ➔ kPa
 
         dp_dT = (p2 - p1) / delta_T  # kPa/K
 
@@ -55,8 +55,8 @@ class PressureTemperatureConverter:
         Convert temperature penalty (K) to equivalent pressure drop (kPa) at a given saturation temperature.
         """
         delta_T = 0.5  # Small temperature step for numerical differentiation
-        p1 = self.refrigerant_props.get_properties(refrigerant, sat_temp_C)["pressure"] * 100  # bar ➔ kPa
-        p2 = self.refrigerant_props.get_properties(refrigerant, sat_temp_C + delta_T)["pressure"] * 100  # bar ➔ kPa
+        p1 = self.refrigerant_props.get_properties(refrigerant, sat_temp_C)["pressure_bar"] * 100  # bar ➔ kPa
+        p2 = self.refrigerant_props.get_properties(refrigerant, sat_temp_C + delta_T)["pressure_bar"] * 100  # bar ➔ kPa
 
         dp_dT = (p2 - p1) / delta_T  # kPa/K
 
