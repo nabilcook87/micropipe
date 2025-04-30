@@ -57,7 +57,7 @@ elif tool_selection == "Pressure Drop ↔ Temperature Penalty":
 
     else:
         delta_T = st.number_input("Temperature Penalty (K)", value=0.5)
-        delta_p_kpa = converter.delta_T_to_delta_p(refrigerant, T_sat, delta_T)
+        delta_p_kpa = converter.temp_penalty_to_pressure_drop(refrigerant, T_sat, delta_T)
         st.write(f"**Equivalent Pressure Drop:** {delta_p_kpa:.2f} kPa")
 
 elif tool_selection == "System Pressure Checker":
