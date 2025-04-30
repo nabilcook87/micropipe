@@ -1,59 +1,39 @@
-import csv
-import os
+# utils/system_pressure_checker.py
 
-class SystemPressureChecker:
-    def __init__(self, data_file="data/pipe_pressure_ratings_full.csv", safety_factor=0.9):
-        self.data_file = data_file
-        self.safety_factor = safety_factor
-        self.pressure_limits = self.load_pressure_limits()
+import pandas as pd
 
-    def load_pressure_limits(self):
-        """Load pipe pressure limits from CSV into a lookup dictionary."""
-        limits = {}
-        if not os.path.exists(self.data_file):
-            raise FileNotFoundError(f"Pipe pressure ratings file not found: {self.data_file}")
+# Load pipe rating data only once
+_pipe_rating_data = pd.read_csv("data/pipe_pressure_ratings_full.csv")
 
-        with open(self.data_file, newline='') as csvfile:
-            reader = csv.DictReader(csvfile)
-            for row in reader:
-                key = self._make_key(row["Material"], row["Nominal Size (inch)"])
-                try:
-                    max_pressure_bar = float(row["Max Pressure (bar)"])
-                    limits[key] = max_pressure_bar
-                except ValueError:
-                    continue  # Skip bad data
+def check_pipe_rating(pipe_row, operating_temp_C):
+    """
+    Check if the pipe's pressure rating at a given temperature is above a safety threshold.
+    Safety threshold: 0.9 × rating at design temp.
+    """
+    design_temp_col = f"{int(round(operating_temp_C))}C"
+    available_cols = _pipe_rating_data.columns
 
-        return limits
+    # Fallback if the exact temp column is not available
+    if design_temp_col not in available_cols:
+        design_temp_col = closest_temp_column(available_cols, operating_temp_C)
 
-    def _make_key(self, material, size_inch):
-        """Helper to normalize key lookup."""
-        return f"{material.strip().lower()}::{size_inch.strip()}"
+    try:
+        rating = float(pipe_row[design_temp_col])
+        return rating * 0.9 >= pipe_row["Design Pressure (bar)"]
+    except Exception:
+        return False
 
-    def check_pressure(self, material, size_inch, system_pressure_bar):
-        """
-        Returns a dict:
-        {
-            "pass": True/False,
-            "allowed_bar": float,
-            "margin_bar": float,
-            "notes": str
-        }
-        """
-        key = self._make_key(material, size_inch)
-        if key not in self.pressure_limits:
-            return {
-                "pass": False,
-                "allowed_bar": None,
-                "margin_bar": None,
-                "notes": f"Pipe size '{size_inch}' with material '{material}' not found in pressure ratings database."
-            }
+def closest_temp_column(columns, target_temp):
+    """
+    Find the closest available temperature column name like '20C' from a list of strings.
+    """
+    temps = []
+    for col in columns:
+        if col.endswith("C") and col[:-1].isdigit():
+            temps.append(int(col[:-1]))
 
-        allowed_max = self.pressure_limits[key] * self.safety_factor
-        margin = allowed_max - system_pressure_bar
-        result = {
-            "pass": margin >= 0,
-            "allowed_bar": round(allowed_max, 2),
-            "margin_bar": round(margin, 2),
-            "notes": "OK" if margin >= 0 else f"⚠️ Exceeds max allowed pressure by {abs(margin):.2f} bar"
-        }
-        return result
+    if not temps:
+        return "20C"  # fallback
+
+    closest = min(temps, key=lambda x: abs(x - target_temp))
+    return f"{closest}C"
