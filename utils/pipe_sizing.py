@@ -18,7 +18,7 @@ class PipeSizer:
         return df.to_dict(orient="records")
 
     def size_pipe(self, refrigerant, pipe_type, T_evap, T_cond, superheat_K, subcooling_K,
-                  pipe_length_m, evap_capacity_kw, fixed_pipe_size, vertical_rise_m=0.0,
+                  pipe_length_m, evap_capacity_kw, fixed_pipe_size, has_riser=False,
                   fittings_equivalent_length_m=0.0):
 
         props = self.refrigerant_props.get_properties(refrigerant, T_evap)
@@ -40,17 +40,18 @@ class PipeSizer:
             ID_mm = pipe["ID_mm"]
             ID_m = ID_mm / 1000.0
             area_m2 = math.pi * (ID_m / 2) ** 2
-            velocity = m_dot_kg_s / (area_m2 * props["density_vapor" if pipe_type in ["Dry Suction", "Discharge"] else "density_liquid"])
+            density = props["density_vapor"] if pipe_type in ["Dry Suction", "Discharge"] else props["density_liquid"]
+            velocity = m_dot_kg_s / (area_m2 * density)
 
             total_equiv_length = pipe_length_m + fittings_equivalent_length_m
             pressure_drop_fric = (
-                pipe["Friction Factor"] * (total_equiv_length / ID_m) * (props["density_vapor"] * velocity ** 2 / 2)
+                pipe["Friction Factor"] * (total_equiv_length / ID_m) * (density * velocity ** 2 / 2)
             ) / 1000  # kPa
 
-            pressure_drop_lift = 9.81 * vertical_rise_m * props["density_vapor"] / 1000 if pipe_type in ["Dry Suction", "Discharge"] else 0
-            pressure_drop_total = pressure_drop_fric + pressure_drop_lift
+            # Optional: implement pressure drop from riser lift later if vertical height is known
+            pressure_drop_total = pressure_drop_fric
 
-            passes_velocity = check_oil_velocity(pipe_type, velocity, vertical_rise_m > 0)
+            passes_velocity = check_oil_velocity(pipe_type, velocity)
             rating_ok, _ = check_pipe_rating(pipe["Nominal Size (inch)"], T_cond, pressure_drop_total)
 
             if passes_velocity and rating_ok:
