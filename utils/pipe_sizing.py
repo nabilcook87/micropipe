@@ -50,7 +50,7 @@ class PipeSizer:
 
             pressure_drop_total = pressure_drop_fric
 
-            passes_velocity = check_oil_velocity(pipe_type, velocity, has_riser)
+            passes_velocity, _ = check_oil_velocity(pipe_type, velocity, has_riser)
             rating_ok, _ = check_pipe_rating(pipe["Nominal Size (inch)"], T_cond, pressure_drop_total)
 
             if passes_velocity and rating_ok:
