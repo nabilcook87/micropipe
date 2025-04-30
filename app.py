@@ -1,8 +1,7 @@
 import streamlit as st
 from utils.network_builder import NetworkBuilder
 from utils.pressure_temp_converter import PressureTemperatureConverter
-from utils.system_pressure_checker import check_pipe_rating  # Stub interface
-from utils.save_load_manager import save_project, load_project  # Load logic optional
+from utils.system_pressure_checker import check_pipe_rating  # Stub only
 
 st.set_page_config(page_title="Micropipe - Industrial Refrigeration Tool", layout="wide")
 st.title("Micropipe - Industrial Refrigeration Pipe Sizing")
@@ -14,15 +13,13 @@ tool_selection = st.sidebar.radio("Select Tool", [
     "Pressure ↔ Temperature Converter",
     "Pressure Drop ↔ Temperature Penalty",
     "System Pressure Checker",
-    "Save / Load Project"
+    "Oil Return Velocity Checker"
 ])
 
-# Tool 1: Pipe Network Builder
 if tool_selection == "Pipe Network Builder":
     builder = NetworkBuilder()
     builder.run()
 
-# Tool 2: Pressure ↔ Temperature Converter
 elif tool_selection == "Pressure ↔ Temperature Converter":
     st.subheader("Saturation Pressure ↔ Temperature Tool")
     converter = PressureTemperatureConverter()
@@ -42,7 +39,6 @@ elif tool_selection == "Pressure ↔ Temperature Converter":
         pressure_bar = converter.temp_to_pressure(refrigerant, temp_C)
         st.write(f"**Saturation Pressure:** {pressure_bar:.2f} bar")
 
-# Tool 3: Pressure Drop ↔ Temperature Penalty
 elif tool_selection == "Pressure Drop ↔ Temperature Penalty":
     st.subheader("Pressure Drop ⇄ Temperature Penalty Tool")
     converter = PressureTemperatureConverter()
@@ -64,31 +60,18 @@ elif tool_selection == "Pressure Drop ↔ Temperature Penalty":
         delta_p_kpa = converter.delta_T_to_delta_p(refrigerant, T_sat, delta_T)
         st.write(f"**Equivalent Pressure Drop:** {delta_p_kpa:.2f} kPa")
 
-# Tool 4: System Pressure Checker
 elif tool_selection == "System Pressure Checker":
-    st.subheader("System Pressure & Pipe Gauge Checker (Beta)")
+    st.subheader("System Pressure Rating Tool (Stub)")
+    st.info("This tool will check if a selected pipe is rated for system pressure. UI to be expanded.")
+    # Minimal stub logic, expects check_pipe_rating(pipe_name, pressure_bar)
+    pipe = st.text_input("Pipe Nominal Size", "1 1/8")
+    pressure = st.number_input("Design Pressure (bar)", value=32.0)
+    is_ok = check_pipe_rating(pipe, pressure)
+    if is_ok:
+        st.success("✅ Pipe rating OK for this pressure.")
+    else:
+        st.error("❌ Pipe not rated for this pressure.")
 
-    refrigerant = st.selectbox("Refrigerant", [
-        "R404A", "R134a", "R407F", "R744", "R410A",
-        "R407C", "R507A", "R448A", "R449A", "R22", "R32", "R454A"
-    ])
-    temp_C = st.number_input("Design Temperature (°C)", value=40.0)
-    pipe_material = st.selectbox("Pipe Material", ["Copper", "Steel"])
-    pipe_type = st.selectbox("Pipe Type", ["Type A", "Type B", "Type L"])  # Customize as needed
-    pipe_size = st.text_input("Nominal Pipe Size (inch)", value="1 1/8")
-
-    try:
-        status, pressure_bar, limit = check_pipe_rating(pipe_material, pipe_type, pipe_size, refrigerant, temp_C)
-        st.write(f"System Pressure: {pressure_bar:.2f} bar")
-        st.write(f"Rating Limit: {limit:.2f} bar")
-        if status:
-            st.success("✅ OK: System pressure is within limits.")
-        else:
-            st.error("⚠️ WARNING: Pressure exceeds pipe rating!")
-    except Exception as e:
-        st.error(f"Error: {e}")
-
-# Tool 5: Save / Load Project
-elif tool_selection == "Save / Load Project":
-    st.subheader("Save / Load Project")
-    st.write("This tool is used internally by the Network Builder. Manual loading support may be added if needed.")
+elif tool_selection == "Oil Return Velocity Checker":
+    st.subheader("Oil Return Velocity Check (Stub)")
+    st.info("This feature checks that refrigerant velocity is sufficient for oil return. UI not yet implemented.")
