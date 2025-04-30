@@ -27,11 +27,11 @@ def system_pressure_checker_ui():
     st.divider()
 
     # Pipe sizes from the data
-    pipe_sizes = sorted(_pipe_rating_data['Pipe Nominal Size'].unique())
+    pipe_sizes = sorted(_pipe_rating_data['Nominal Size (inch)'].unique())
     selected_size = st.selectbox("Select Pipe Nominal Size", pipe_sizes)
 
     # Filter rows for selected pipe size
-    matching_pipes = _pipe_rating_data[_pipe_rating_data['Pipe Nominal Size'] == selected_size]
+    matching_pipes = _pipe_rating_data[_pipe_rating_data['Nominal Size (inch)'] == selected_size]
 
     if len(matching_pipes) == 0:
         st.warning("No pipe data available for selected size.")
