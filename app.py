@@ -1,7 +1,7 @@
 import streamlit as st
 from utils.network_builder import NetworkBuilder
 from utils.pressure_temp_converter import PressureTemperatureConverter
-from utils.system_pressure_checker import check_pipe_rating, _pipe_rating_data
+from utils.system_pressure_checker import check_pipe_rating, _pipe_rating_data, get_pipe_options
 import pandas as pd
 
 st.set_page_config(page_title="Micropipe - Industrial Refrigeration Tool", layout="wide")
@@ -30,22 +30,27 @@ def system_pressure_checker_ui():
     pipe_sizes = sorted(_pipe_rating_data['Nominal Size (inch)'].unique())
     selected_size = st.selectbox("Select Pipe Nominal Size", pipe_sizes)
 
-    # Filter rows for selected pipe size
-    matching_pipes = _pipe_rating_data[_pipe_rating_data['Nominal Size (inch)'] == selected_size]
+    # Pipe materials
+    materials = sorted(_pipe_rating_data['Material'].unique())
+    selected_material = st.selectbox("Select Pipe Material", materials)
 
-    if len(matching_pipes) == 0:
-        st.warning("No pipe data available for selected size.")
+    # Filter rows for selected pipe material and size
+    matching_pipes = get_pipe_options(selected_material, selected_size)
+
+    if matching_pipes.empty:
+        st.warning("No pipe data available for selected material and size.")
         return
 
-    # Let user choose gauge if multiple gauges exist for this size
-    gauges = matching_pipes['Gauge'].unique()
-    selected_gauge = st.selectbox("Select Copper Gauge", gauges)
+    # Optional gauge selection
+    if "Gauge" in matching_pipes.columns and matching_pipes["Gauge"].notna().any():
+        gauges = sorted(matching_pipes["Gauge"].dropna().unique())
+        selected_gauge = st.selectbox("Select Copper Gauge", gauges)
+        pipe_row = matching_pipes[matching_pipes["Gauge"] == selected_gauge].iloc[0]
+    else:
+        pipe_row = matching_pipes.iloc[0]  # fallback for steel
 
     # Choose temperature for rating lookup
     design_temp_C = st.select_slider("Design Temperature (C)", options=[50, 100, 150], value=50)
-
-    # Get matching row
-    pipe_row = matching_pipes[matching_pipes['Gauge'] == selected_gauge].iloc[0]
 
     # Input design pressure
     design_pressure_bar = st.number_input("Design Pressure (bar)", min_value=0.0, step=0.5, value=10.0)
