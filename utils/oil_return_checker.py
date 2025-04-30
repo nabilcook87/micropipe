@@ -1,32 +1,19 @@
-def check_oil_return(velocity_m_per_s, orientation="horizontal"):
+# utils/oil_return_checker.py
+
+def check_oil_velocity(network_type, velocity_m_s):
     """
-    Check if the refrigerant velocity is sufficient to ensure oil return.
-
-    Parameters:
-    - velocity_m_per_s (float): Calculated velocity in the pipe (m/s)
-    - orientation (str): "horizontal" or "vertical"
-
+    Check if the velocity is sufficient for oil return.
+    
+    For horizontal sections (Dry Suction, Discharge): minimum 4.0 m/s
+    For vertical risers: minimum 7.0 m/s
+    
     Returns:
-    - result (dict): {
-        "required_velocity_m_per_s": float,
-        "is_sufficient": bool,
-        "note": str
-      }
+        (bool, str): Tuple of (is_ok, message)
     """
-    if orientation.lower() == "vertical":
-        required_velocity = 7.0  # m/s for vertical risers
-    else:
-        required_velocity = 4.0  # m/s for horizontal runs
-
-    is_sufficient = velocity_m_per_s >= required_velocity
-    note = (
-        "Velocity sufficient for oil return."
-        if is_sufficient
-        else f"Velocity too low for oil return — minimum {required_velocity} m/s required."
-    )
-
-    return {
-        "required_velocity_m_per_s": required_velocity,
-        "is_sufficient": is_sufficient,
-        "note": note
-    }
+    if network_type in ["Dry Suction", "Discharge"]:
+        if velocity_m_s < 4.0:
+            return False, "Velocity too low for oil return (horizontal)"
+    if network_type == "Vertical Rise":
+        if velocity_m_s < 7.0:
+            return False, "Velocity too low for oil return (vertical)"
+    return True, "OK"
