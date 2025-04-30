@@ -23,15 +23,14 @@ INCH_TO_MM_MAP = {
     "4-1/8": 104.78,
 }
 
-def check_pipe_rating(pipe_row, operating_temp_C):
+def check_pipe_rating(pipe_row, operating_temp_C, design_pressure_bar):
     """
     Check if the pipe's pressure rating at a given temperature is above a safety threshold.
     Safety threshold: 0.9 × rating at design temp.
     """
     design_temp_col = f"{int(round(operating_temp_C))}C"
-    available_cols = _pipe_rating_data.columns
+    available_cols = pipe_row.index
 
-    # Fallback if the exact temp column is not available
     if design_temp_col not in available_cols:
         design_temp_col = closest_temp_column(available_cols, operating_temp_C)
 
@@ -40,7 +39,7 @@ def check_pipe_rating(pipe_row, operating_temp_C):
         if pd.isna(val):
             return False
         rating = float(val)
-        return rating * 0.9 >= pipe_row["Design Pressure (bar)"]
+        return rating * 0.9 >= design_pressure_bar
     except Exception:
         return False
 
