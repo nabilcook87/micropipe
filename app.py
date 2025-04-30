@@ -3,7 +3,6 @@ from utils.network_builder import NetworkBuilder
 from utils.pressure_temp_converter import PressureTemperatureConverter
 from utils.system_pressure_checker import check_pipe_rating, _pipe_rating_data
 import pandas as pd
-import io
 
 st.set_page_config(page_title="Micropipe - Industrial Refrigeration Tool", layout="wide")
 st.title("Micropipe - Industrial Refrigeration Pipe Sizing")
@@ -42,9 +41,8 @@ def system_pressure_checker_ui():
     gauges = matching_pipes['Gauge'].unique()
     selected_gauge = st.selectbox("Select Copper Gauge", gauges)
 
-    # Choose temperature for rating lookup (with interpolation step)
-    all_temps = [int(col[:-1]) for col in _pipe_rating_data.columns if col.endswith("C") and col[:-1].isdigit()]
-    design_temp_C = st.slider("Design Temperature (°C)", min_value=min(all_temps), max_value=max(all_temps), value=50)
+    # Choose temperature for rating lookup
+    design_temp_C = st.select_slider("Design Temperature (C)", options=[50, 100, 150], value=50)
 
     # Get matching row
     pipe_row = matching_pipes[matching_pipes['Gauge'] == selected_gauge].iloc[0]
@@ -52,14 +50,9 @@ def system_pressure_checker_ui():
     # Input design pressure
     design_pressure_bar = st.number_input("Design Pressure (bar)", min_value=0.0, step=0.5, value=10.0)
 
-    # Interpolate pressure rating
-    temp_cols = [col for col in pipe_row.index if col.endswith("C") and col[:-1].isdigit()]
-    temp_values = [int(col[:-1]) for col in temp_cols]
-    rating_values = [pipe_row[col] for col in temp_cols]
-    rated_pressure = pd.Series(rating_values, index=temp_values).sort_index().interpolate(method='linear').reindex(range(min(temp_values), max(temp_values)+1)).interpolate().get(design_temp_C, None)
-
     # Check rating
-    is_rated = rated_pressure * 0.9 >= design_pressure_bar if rated_pressure else False
+    is_rated = check_pipe_rating(pipe_row, design_temp_C)
+    rated_pressure = pipe_row.get(f"{design_temp_C}C", None)
 
     st.divider()
 
@@ -80,25 +73,6 @@ def system_pressure_checker_ui():
     # Show full data row for transparency
     with st.expander("Show Full Pipe Data"):
         st.dataframe(pipe_row.to_frame().T.style.highlight_max(axis=1))
-
-    # Add a line chart for Rated Pressure vs. Temperature with design pressure overlay
-    with st.expander("Rated Pressure vs. Temperature Chart"):
-        chart_data = pd.DataFrame({
-            "Temperature (C)": range(min(temp_values), max(temp_values)+1),
-            "Rated Pressure (bar)": pd.Series(rating_values, index=temp_values).sort_index().interpolate(method='linear').reindex(range(min(temp_values), max(temp_values)+1)).interpolate().values
-        })
-        chart_data["Design Pressure (bar)"] = design_pressure_bar
-        st.line_chart(chart_data.set_index("Temperature (C)"))
-
-    # Add CSV export
-    with st.expander("Export Pressure Data"):
-        csv = chart_data.to_csv(index=False)
-        st.download_button(
-            label="Download Pressure Data as CSV",
-            data=csv,
-            file_name="pressure_rating_vs_temperature.csv",
-            mime="text/csv"
-        )
 
     with st.expander("BS EN 378 Reference Pressures"):
         st.table(pd.DataFrame({
