@@ -1,11 +1,10 @@
-# utils/pipe_sizing.py
-
 from utils.refrigerant_properties import RefrigerantProperties
 from utils.friction_calculations import get_equivalent_length
 from utils.system_pressure_checker import check_pipe_rating
 from utils.oil_return_checker import check_oil_velocity
 from utils.pipe_length_volume_calc import calculate_pipe_volume_liters
 import math
+import pandas as pd
 
 class PipeSizer:
     def __init__(self):
@@ -37,7 +36,12 @@ class PipeSizer:
 
         best_pipe = None
         for pipe in candidates:
-            ID_mm = pipe["ID_mm"]
+            ID_mm = pipe.get("ID_mm")
+            friction = pipe.get("Friction Factor")
+
+            if ID_mm is None or friction is None:
+                continue  # skip incomplete data
+
             ID_m = ID_mm / 1000.0
             area_m2 = math.pi * (ID_m / 2) ** 2
             density = props["density_vapor"] if pipe_type in ["Dry Suction", "Discharge"] else props["density_liquid"]
@@ -45,13 +49,13 @@ class PipeSizer:
 
             total_equiv_length = pipe_length_m + fittings_equivalent_length_m
             pressure_drop_fric = (
-                pipe["Friction Factor"] * (total_equiv_length / ID_m) * (density * velocity ** 2 / 2)
+                friction * (total_equiv_length / ID_m) * (density * velocity ** 2 / 2)
             ) / 1000  # kPa
 
             pressure_drop_total = pressure_drop_fric
 
             passes_velocity, _ = check_oil_velocity(pipe_type, velocity, is_riser=has_riser)
-            rating_ok = check_pipe_rating(pipe, T_cond, pressure_drop_total)
+            rating_ok = check_pipe_rating(pd.Series(pipe), T_cond, pressure_drop_total)
 
             if passes_velocity and rating_ok:
                 best_pipe = {
