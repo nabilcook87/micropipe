@@ -5,36 +5,26 @@ _pipe_rating_data = pd.read_csv("data/pipe_pressure_ratings_full.csv")
 
 # Imperial to metric lookup (approximate mm equivalents)
 INCH_TO_MM_MAP = {
-    "1/4": 6.35,
-    "3/8": 9.53,
-    "1/2": 12.7,
-    "5/8": 15.88,
-    "3/4": 19.05,
-    "7/8": 22.23,
-    "1-1/8": 28.58,
-    "1-3/8": 34.93,
-    "1-5/8": 41.28,
-    "2-1/8": 53.98,
-    "2-5/8": 66.68,
-    "3-1/8": 79.38,
-    "3-5/8": 92.08,
-    "4-1/8": 104.78,
+    "1/4": 6.35, "3/8": 9.53, "1/2": 12.7, "5/8": 15.88,
+    "3/4": 19.05, "7/8": 22.23, "1-1/8": 28.58, "1-3/8": 34.93,
+    "1-5/8": 41.28, "2-1/8": 53.98, "2-5/8": 66.68, "3-1/8": 79.38,
+    "3-5/8": 92.08, "4-1/8": 104.78,
 }
 
-def check_pipe_rating(pipe_row, operating_temp_C, design_pressure_bar):
+def check_pipe_rating(pipe, operating_temp_C, design_pressure_bar):
     """
     Check if the pipe's pressure rating at a given temperature is above a safety threshold.
-    Safety threshold: 0.9 × rating at design temp.
+    Supports both dict and Series inputs.
     """
     design_temp_col = f"{int(round(operating_temp_C))}C"
-    available_cols = pipe_row.index
+    columns = pipe.keys() if isinstance(pipe, dict) else pipe.index
 
     # Fallback if the exact temp column is not available
-    if design_temp_col not in available_cols:
-        design_temp_col = closest_temp_column(available_cols, operating_temp_C)
+    if design_temp_col not in columns:
+        design_temp_col = closest_temp_column(columns, operating_temp_C)
 
     try:
-        rating_val = pipe_row.get(design_temp_col)
+        rating_val = pipe.get(design_temp_col) if isinstance(pipe, dict) else pipe[design_temp_col]
         if pd.isna(rating_val):
             return False
         rating = float(rating_val)
@@ -48,7 +38,7 @@ def closest_temp_column(columns, target_temp):
     """
     temps = []
     for col in columns:
-        if col.endswith("C") and col[:-1].isdigit():
+        if isinstance(col, str) and col.endswith("C") and col[:-1].isdigit():
             temps.append(int(col[:-1]))
 
     if not temps:
