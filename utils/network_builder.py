@@ -67,7 +67,11 @@ class NetworkBuilder:
                 )
                 updated_circuit["results"] = results
 
-                volume_liters = calculate_pipe_volume_liters(results["selected_pipe"]["ID_mm"], updated_circuit["length_m"])
+                pipe_id_mm = results.get("selected_pipe", {}).get("ID_mm")
+                if pipe_id_mm is None:
+                    raise ValueError("Missing ID_mm in selected pipe.")
+
+                volume_liters = calculate_pipe_volume_liters(pipe_id_mm, updated_circuit["length_m"])
                 props = self.refrigerant_props.get_properties(self.refrigerant, self.evaporating_temp)
                 density = props["density_vapor"] if self.network_type in ["Dry Suction", "Discharge"] else props["density_liquid"]
                 updated_circuit["refrigerant_mass_kg"] = volume_liters / 1000 * density
