@@ -126,8 +126,8 @@ elif tool_selection == "Oil Return Velocity Checker":
     st.subheader("Oil Return Velocity Checker")
 
     st.markdown("""
-    This tool calculates refrigerant velocity in a dry suction riser and checks whether it meets the oil return requirement.
-    The velocity is computed at **reduced load** according to the required oil return duty %. Logic follows the original Micropipe VB implementation.
+    This tool calculates refrigerant velocity in a suction line and checks whether it meets the oil return requirement
+    based on pipe size and refrigerant. The logic follows the original Micropipe VB software.
     """)
 
     refrigerant = st.selectbox("Refrigerant", [
@@ -140,49 +140,41 @@ elif tool_selection == "Oil Return Velocity Checker":
         "2-1/8", "2-5/8", "3-1/8", "3-5/8", "4-1/8"
     ])
 
-    full_capacity_kw = st.number_input("Evaporator Capacity (kW)", min_value=0.1, value=10.0)
-    evaporating_temp = st.number_input("Evaporating Temperature (°C)", value=-10.0)
+    evap_capacity_kw = st.number_input("Evaporator Capacity (kW)", min_value=0.1, value=10.0)
     condensing_temp = st.number_input("Condensing Temperature (°C)", value=40.0)
     subcooling_K = st.number_input("Subcooling (K)", value=3.0)
     superheat_K = st.number_input("Superheat (K)", value=5.0)
-    required_duty_pct = st.number_input("Required Oil Return Duty (%)", min_value=0.0, max_value=100.0, value=100.0, step=5.0)
+    required_oil_duty_pct = st.number_input("Required Oil Return Duty (%)", min_value=0.0, max_value=100.0, value=100.0, step=5.0)
 
     from utils.refrigerant_properties import RefrigerantProperties
     from utils.pipe_length_volume_calc import get_pipe_id_mm
     from utils.oil_return_checker import check_oil_velocity
 
-    props = RefrigerantProperties()
+    # Get refrigerant properties
+    props = RefrigerantProperties().get_properties(refrigerant, condensing_temp)
+    h_in = props["enthalpy_liquid"]
+    h_out = h_in + superheat_K * ((RefrigerantProperties().get_properties(refrigerant, condensing_temp + 10)["enthalpy_vapor"] - props["enthalpy_vapor"]) / 10)
 
-    # Step 1: Effective capacity at minimum duty
-    effective_capacity_kw = full_capacity_kw * (required_duty_pct / 100.0)
+    Δh = h_out - h_in
+    mass_flow_kg_s = evap_capacity_kw / Δh if Δh > 0 else 0.01
 
-    # Step 2: Enthalpy difference using suction conditions
-    h_vap = props.get_properties(refrigerant, evaporating_temp)["enthalpy_vapor"]
-    h_vap_plus = props.get_properties(refrigerant, evaporating_temp + 10)["enthalpy_vapor"]
-    Cp_vapor = (h_vap_plus - h_vap) / 10
-    h_out = h_vap + superheat_K * Cp_vapor
-    Δh_kj_kg = h_out - h_vap
+    # Oil return check
+    is_ok, message = check_oil_velocity(pipe_size_inch, refrigerant, mass_flow_kg_s, required_oil_duty_pct)
 
-    # Step 3: Mass flow rate
-    mass_flow_kg_s = effective_capacity_kw / Δh_kj_kg if Δh_kj_kg > 0 else 0.01
-
-    # Step 4: Get internal diameter
+    # Calculate velocity for transparency
     ID_mm = get_pipe_id_mm(pipe_size_inch)
-    if ID_mm:
+    if ID_mm is not None:
         ID_m = ID_mm / 1000.0
         area_m2 = 3.1416 * (ID_m / 2) ** 2
-        density_vapor = props.get_properties(refrigerant, evaporating_temp)["density_vapor"]
-        velocity_m_s = mass_flow_kg_s / (area_m2 * density_vapor)
+        density = RefrigerantProperties().get_properties(refrigerant, condensing_temp)["density_vapor"]
+        velocity_m_s = mass_flow_kg_s / (area_m2 * density)
     else:
         velocity_m_s = None
-
-    # Step 5: Check velocity threshold based on VB logic
-    is_ok, message = check_oil_velocity(pipe_size_inch, refrigerant, mass_flow_kg_s, required_duty_pct)
 
     st.divider()
     st.subheader("Results")
 
-    if velocity_m_s is not None:
+    if velocity_m_s:
         st.metric("Refrigerant Velocity", f"{velocity_m_s:.2f} m/s")
 
     if is_ok:
