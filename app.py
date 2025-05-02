@@ -133,55 +133,60 @@ elif tool_selection == "System Pressure Checker":
     system_pressure_checker_ui()
 
 elif tool_selection == "Oil Return Velocity Checker":
-    st.subheader("Oil Return Velocity Check")
+    st.subheader("Oil Return Velocity Checker")
 
-    st.markdown("This tool calculates refrigerant velocity for a **Dry Suction** pipe and checks whether it meets minimum requirements for oil return (4 m/s horizontal, 7 m/s riser).")
+    st.markdown("""
+    This tool checks if refrigerant velocity in a dry suction riser is sufficient for oil return.
+    It uses refrigerant properties and enthalpy difference to estimate velocity based on capacity and pipe size.
+    """)
 
-    from utils.oil_return_checker import check_oil_velocity
-    from utils.refrigerant_properties import RefrigerantProperties
-    import math
-    import pandas as pd
-
-    # User Inputs
     refrigerant = st.selectbox("Refrigerant", [
         "R404A", "R134a", "R407F", "R744", "R410A",
         "R407C", "R507A", "R448A", "R449A", "R22", "R32", "R454A"
     ])
-    evap_temp = st.number_input("Evaporating Temperature (°C)", value=-10.0)
-    cond_temp = st.number_input("Condensing Temperature (°C)", value=40.0)
-    superheat_K = st.number_input("Superheat (K)", value=5.0)
-    subcooling_K = st.number_input("Subcooling (K)", value=3.0)
-    capacity_kw = st.number_input("Evaporator Capacity (kW)", value=10.0)
-    is_riser = st.checkbox("Is Vertical Riser?", value=False)
 
-    # Pipe selection
+    T_evap = st.number_input("Evaporating Temperature (°C)", value=-10.0)
+    T_cond = st.number_input("Condensing Temperature (°C)", value=40.0)
+    subcooling_K = st.number_input("Subcooling (K)", value=3.0)
+    superheat_K = st.number_input("Superheat (K)", value=5.0)
+    capacity_kw = st.number_input("Evaporator Capacity (kW)", value=10.0)
+
+    # Load pipe data
+    import pandas as pd
+    import math
+    from utils.refrigerant_properties import RefrigerantProperties
+    from utils.oil_return_checker import check_oil_velocity
+
     pipe_data = pd.read_csv("data/pipe_pressure_ratings_full.csv")
-    suction_pipes = pipe_data[pipe_data["Application"].str.contains("suction", case=False, na=False)]
-    pipe_options = suction_pipes["Nominal Size (inch)"].dropna().unique()
+    pipe_options = pipe_data["Nominal Size (inch)"].dropna().unique()
     selected_pipe = st.selectbox("Pipe Nominal Size (inch)", sorted(pipe_options))
 
-    matching_pipe = suction_pipes[suction_pipes["Nominal Size (inch)"] == selected_pipe].iloc[0]
-    ID_mm = matching_pipe["ID_mm"]
-    ID_m = ID_mm / 1000.0
-    area_m2 = math.pi * (ID_m / 2) ** 2
-
-    # Enthalpy-based mass flow
-    props = RefrigerantProperties()
-    h_superheat = props.get_properties(refrigerant, evap_temp + superheat_K)["enthalpy_vapor"]
-    h_subcooled = props.get_properties(refrigerant, cond_temp - subcooling_K)["enthalpy_liquid"]
-    delta_h = h_superheat - h_subcooled
-    mass_flow_kg_s = capacity_kw / delta_h if delta_h > 0 else 0.01
-
-    density_vapor = props.get_properties(refrigerant, evap_temp)["density_vapor"]
-    velocity_m_s = mass_flow_kg_s / (area_m2 * density_vapor)
-
-    # Oil return check
-    is_ok, message = check_oil_velocity("Dry Suction", velocity_m_s, is_riser=is_riser)
-
-    st.markdown("---")
-    st.metric("Calculated Velocity", f"{velocity_m_s:.2f} m/s")
-    if is_ok:
-        st.success(f"✅ OK: {message}")
+    matching_rows = pipe_data[pipe_data["Nominal Size (inch)"] == selected_pipe]
+    if matching_rows.empty:
+        st.error("No matching pipe found for this size.")
     else:
-        st.error(f"❌ Warning: {message}")
+        matching_pipe = matching_rows.iloc[0]
+        ID_mm = matching_pipe["ID_mm"]
+        ID_m = ID_mm / 1000.0
+        area_m2 = math.pi * (ID_m / 2) ** 2
 
+        props = RefrigerantProperties().get_properties(refrigerant, T_evap)
+        density = props["density_vapor"]
+
+        # Enthalpy difference (inlet to evaporator vs superheated outlet)
+        h_vap = props["enthalpy_vapor"]
+        h_vap_plus = RefrigerantProperties().get_properties(refrigerant, T_evap + 10)["enthalpy_vapor"]
+        Cp_vapor = (h_vap_plus - h_vap) / 10
+
+        Δh_kj_per_kg = Cp_vapor * superheat_K  # dry suction only
+        m_dot_kg_s = capacity_kw / Δh_kj_per_kg if Δh_kj_per_kg > 0 else 0.01
+
+        velocity_m_s = m_dot_kg_s / (area_m2 * density)
+
+        st.metric("Calculated Velocity", f"{velocity_m_s:.2f} m/s")
+        ok, msg = check_oil_velocity("Dry Suction", velocity_m_s, is_riser=True)
+
+        if ok:
+            st.success(f"✅ OK: {msg}")
+        else:
+            st.error(f"❌ Warning: {msg}")
