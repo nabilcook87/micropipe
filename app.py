@@ -150,15 +150,18 @@ elif tool_selection == "Oil Return Velocity Checker":
     from utils.pipe_length_volume_calc import get_pipe_id_mm
     from utils.oil_return_checker import check_oil_velocity
 
-    props = RefrigerantProperties()
-    h_in = props.get_properties(refrigerant, condensing_temp - subcooling_K)["enthalpy_liquid"]
-    h_evap = props.get_properties(refrigerant, condensing_temp - subcooling_K - superheat_K)["enthalpy_vapor"]
-    h_evap_plus10 = props.get_properties(refrigerant, condensing_temp - subcooling_K - superheat_K + 10)["enthalpy_vapor"]
-    Cp_vap = (h_evap_plus10 - h_evap) / 10
-    h_out = h_evap + superheat_K * Cp_vap
+    T_evap = evaporating_temp
+    T_cond = condensing_temp
 
-    Δh = h_out - h_in
-    mass_flow_kg_s = evap_capacity_kw / Δh if Δh > 0 else 0.01
+    props = RefrigerantProperties()
+    h_inlet = props.get_properties(refrigerant, T_cond - subcooling_K)["enthalpy_liquid"]
+    h_evap = props.get_properties(refrigerant, T_evap)["enthalpy_vapor"]
+    h_evap_plus10 = props.get_properties(refrigerant, T_evap + 10)["enthalpy_vapor"]
+    Cp_vap = (h_evap_plus10 - h_evap) / 10
+    h_exit = h_evap + superheat_K * Cp_vap
+
+    delta_h = h_exit - h_inlet
+    mass_flow_kg_s = evap_capacity_kw / delta_h if delta_h > 0 else 0.01
 
     # Oil return check
     is_ok, message = check_oil_velocity(pipe_size_inch, refrigerant, mass_flow_kg_s * (required_oil_duty_pct / 100.0))
