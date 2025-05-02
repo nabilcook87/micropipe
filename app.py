@@ -26,44 +26,35 @@ def system_pressure_checker_ui():
 
     st.divider()
 
-    # Pipe sizes from the data
     pipe_sizes = sorted(_pipe_rating_data['Nominal Size (inch)'].dropna().unique())
     selected_size = st.selectbox("Select Pipe Nominal Size", pipe_sizes)
 
-    # Pipe materials
     materials = sorted(_pipe_rating_data['Material'].dropna().unique())
     selected_material = st.selectbox("Select Pipe Material", materials)
 
-    # Filter rows for selected pipe material and size
     matching_pipes = get_pipe_options(selected_material, selected_size)
 
     if matching_pipes.empty:
         st.warning("No pipe data available for selected material and size.")
         return
 
-    # Optional gauge selection
     if "Gauge" in matching_pipes.columns and matching_pipes["Gauge"].notna().any():
         gauges = sorted(matching_pipes["Gauge"].dropna().unique())
         selected_gauge = st.selectbox("Select Copper Gauge", gauges)
         pipe_row = matching_pipes[matching_pipes["Gauge"] == selected_gauge].iloc[0]
     else:
-        pipe_row = matching_pipes.iloc[0]  # fallback for steel
+        pipe_row = matching_pipes.iloc[0]
 
-    # Choose temperature for rating lookup
     design_temp_C = st.select_slider("Design Temperature (C)", options=[50, 100, 150], value=50)
     design_temp_col = f"{design_temp_C}C"
-
-    # Input design pressure
     design_pressure_bar = st.number_input("Design Pressure (bar)", min_value=0.0, step=0.5, value=10.0)
 
-    # Check rating using corrected call
     is_rated = check_pipe_rating(pipe_row, design_temp_C, design_pressure_bar)
     rated_pressure = pipe_row.get(design_temp_col)
 
     st.divider()
 
     col1, col2 = st.columns(2)
-
     with col1:
         st.subheader("Pipe Rating Summary")
         st.metric("Rated Pressure @ Temp", f"{rated_pressure:.2f} bar" if pd.notna(rated_pressure) else "N/A")
@@ -76,7 +67,6 @@ def system_pressure_checker_ui():
         else:
             st.error("❌ Pipe is NOT rated for this pressure.")
 
-    # Show full data row for transparency
     with st.expander("Show Full Pipe Data"):
         st.dataframe(pipe_row.to_frame().T)
 
@@ -180,7 +170,8 @@ elif tool_selection == "Oil Return Velocity Checker":
     else:
         velocity_m_s = None
 
-    is_ok, message = check_oil_velocity(pipe_size_inch, refrigerant, mass_flow_kg_s)
+    # ✅ FIXED: now includes required_oil_duty_pct
+    is_ok, message = check_oil_velocity(pipe_size_inch, refrigerant, mass_flow_kg_s, required_oil_duty_pct)
 
     st.divider()
     st.subheader("Results")
