@@ -141,6 +141,7 @@ elif tool_selection == "Oil Return Velocity Checker":
     ])
 
     evap_capacity_kw = st.number_input("Evaporator Capacity (kW)", min_value=0.1, value=10.0)
+    evaporating_temp = st.number_input("Evaporating Temperature (°C)", value=-10)
     condensing_temp = st.number_input("Condensing Temperature (°C)", value=40.0)
     subcooling_K = st.number_input("Subcooling (K)", value=3.0)
     superheat_K = st.number_input("Superheat (K)", value=5.0)
