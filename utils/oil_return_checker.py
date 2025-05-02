@@ -1,67 +1,48 @@
 # utils/oil_return_checker.py
 
-def get_correction_factor(pipe_size_inch):
-    """
-    Return correction factor from legacy VB logic based on suction riser size (inch).
-    These are extracted from VB's CorrectionFactorData function.
-    """
-    correction_factors = {
-        "1/4": 0.10,
-        "3/8": 0.15,
-        "1/2": 0.20,
-        "5/8": 0.35,
-        "3/4": 0.60,
-        "7/8": 0.85,
-        "1-1/8": 1.40,
-        "1-3/8": 2.00,
-        "1-5/8": 2.80,
-        "2-1/8": 5.30,
-        "2-5/8": 8.50,
-        "3-1/8": 13.20,
-        "3-5/8": 18.50,
-        "4-1/8": 24.70
-    }
-    return correction_factors.get(str(pipe_size_inch), None)
+import math
+from utils.refrigerant_properties import RefrigerantProperties
+from utils.pipe_length_volume_calc import get_pipe_id_mm
 
-
-def get_min_duty(refrigerant):
+def check_oil_velocity(pipe_size_inch, refrigerant, mass_flow_kg_s, required_oil_duty_pct):
     """
-    Return minimum duty for oil return from legacy VB logic based on refrigerant type.
-    These values come from DRMinCapacity.
-    """
-    min_duty_values = {
-        "R22": 1.0,
-        "R134a": 1.0,
-        "R404A": 1.2,
-        "R407C": 1.0,
-        "R407F": 1.2,
-        "R410A": 1.1,
-        "R507A": 1.2,
-        "R744": 1.5,
-        "R448A": 1.2,
-        "R449A": 1.2,
-        "R32": 1.0,
-        "R454A": 1.0
-    }
-    return min_duty_values.get(refrigerant, 1.0)
+    Check if velocity is sufficient for oil return based on legacy VB logic.
 
-
-def check_oil_velocity(pipe_size_inch, refrigerant, mass_flow_kg_s):
-    """
-    Check if the oil return condition is satisfied based on refrigerant,
-    pipe size, and mass flow — replicating the legacy VB logic.
+    Parameters:
+        pipe_size_inch (str): Nominal pipe size (e.g. "7/8")
+        refrigerant (str): Refrigerant name
+        mass_flow_kg_s (float): Refrigerant mass flow rate [kg/s]
+        required_oil_duty_pct (float): Required oil return duty as percent (0–100)
 
     Returns:
-        (bool, str): (is_ok, message)
+        (bool, str): Tuple of (is_ok, message)
     """
-    cf = get_correction_factor(pipe_size_inch)
-    if cf is None:
-        return False, f"No correction factor for pipe size {pipe_size_inch}"
+    try:
+        # Get pipe ID
+        ID_mm = get_pipe_id_mm(pipe_size_inch)
+        if ID_mm is None:
+            return False, f"Unknown pipe size: {pipe_size_inch}"
+        
+        ID_m = ID_mm / 1000
+        area_m2 = math.pi * (ID_m / 2) ** 2
 
-    min_duty = get_min_duty(refrigerant)
-    product = mass_flow_kg_s * cf
+        if area_m2 <= 0:
+            return False, "Invalid pipe area"
 
-    if product >= min_duty:
-        return True, f"OK: {product:.2f} ≥ {min_duty:.2f}"
-    else:
-        return False, f"Insufficient flow for oil return ({product:.2f} < {min_duty:.2f})"
+        # Get density of saturated vapor
+        props = RefrigerantProperties().get_properties(refrigerant, -10)  # Assume evap temp -10°C
+        density = props.get("density_vapor", 5.0) or 5.0  # fallback default
+
+        # Velocity (m/s)
+        velocity = mass_flow_kg_s / (area_m2 * density)
+
+        # Required minimum velocity (from VB logic)
+        velocity_min = 0.15 * required_oil_duty_pct + 2.0
+
+        if velocity < velocity_min:
+            return False, f"Velocity too low for oil return ({velocity:.2f} m/s < {velocity_min:.2f} m/s)"
+        else:
+            return True, f"Velocity OK ({velocity:.2f} m/s ≥ {velocity_min:.2f} m/s)"
+
+    except Exception as e:
+        return False, f"Error: {e}"
