@@ -1,7 +1,7 @@
 # utils/pipe_length_volume_calc.py
 
 import math
-import pandas as pd
+from utils.system_pressure_checker import _pipe_rating_data
 
 def calculate_pipe_volume_liters(diameter_mm, length_m):
     """
@@ -20,19 +20,20 @@ def calculate_pipe_volume_liters(diameter_mm, length_m):
     volume_m3 = area_m2 * length_m
     return volume_m3 * 1000  # Convert to liters
 
+
 def get_pipe_id_mm(nominal_size_inch):
     """
-    Return the internal diameter (ID) in mm for a given nominal pipe size (inch)
-    using the pipe pressure ratings table.
-    
+    Look up internal diameter in mm for a given nominal size (inch)
+    from the loaded _pipe_rating_data.
+
     Parameters:
-        nominal_size_inch (str or float): Nominal pipe size as string (e.g., "1-1/8") or float
-    
+        nominal_size_inch (str): e.g. "7/8"
+
     Returns:
-        float or None: ID in mm, or None if not found
+        float or None: internal diameter in mm
     """
     try:
-        df = pd.read_csv("data/pipe_pressure_ratings_full.csv")
+        df = _pipe_rating_data
         match = df[df["Nominal Size (inch)"].astype(str).str.strip() == str(nominal_size_inch).strip()]
         if not match.empty and "ID_mm" in match.columns:
             return match.iloc[0]["ID_mm"]
