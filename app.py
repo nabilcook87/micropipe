@@ -136,7 +136,7 @@ elif tool_selection == "Oil Return Velocity Checker":
     st.subheader("Oil Return Velocity Checker")
 
     st.markdown("""
-    This tool checks if refrigerant velocity in a dry suction riser is sufficient for oil return.
+    This tool checks if refrigerant velocity in a dry suction riser is sufficient for oil return.  
     It uses refrigerant properties and enthalpy difference to estimate velocity based on capacity and pipe size.
     """)
 
@@ -144,49 +144,47 @@ elif tool_selection == "Oil Return Velocity Checker":
         "R404A", "R134a", "R407F", "R744", "R410A",
         "R407C", "R507A", "R448A", "R449A", "R22", "R32", "R454A"
     ])
-
     T_evap = st.number_input("Evaporating Temperature (°C)", value=-10.0)
     T_cond = st.number_input("Condensing Temperature (°C)", value=40.0)
     subcooling_K = st.number_input("Subcooling (K)", value=3.0)
     superheat_K = st.number_input("Superheat (K)", value=5.0)
-    capacity_kw = st.number_input("Evaporator Capacity (kW)", value=10.0)
+    evap_capacity_kw = st.number_input("Evaporator Capacity (kW)", value=10.0)
 
-    # Load pipe data
+    # Pipe selection
     import pandas as pd
-    import math
-    from utils.refrigerant_properties import RefrigerantProperties
-    from utils.oil_return_checker import check_oil_velocity
-
     pipe_data = pd.read_csv("data/pipe_pressure_ratings_full.csv")
-    pipe_options = pipe_data["Nominal Size (inch)"].dropna().unique()
-    selected_pipe = st.selectbox("Pipe Nominal Size (inch)", sorted(pipe_options))
+    suction_pipes = pipe_data[pipe_data["Application"].fillna("").str.contains("suction", case=False)]
+    pipe_options = suction_pipes["Nominal Size (inch)"].dropna().unique().tolist()
+    selected_pipe = st.selectbox("Pipe Nominal Size (inch)", pipe_options)
 
-    matching_rows = pipe_data[pipe_data["Nominal Size (inch)"] == selected_pipe]
-    if matching_rows.empty:
-        st.error("No matching pipe found for this size.")
+    # Pull refrigerant enthalpies
+    from utils.refrigerant_properties import RefrigerantProperties
+    props = RefrigerantProperties()
+    h_vap = props.get_properties(refrigerant, T_evap)["enthalpy_vapor"]
+    h_vap_plus = props.get_properties(refrigerant, T_evap + 10)["enthalpy_vapor"]
+    Cp_vap = (h_vap_plus - h_vap) / 10
+    h_vap_out = h_vap + Cp_vap * superheat_K
+
+    h_liq_in = props.get_properties(refrigerant, T_cond - subcooling_K)["enthalpy_liquid"]
+    delta_h = h_vap_out - h_liq_in
+
+    m_dot = evap_capacity_kw / delta_h if delta_h > 0 else 0.01  # kg/s
+
+    selected_row = suction_pipes[suction_pipes["Nominal Size (inch)"] == selected_pipe].iloc[0]
+    ID_mm = selected_row["ID_mm"]
+    ID_m = ID_mm / 1000
+    area_m2 = 3.1416 * (ID_m / 2) ** 2
+
+    density_vapor = props.get_properties(refrigerant, T_evap)["density_vapor"]
+    velocity = m_dot / (area_m2 * density_vapor)
+
+    st.subheader("Calculated Velocity")
+    st.markdown(f"**{velocity:.2f} m/s**")
+
+    from utils.oil_return_checker import check_oil_velocity
+    ok, msg = check_oil_velocity("Dry Suction", velocity, is_riser=True)
+
+    if ok:
+        st.success(f"✅ OK: {msg}")
     else:
-        matching_pipe = matching_rows.iloc[0]
-        ID_mm = matching_pipe["ID_mm"]
-        ID_m = ID_mm / 1000.0
-        area_m2 = math.pi * (ID_m / 2) ** 2
-
-        props = RefrigerantProperties().get_properties(refrigerant, T_evap)
-        density = props["density_vapor"]
-
-        # Enthalpy difference (inlet to evaporator vs superheated outlet)
-        h_vap = props["enthalpy_vapor"]
-        h_vap_plus = RefrigerantProperties().get_properties(refrigerant, T_evap + 10)["enthalpy_vapor"]
-        Cp_vapor = (h_vap_plus - h_vap) / 10
-
-        Δh_kj_per_kg = Cp_vapor * superheat_K  # dry suction only
-        m_dot_kg_s = capacity_kw / Δh_kj_per_kg if Δh_kj_per_kg > 0 else 0.01
-
-        velocity_m_s = m_dot_kg_s / (area_m2 * density)
-
-        st.metric("Calculated Velocity", f"{velocity_m_s:.2f} m/s")
-        ok, msg = check_oil_velocity("Dry Suction", velocity_m_s, is_riser=True)
-
-        if ok:
-            st.success(f"✅ OK: {msg}")
-        else:
-            st.error(f"❌ Warning: {msg}")
+        st.error(f"⚠️ Warning: {msg}")
