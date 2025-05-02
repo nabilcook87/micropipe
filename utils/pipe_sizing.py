@@ -12,7 +12,6 @@ class PipeSizer:
         self.pipe_table = self.load_pipe_table()
 
     def load_pipe_table(self):
-        import pandas as pd
         df = pd.read_csv("data/pipe_pressure_ratings_full.csv")
         return df.to_dict(orient="records")
 
@@ -25,21 +24,25 @@ class PipeSizer:
         h_vap_plus = self.refrigerant_props.get_properties(refrigerant, T_evap + 10)["enthalpy_vapor"]
         Cp_vapor = (h_vap_plus - h_vap) / 10
         h_subcooled = self.refrigerant_props.get_properties(refrigerant, T_cond)["enthalpy_liquid"]
-        Δh_kj_per_kg = Cp_vapor * superheat_K if pipe_type in ["Dry Suction", "Discharge"] else (
-            h_subcooled - self.refrigerant_props.get_properties(refrigerant, T_cond - subcooling_K)["enthalpy_liquid"]
+
+        Δh_kj_per_kg = (
+            Cp_vapor * superheat_K
+            if pipe_type in ["Dry Suction", "Discharge"]
+            else h_subcooled - self.refrigerant_props.get_properties(refrigerant, T_cond - subcooling_K)["enthalpy_liquid"]
         )
-        m_dot_kg_s = (evap_capacity_kw) / Δh_kj_per_kg if Δh_kj_per_kg > 0 else 0.01
+        m_dot_kg_s = (evap_capacity_kw / Δh_kj_per_kg) if Δh_kj_per_kg > 0 else 0.01
 
         candidates = self.pipe_table if not fixed_pipe_size else [
-            pipe for pipe in self.pipe_table if pipe["Nominal Size (inch)"] == fixed_pipe_size
+            pipe for pipe in self.pipe_table if pipe.get("Nominal Size (inch)") == fixed_pipe_size
         ]
 
         best_pipe = None
         for pipe in candidates:
             ID_mm = pipe.get("ID_mm")
             friction = pipe.get("Friction Factor")
+            pipe_size_inch = pipe.get("Nominal Size (inch)")
 
-            if ID_mm is None or friction is None:
+            if ID_mm is None or friction is None or pipe_size_inch is None:
                 continue  # skip incomplete data
 
             ID_m = ID_mm / 1000.0
@@ -54,7 +57,8 @@ class PipeSizer:
 
             pressure_drop_total = pressure_drop_fric
 
-            passes_velocity, _ = check_oil_velocity(pipe_type, velocity, is_riser=has_riser)
+            # ✅ NEW: Use mass flow-based oil return logic from legacy VB code
+            passes_velocity, _ = check_oil_velocity(pipe_size_inch, refrigerant, m_dot_kg_s)
             rating_ok = check_pipe_rating(pd.Series(pipe), T_cond, pressure_drop_total)
 
             if passes_velocity and rating_ok:
