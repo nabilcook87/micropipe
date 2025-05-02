@@ -172,7 +172,7 @@ elif tool_selection == "Oil Return Velocity Checker":
     if ID_mm is not None:
         ID_m = ID_mm / 1000.0
         area_m2 = 3.1416 * (ID_m / 2) ** 2
-        density = RefrigerantProperties().get_properties(refrigerant, condensing_temp)["density_vapor"]
+        density = RefrigerantProperties().get_properties(refrigerant, T_evap)["density_vapor"]
         velocity_m_s = mass_flow_kg_s / (area_m2 * density)
     else:
         velocity_m_s = None
