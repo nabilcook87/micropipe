@@ -62,17 +62,17 @@ def get_massflow_scaling_factor(refrigerant):
 
 def check_oil_velocity(pipe_size_inch, refrigerant, evap_capacity_kw, required_oil_duty_pct=100.0):
     """
-    Legacy VB logic: scaled capacity must exceed (min_duty / correction factor).
+    Checks oil return using legacy Micropipe logic.
+    Correct condition: Scaled duty × CF ≥ min required duty
     """
     cf = get_correction_factor(pipe_size_inch)
-    if cf is None or cf == 0:
+    if cf is None:
         return False, f"No correction factor for pipe size {pipe_size_inch}"
 
     min_duty = get_min_duty(refrigerant)
-    scaled_capacity_kw = evap_capacity_kw * (required_oil_duty_pct / 100.0)
-    required_capacity_kw = min_duty / cf
+    effective_duty = evap_capacity_kw * (required_oil_duty_pct / 100.0) * cf
 
-    if scaled_capacity_kw >= required_capacity_kw:
-        return True, f"OK: {scaled_capacity_kw:.2f} ≥ {required_capacity_kw:.2f}"
+    if effective_duty >= min_duty:
+        return True, f"OK: {effective_duty:.2f} ≥ {min_duty:.2f}"
     else:
-        return False, f"Insufficient flow for oil return ({scaled_capacity_kw:.2f} < {required_capacity_kw:.2f})"
+        return False, f"Insufficient flow for oil return ({effective_duty:.2f} < {min_duty:.2f})"
