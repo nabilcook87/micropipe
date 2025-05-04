@@ -135,9 +135,30 @@ elif tool_selection == "Oil Return Velocity Checker":
         "R407C", "R507A", "R448A", "R449A", "R22", "R32", "R454A"
     ])
 
+    # Load pipe data
     pipe_data = pd.read_csv("data/pipe_pressure_ratings_full.csv")
-    pipe_options = sorted(pipe_data["Nominal Size (inch)"].dropna().astype(str).unique())
-    pipe_size_inch = st.selectbox("Pipe Size (inch)", pipe_options)
+
+    # 1. Select Pipe Material
+    pipe_materials = sorted(pipe_data["Material"].dropna().unique())
+    selected_material = st.selectbox("Pipe Material", pipe_materials)
+
+    # 2. Filter pipe sizes for selected material
+    material_df = pipe_data[pipe_data["Material"] == selected_material]
+    pipe_sizes = sorted(material_df["Nominal Size (inch)"].dropna().astype(str).unique())
+    selected_size = st.selectbox("Nominal Pipe Size (inch)", pipe_sizes)
+
+    # 3. Gauge (if applicable)
+    gauge_options = material_df[material_df["Nominal Size (inch)"].astype(str) == selected_size]
+    if "Gauge" in gauge_options.columns and gauge_options["Gauge"].notna().any():
+        gauges = sorted(gauge_options["Gauge"].dropna().unique())
+        selected_gauge = st.selectbox("Copper Gauge", gauges)
+        selected_pipe_row = gauge_options[gauge_options["Gauge"] == selected_gauge].iloc[0]
+    else:
+        selected_pipe_row = gauge_options.iloc[0]
+
+    # Pipe parameters
+    pipe_size_inch = selected_pipe_row["Nominal Size (inch)"]
+    ID_mm = selected_pipe_row["ID_mm"]
 
     evap_capacity_kw = st.number_input("Evaporator Capacity (kW)", min_value=0.1, value=10.0)
     evaporating_temp = st.number_input("Evaporating Temperature (°C)", value=-10)
@@ -167,7 +188,6 @@ elif tool_selection == "Oil Return Velocity Checker":
     is_ok, message = check_oil_velocity(pipe_size_inch, refrigerant, mass_flow_kg_s * (required_oil_duty_pct / 100.0))
 
     # Calculate velocity for transparency
-    ID_mm = get_pipe_id_mm(pipe_size_inch)
     if ID_mm is not None:
         ID_m = ID_mm / 1000.0
         area_m2 = 3.1416 * (ID_m / 2) ** 2
