@@ -18,9 +18,7 @@ tool_selection = st.sidebar.radio("Select Tool", [
 ])
 
 def system_pressure_checker_ui():
-    st.title("System Pressure Rating Tool")
-
-    st.divider()
+    st.subheader("System Pressure Rating Tool")
 
     # Load pipe data
     pipe_data = pd.read_csv("data/pipe_pressure_ratings_full.csv")
@@ -49,8 +47,6 @@ def system_pressure_checker_ui():
 
     is_rated = check_pipe_rating(selected_pipe_row, design_temp_C, design_pressure_bar)
     rated_pressure = selected_pipe_row.get(design_temp_col)
-
-    st.divider()
 
     col1, col2 = st.columns(2)
     with col1:
