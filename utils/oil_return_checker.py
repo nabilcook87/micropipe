@@ -64,7 +64,7 @@ def check_oil_return(pipe_size_inch, refrigerant, evap_capacity_kw, duty_percent
 
     return_factor = min_required_flow / effective_flow
 
-    if return_factor <= duty_percentage:
-        return True, f"OK: {return_factor:.2f} ≤ {duty_percentage:.2f}"
+    if return_factor <= (duty_percentage / 100.0):
+        return True, f"OK: {return_factor:.2f} ≤ {(duty_percentage / 100.0):.2f}"
     else:
-        return False, f"Insufficient flow for oil return ({return_factor:.2f} > {duty_percentage:.2f})"
+        return False, f"Insufficient flow for oil return ({return_factor:.2f} > {(duty_percentage / 100.0):.2f})"
