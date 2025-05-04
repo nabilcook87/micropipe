@@ -195,7 +195,16 @@ elif tool_selection == "Oil Return Velocity Checker":
 
     # Oil return check — pass adjusted duty (in kW), not mass flow
     adjusted_duty_kw = evap_capacity_kw * (required_oil_duty_pct / 100.0)
-    is_ok, message = check_oil_return(pipe_size_inch, refrigerant, evap_capacity_kw, required_oil_duty_pct)
+    is_ok, message = check_oil_return(
+    pipe_size_inch,
+    refrigerant,
+    evap_capacity_kw,
+    required_oil_duty_pct,
+    evaporating_temp,
+    condensing_temp,
+    superheat_K,
+    subcooling_K
+)
     
     st.divider()
     st.subheader("Results")
