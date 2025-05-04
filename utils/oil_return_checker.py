@@ -46,21 +46,25 @@ def get_min_duty(refrigerant):
     return min_duty_values.get(refrigerant, 1.0)
 
 
-def check_oil_velocity(pipe_size_inch, refrigerant, mass_flow_kg_s, required_oil_duty_pct=100.0):
+def check_oil_velocity(pipe_size_inch, refrigerant, evap_capacity_kw, required_oil_duty_pct=100.0):
     """
-    Legacy VB-style check: scaled mass flow × correction factor must meet refrigerant's min duty.
+    Check if the oil return condition is satisfied based on refrigerant,
+    pipe size, and actual evaporator capacity in kW — replicating the VB logic.
+
+    Returns:
+        (bool, str): (is_ok, message)
     """
     cf = get_correction_factor(pipe_size_inch)
     if cf is None:
         return False, f"No correction factor for pipe size {pipe_size_inch}"
 
-    min_duty = get_min_duty(refrigerant)
+    min_duty = get_min_duty(refrigerant)  # in kW
+    actual_duty = evap_capacity_kw * (required_oil_duty_pct / 100.0)
 
-    # Adjust for required oil return duty percentage
-    scaled_mass_flow = mass_flow_kg_s * (required_oil_duty_pct / 100.0)
-    product = scaled_mass_flow * cf
+    # Calculate the required threshold for this pipe size and refrigerant
+    required_duty_threshold = min_duty / cf
 
-    if product >= min_duty:
-        return True, f"OK: {product:.2f} ≥ {min_duty:.2f}"
+    if actual_duty >= required_duty_threshold:
+        return True, f"OK: {actual_duty:.2f} ≥ {required_duty_threshold:.2f}"
     else:
-        return False, f"Insufficient flow for oil return ({product:.2f} < {min_duty:.2f})"
+        return False, f"Insufficient duty for oil return ({actual_duty:.2f} < {required_duty_threshold:.2f})"
