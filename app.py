@@ -135,10 +135,9 @@ elif tool_selection == "Oil Return Velocity Checker":
         "R407C", "R507A", "R448A", "R449A", "R22", "R32", "R454A"
     ])
 
-    pipe_size_inch = st.selectbox("Pipe Size (inch)", [
-        "1/4", "3/8", "1/2", "5/8", "3/4", "7/8", "1-1/8", "1-3/8", "1-5/8",
-        "2-1/8", "2-5/8", "3-1/8", "3-5/8", "4-1/8"
-    ])
+    pipe_data = pd.read_csv("data/pipe_pressure_ratings_full.csv")
+    pipe_options = sorted(pipe_data["Nominal Size (inch)"].dropna().astype(str).unique())
+    pipe_size_inch = st.selectbox("Pipe Size (inch)", pipe_options)
 
     evap_capacity_kw = st.number_input("Evaporator Capacity (kW)", min_value=0.1, value=10.0)
     evaporating_temp = st.number_input("Evaporating Temperature (°C)", value=-10)
