@@ -1,10 +1,6 @@
 # utils/oil_return_checker.py
 
 def get_correction_factor(pipe_size_inch):
-    """
-    Return correction factor from legacy VB logic based on suction riser size (inch).
-    These are extracted from VB's CorrectionFactorData function.
-    """
     correction_factors = {
         "1/4": 0.10,
         "3/8": 0.15,
@@ -24,12 +20,11 @@ def get_correction_factor(pipe_size_inch):
     return correction_factors.get(str(pipe_size_inch), None)
 
 
-def get_min_duty(refrigerant):
+def get_min_kW(refrigerant):
     """
-    Return minimum duty for oil return from legacy VB logic based on refrigerant type.
-    These values come from DRMinCapacity.
+    Minimum required kW for oil return based on refrigerant.
     """
-    min_duty_values = {
+    return {
         "R22": 1.0,
         "R134a": 1.0,
         "R404A": 1.2,
@@ -42,14 +37,37 @@ def get_min_duty(refrigerant):
         "R449A": 1.2,
         "R32": 1.0,
         "R454A": 1.0
-    }
-    return min_duty_values.get(refrigerant, 1.0)
+    }.get(refrigerant, 1.0)
 
 
-def check_oil_velocity(pipe_size_inch, refrigerant, evap_capacity_kw, required_oil_duty_pct=100.0):
+def get_massflow_scaling_factor(refrigerant):
     """
-    Check if the oil return condition is satisfied based on refrigerant,
-    pipe size, and actual evaporator capacity in kW — replicating the VB logic.
+    Legacy VB-style multiplier used to convert kW to an equivalent scaled mass flow.
+    """
+    return {
+        "R22": 1.00,
+        "R134a": 0.98,
+        "R404A": 1.04,
+        "R407C": 1.00,
+        "R407F": 1.04,
+        "R410A": 1.03,
+        "R507A": 1.04,
+        "R744": 1.20,
+        "R448A": 1.04,
+        "R449A": 1.04,
+        "R32": 1.00,
+        "R454A": 1.00
+    }.get(refrigerant, 1.0)
+
+
+def check_oil_velocity(pipe_size_inch, refrigerant, actual_duty_kw):
+    """
+    Check oil return based on corrected VB logic: (scaled_kW * correction factor) ≥ min_kW
+
+    Parameters:
+        pipe_size_inch (str): Pipe nominal size
+        refrigerant (str): Refrigerant name
+        actual_duty_kw (float): Actual duty in kW
 
     Returns:
         (bool, str): (is_ok, message)
@@ -58,13 +76,13 @@ def check_oil_velocity(pipe_size_inch, refrigerant, evap_capacity_kw, required_o
     if cf is None:
         return False, f"No correction factor for pipe size {pipe_size_inch}"
 
-    min_duty = get_min_duty(refrigerant)  # in kW
-    actual_duty = evap_capacity_kw * (required_oil_duty_pct / 100.0)
+    min_kW = get_min_kW(refrigerant)
+    multiplier = get_massflow_scaling_factor(refrigerant)
 
-    # Calculate the required threshold for this pipe size and refrigerant
-    required_duty_threshold = min_duty / cf
+    # Convert duty (kW) to a pseudo-flow using legacy VB scaling
+    scaled_duty_product = actual_duty_kw * multiplier * cf
 
-    if actual_duty >= required_duty_threshold:
-        return True, f"OK: {actual_duty:.2f} ≥ {required_duty_threshold:.2f}"
+    if scaled_duty_product >= min_kW:
+        return True, f"OK: {scaled_duty_product:.2f} ≥ {min_kW:.2f}"
     else:
-        return False, f"Insufficient duty for oil return ({actual_duty:.2f} < {required_duty_threshold:.2f})"
+        return False, f"Insufficient flow for oil return ({scaled_duty_product:.2f} < {min_kW:.2f})"
