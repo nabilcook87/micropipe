@@ -1,3 +1,5 @@
+from utils.refrigerant_properties import RefrigerantProperties
+
 def get_correction_factor(pipe_size_inch):
     correction_factors = {
         "1/4": 0.10,
@@ -17,22 +19,22 @@ def get_correction_factor(pipe_size_inch):
     }
     return correction_factors.get(pipe_size_inch.strip())
 
-def get_base_min_duty(refrigerant):
-    base_min_duties = {
-        "R22": 1.0,
-        "R134a": 1.0,
-        "R404A": 1.2,
-        "R407C": 1.0,
-        "R407F": 1.2,
-        "R410A": 1.1,
-        "R507A": 1.2,
-        "R744": 1.5,
-        "R448A": 1.2,
-        "R449A": 1.2,
-        "R32": 1.0,
-        "R454A": 1.0
+def get_base_min_flow(refrigerant):
+    base_min_flows = {
+        "R22": 0.010,     # in kg/s
+        "R134a": 0.010,
+        "R404A": 0.012,
+        "R407C": 0.010,
+        "R407F": 0.012,
+        "R410A": 0.011,
+        "R507A": 0.012,
+        "R744": 0.015,
+        "R448A": 0.012,
+        "R449A": 0.012,
+        "R32": 0.010,
+        "R454A": 0.010
     }
-    return base_min_duties.get(refrigerant.strip(), 1.0)
+    return base_min_flows.get(refrigerant.strip(), 0.010)
 
 def get_scaling_factor(refrigerant):
     scaling_factors = {
@@ -51,20 +53,30 @@ def get_scaling_factor(refrigerant):
     }
     return scaling_factors.get(refrigerant.strip(), 1.0)
 
-def check_oil_return(pipe_size_inch, refrigerant, evap_capacity_kw, duty_percentage=100.0):
+def check_oil_return(pipe_size_inch, refrigerant, evap_capacity_kw, evap_temp, cond_temp, superheat, subcool, duty_percentage=100.0):
+    props = RefrigerantProperties()
+
+    h_inlet = props.get_properties(refrigerant, cond_temp - subcool)["enthalpy_liquid"]
+    h_evap = props.get_properties(refrigerant, evap_temp)["enthalpy_vapor"]
+    h_evap_plus10 = props.get_properties(refrigerant, evap_temp + 10)["enthalpy_vapor"]
+    cp_vap = (h_evap_plus10 - h_evap) / 10
+    h_exit = h_evap + superheat * cp_vap
+
+    delta_h = h_exit - h_inlet  # in kJ/kg
+    if delta_h <= 0:
+        return False, "Invalid enthalpy difference (Δh <= 0)"
+
+    mass_flow_kg_s = evap_capacity_kw / delta_h
+    scaled_flow = mass_flow_kg_s * get_scaling_factor(refrigerant) * (duty_percentage / 100.0)
+
+    base_min = get_base_min_flow(refrigerant)
     cf = get_correction_factor(pipe_size_inch)
     if cf is None:
-        return False, f"No correction factor for pipe size {pipe_size_inch}"
+        return False, f"No correction factor for pipe size '{pipe_size_inch}'"
 
-    base_min_duty = get_base_min_duty(refrigerant)
-    scaling_factor = get_scaling_factor(refrigerant)
+    min_required_flow = base_min * cf
 
-    effective_flow = evap_capacity_kw * (duty_percentage / 100.0) * scaling_factor
-    min_required_flow = base_min_duty * cf
-
-    return_factor = min_required_flow / effective_flow
-
-    if return_factor <= (duty_percentage / 100.0):
-        return True, f"OK: {return_factor:.2f} ≤ {(duty_percentage / 100.0):.2f}"
+    if scaled_flow >= min_required_flow:
+        return True, f"OK: {scaled_flow:.3f} kg/s ≥ {min_required_flow:.3f} kg/s"
     else:
-        return False, f"Insufficient flow for oil return ({return_factor:.2f} > {(duty_percentage / 100.0):.2f})"
+        return False, f"Insufficient flow ({scaled_flow:.3f} < {min_required_flow:.3f} kg/s)"
