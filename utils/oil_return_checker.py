@@ -46,18 +46,9 @@ def get_min_duty(refrigerant):
     return min_duty_values.get(refrigerant, 1.0)
 
 
-def check_oil_velocity(pipe_size_inch, refrigerant, velocity_m_s):
+def check_oil_velocity(pipe_size_inch, refrigerant, mass_flow_kg_s, required_oil_duty_pct=100.0):
     """
-    Check if the oil return condition is satisfied using VB-style logic:
-    velocity × correction factor ≥ refrigerant-specific minimum duty.
-
-    Parameters:
-        pipe_size_inch (str): Pipe nominal size
-        refrigerant (str): Refrigerant name
-        velocity_m_s (float): Refrigerant velocity in m/s
-
-    Returns:
-        (bool, str): (is_ok, message)
+    Legacy VB-style check: scaled mass flow × correction factor must meet refrigerant's min duty.
     """
     cf = get_correction_factor(pipe_size_inch)
     if cf is None:
@@ -65,7 +56,9 @@ def check_oil_velocity(pipe_size_inch, refrigerant, velocity_m_s):
 
     min_duty = get_min_duty(refrigerant)
 
-    product = velocity_m_s * cf
+    # Adjust for required oil return duty percentage
+    scaled_mass_flow = mass_flow_kg_s * (required_oil_duty_pct / 100.0)
+    product = scaled_mass_flow * cf
 
     if product >= min_duty:
         return True, f"OK: {product:.2f} ≥ {min_duty:.2f}"
