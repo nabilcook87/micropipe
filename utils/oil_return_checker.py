@@ -17,12 +17,8 @@ def get_correction_factor(pipe_size_inch):
     }
     return correction_factors.get(pipe_size_inch.strip())
 
-def get_base_min_kW(refrigerant):
-    """
-    Returns the base minimum duty (in kW) required for oil return
-    for a given refrigerant. This comes from the legacy VB logic (DRMinCapacity).
-    """
-    return {
+def get_base_min_duty(refrigerant):
+    base_min_duties = {
         "R22": 1.0,
         "R134a": 1.0,
         "R404A": 1.2,
@@ -35,7 +31,8 @@ def get_base_min_kW(refrigerant):
         "R449A": 1.2,
         "R32": 1.0,
         "R454A": 1.0
-    }.get(refrigerant, 1.0)
+    }
+    return base_min_duties.get(refrigerant.strip(), 1.0)
 
 def get_scaling_factor(refrigerant):
     scaling_factors = {
@@ -54,19 +51,18 @@ def get_scaling_factor(refrigerant):
     }
     return scaling_factors.get(refrigerant.strip(), 1.0)
 
-def check_oil_return(pipe_size_inch, refrigerant, evap_capacity_kw, required_oil_duty_pct=100.0):
+def check_oil_return(pipe_size_inch, refrigerant, evap_capacity_kw, duty_percentage=100.0):
     cf = get_correction_factor(pipe_size_inch)
-    if cf is None or cf == 0:
-        return False, f"No valid correction factor for pipe size {pipe_size_inch}"
+    if cf is None:
+        return False, f"No correction factor for pipe size {pipe_size_inch}"
 
-    base_min_kW = get_base_min_kW(refrigerant)
+    base_min_duty = get_base_min_duty(refrigerant)
+    scaling_factor = get_scaling_factor(refrigerant)
 
-    # CORRECT: min required capacity decreases as CF increases
-    required_min_capacity = base_min_kW / cf
+    effective_flow = evap_capacity_kw * (duty_percentage / 100.0) * scaling_factor
+    min_required_flow = base_min_duty * cf
 
-    available_capacity = evap_capacity_kw * (required_oil_duty_pct / 100.0)
-
-    if available_capacity >= required_min_capacity:
-        return True, f"OK: {available_capacity:.2f} ≥ {required_min_capacity:.2f}"
+    if effective_flow >= min_required_flow:
+        return True, f"OK: {effective_flow:.2f} ≥ {min_required_flow:.2f}"
     else:
-        return False, f"Insufficient oil return: {available_capacity:.2f} < {required_min_capacity:.2f}"
+        return False, f"Insufficient flow for oil return ({effective_flow:.2f} < {min_required_flow:.2f})"
