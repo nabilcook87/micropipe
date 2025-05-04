@@ -58,7 +58,7 @@ class PipeSizer:
             pressure_drop_total = pressure_drop_fric
 
             # ✅ NEW: Use mass flow-based oil return logic from legacy VB code
-            passes_velocity, _ = check_oil_velocity(pipe_size_inch, refrigerant, m_dot_kg_s)
+            passes_velocity, _ = check_oil_return(pipe_size_inch, refrigerant, m_dot_kg_s)
             rating_ok = check_pipe_rating(pd.Series(pipe), T_cond, pressure_drop_total)
 
             if passes_velocity and rating_ok:
