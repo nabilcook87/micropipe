@@ -19,10 +19,6 @@ tool_selection = st.sidebar.radio("Select Tool", [
 
 def system_pressure_checker_ui():
     st.title("System Pressure Rating Tool")
-    st.markdown("""
-    This tool checks if a selected pipe size and gauge is rated for your system's design pressure 
-    at a specified temperature. Safety factor threshold: **90%** of the rated pressure.
-    """)
 
     st.divider()
 
@@ -126,11 +122,6 @@ elif tool_selection == "System Pressure Checker":
 
 elif tool_selection == "Oil Return Velocity Checker":
     st.subheader("Oil Return Velocity Checker")
-
-    st.markdown("""
-    This tool calculates refrigerant velocity in a suction line and checks whether it meets the oil return requirement
-    based on pipe size and refrigerant. The logic follows the original Micropipe VB software.
-    """)
 
     refrigerant = st.selectbox("Refrigerant", [
         "R404A", "R134a", "R407F", "R744", "R410A",
