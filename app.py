@@ -26,31 +26,33 @@ def system_pressure_checker_ui():
 
     st.divider()
 
-    pipe_sizes = sorted(_pipe_rating_data['Nominal Size (inch)'].dropna().unique())
-    selected_size = st.selectbox("Select Pipe Nominal Size", pipe_sizes)
+    # Load pipe data
+    pipe_data = pd.read_csv("data/pipe_pressure_ratings_full.csv")
 
-    materials = sorted(_pipe_rating_data['Material'].dropna().unique())
-    selected_material = st.selectbox("Select Pipe Material", materials)
+    # 1. Select Pipe Material
+    pipe_materials = sorted(pipe_data["Material"].dropna().unique())
+    selected_material = st.selectbox("Pipe Material", pipe_materials)
 
-    matching_pipes = get_pipe_options(selected_material, selected_size)
+    # 2. Filter pipe sizes for selected material
+    material_df = pipe_data[pipe_data["Material"] == selected_material]
+    pipe_sizes = sorted(material_df["Nominal Size (inch)"].dropna().astype(str).unique())
+    selected_size = st.selectbox("Nominal Pipe Size (inch)", pipe_sizes)
 
-    if matching_pipes.empty:
-        st.warning("No pipe data available for selected material and size.")
-        return
-
-    if "Gauge" in matching_pipes.columns and matching_pipes["Gauge"].notna().any():
-        gauges = sorted(matching_pipes["Gauge"].dropna().unique())
-        selected_gauge = st.selectbox("Select Copper Gauge", gauges)
-        pipe_row = matching_pipes[matching_pipes["Gauge"] == selected_gauge].iloc[0]
+    # 3. Gauge (if applicable)
+    gauge_options = material_df[material_df["Nominal Size (inch)"].astype(str) == selected_size]
+    if "Gauge" in gauge_options.columns and gauge_options["Gauge"].notna().any():
+        gauges = sorted(gauge_options["Gauge"].dropna().unique())
+        selected_gauge = st.selectbox("Copper Gauge", gauges)
+        selected_pipe_row = gauge_options[gauge_options["Gauge"] == selected_gauge].iloc[0]
     else:
-        pipe_row = matching_pipes.iloc[0]
+        selected_pipe_row = gauge_options.iloc[0]
 
     design_temp_C = st.select_slider("Design Temperature (C)", options=[50, 100, 150], value=50)
     design_temp_col = f"{design_temp_C}C"
     design_pressure_bar = st.number_input("Design Pressure (bar)", min_value=0.0, step=0.5, value=10.0)
 
-    is_rated = check_pipe_rating(pipe_row, design_temp_C, design_pressure_bar)
-    rated_pressure = pipe_row.get(design_temp_col)
+    is_rated = check_pipe_rating(selected_pipe_row, design_temp_C, design_pressure_bar)
+    rated_pressure = selected_pipe_row.get(design_temp_col)
 
     st.divider()
 
@@ -68,7 +70,7 @@ def system_pressure_checker_ui():
             st.error("❌ Pipe is NOT rated for this pressure.")
 
     with st.expander("Show Full Pipe Data"):
-        st.dataframe(pipe_row.to_frame().T)
+        st.dataframe(selected_pipe_row.to_frame().T)
 
     with st.expander("BS EN 378 Reference Pressures"):
         st.table(pd.DataFrame({
