@@ -182,18 +182,20 @@ elif tool_selection == "Oil Return Velocity Checker":
     delta_h = h_exit - h_inlet
     mass_flow_kg_s = evap_capacity_kw / delta_h if delta_h > 0 else 0.01
 
-    # Oil return check
-    is_ok, message = check_oil_velocity(pipe_size_inch, refrigerant, mass_flow_kg_s, required_oil_duty_pct)
+    adjusted_mass_flow_kg_s = mass_flow_kg_s * (required_oil_duty_pct / 100.0)
 
     # Calculate velocity for transparency
     if ID_mm is not None:
         ID_m = ID_mm / 1000.0
         area_m2 = 3.1416 * (ID_m / 2) ** 2
         density = RefrigerantProperties().get_properties(refrigerant, T_evap)["density_vapor"]
-        velocity_m_s = mass_flow_kg_s / (area_m2 * density)
+        velocity_m_s = adjusted_mass_flow_kg_s / (area_m2 * density)
     else:
         velocity_m_s = None
 
+    # Oil return check
+    is_ok, message = check_oil_velocity(pipe_size_inch, refrigerant, velocity_m_s)
+    
     st.divider()
     st.subheader("Results")
 
