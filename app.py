@@ -183,7 +183,7 @@ elif tool_selection == "Oil Return Velocity Checker":
     mass_flow_kg_s = evap_capacity_kw / delta_h if delta_h > 0 else 0.01
 
     # Oil return check
-    is_ok, message = check_oil_velocity(pipe_size_inch, refrigerant, mass_flow_kg_s * (required_oil_duty_pct / 100.0))
+    is_ok, message = check_oil_velocity(pipe_size_inch, refrigerant, mass_flow_kg_s, required_oil_duty_pct)
 
     # Calculate velocity for transparency
     if ID_mm is not None:
