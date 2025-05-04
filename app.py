@@ -9,6 +9,7 @@ st.title("MicroPipe")
 
 # Sidebar for tools and settings
 st.sidebar.title("Tools & Utilities")
+st.sidebar.image("assets/logo-nobackground-200.png", width=200)
 tool_selection = st.sidebar.radio("Select Tool", [
     "Pipe Network Builder",
     "Pressure ↔ Temperature Converter",
