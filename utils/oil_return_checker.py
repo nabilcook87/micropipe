@@ -21,6 +21,10 @@ def get_correction_factor(pipe_size_inch):
 
 
 def get_min_duty(refrigerant):
+    """
+    Base minimum required duty (kW) for oil return.
+    This is later scaled up based on pipe size.
+    """
     return {
         "R22": 1.0,
         "R134a": 1.0,
@@ -38,6 +42,9 @@ def get_min_duty(refrigerant):
 
 
 def get_massflow_scaling_factor(refrigerant):
+    """
+    Scale kW into equivalent flow weighting (VB-style).
+    """
     return {
         "R22": 1.00,
         "R134a": 0.98,
@@ -56,22 +63,22 @@ def get_massflow_scaling_factor(refrigerant):
 
 def check_oil_velocity(pipe_size_inch, refrigerant, evap_capacity_kw, required_oil_duty_pct=100.0):
     """
-    Final version mimicking legacy VB software:
-    - Applies scaling factor (kW → flow representation)
-    - Multiplies by correction factor (pipe size)
-    - Compares to min duty threshold
+    Final corrected legacy VB logic:
+    - Effective flow = evap_kW × scaling × duty%
+    - Minimum required = min_duty × correction factor
+    - Flow must exceed this threshold
     """
     cf = get_correction_factor(pipe_size_inch)
     if cf is None:
         return False, f"No correction factor for pipe size {pipe_size_inch}"
 
-    scale = get_massflow_scaling_factor(refrigerant)
-    min_required = get_min_duty(refrigerant)
+    min_duty = get_min_duty(refrigerant)
+    scaling = get_massflow_scaling_factor(refrigerant)
 
-    adjusted_kw = evap_capacity_kw * (required_oil_duty_pct / 100.0)
-    effective_value = adjusted_kw * scale * cf
+    effective_value = evap_capacity_kw * (required_oil_duty_pct / 100.0) * scaling
+    required_threshold = min_duty * cf
 
-    if effective_value >= min_required:
-        return True, f"OK: {effective_value:.2f} ≥ {min_required:.2f}"
+    if effective_value >= required_threshold:
+        return True, f"OK: {effective_value:.2f} ≥ {required_threshold:.2f}"
     else:
-        return False, f"Insufficient flow for oil return ({effective_value:.2f} < {min_required:.2f})"
+        return False, f"Insufficient flow for oil return ({effective_value:.2f} < {required_threshold:.2f})"
