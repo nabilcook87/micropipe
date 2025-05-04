@@ -20,7 +20,7 @@ def get_correction_factor(pipe_size_inch):
     return correction_factors.get(str(pipe_size_inch), None)
 
 
-def get_min_kW(refrigerant):
+def get_min_duty(refrigerant):
     """
     Minimum required kW for oil return based on refrigerant.
     """
