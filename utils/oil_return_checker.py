@@ -51,7 +51,7 @@ def get_scaling_factor(refrigerant):
     }
     return scaling_factors.get(refrigerant.strip(), 1.0)
 
-def check_oil_velocity(pipe_size_inch, refrigerant, evap_capacity_kw, required_oil_duty_pct=100.0):
+def check_oil_return(pipe_size_inch, refrigerant, evap_capacity_kw, required_oil_duty_pct=100.0):
     cf = get_correction_factor(pipe_size_inch)
     if cf is None or cf == 0:
         return False, f"No valid correction factor for pipe size {pipe_size_inch}"
