@@ -194,7 +194,7 @@ elif tool_selection == "Oil Return Velocity Checker":
         velocity_m_s = None
 
     # Oil return check
-    is_ok, message = check_oil_velocity(pipe_size_inch, refrigerant, velocity_m_s)
+    is_ok, message = check_oil_velocity(pipe_size_inch, refrigerant, mass_flow_kg_s, required_oil_duty_pct)
     
     st.divider()
     st.subheader("Results")
