@@ -17,8 +17,12 @@ def get_correction_factor(pipe_size_inch):
     }
     return correction_factors.get(pipe_size_inch.strip())
 
-def get_base_min_duty(refrigerant):
-    base_min_duties = {
+def get_base_min_kW(refrigerant):
+    """
+    Returns the base minimum duty (in kW) required for oil return
+    for a given refrigerant. This comes from the legacy VB logic (DRMinCapacity).
+    """
+    return {
         "R22": 1.0,
         "R134a": 1.0,
         "R404A": 1.2,
@@ -31,8 +35,7 @@ def get_base_min_duty(refrigerant):
         "R449A": 1.2,
         "R32": 1.0,
         "R454A": 1.0
-    }
-    return base_min_duties.get(refrigerant.strip(), 1.0)
+    }.get(refrigerant, 1.0)
 
 def get_scaling_factor(refrigerant):
     scaling_factors = {
