@@ -167,7 +167,7 @@ elif tool_selection == "Oil Return Velocity Checker":
 
     from utils.refrigerant_properties import RefrigerantProperties
     from utils.pipe_length_volume_calc import get_pipe_id_mm
-    from utils.oil_return_checker import check_oil_velocity
+    from utils.oil_return_checker import check_oil_return
 
     T_evap = evaporating_temp
     T_cond = condensing_temp
@@ -195,7 +195,7 @@ elif tool_selection == "Oil Return Velocity Checker":
 
     # Oil return check — pass adjusted duty (in kW), not mass flow
     adjusted_duty_kw = evap_capacity_kw * (required_oil_duty_pct / 100.0)
-    is_ok, message = check_oil_velocity(pipe_size_inch, refrigerant, evap_capacity_kw, required_oil_duty_pct)
+    is_ok, message = check_oil_return(pipe_size_inch, refrigerant, evap_capacity_kw, required_oil_duty_pct)
     
     st.divider()
     st.subheader("Results")
