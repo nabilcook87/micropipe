@@ -51,18 +51,19 @@ def get_scaling_factor(refrigerant):
     }
     return scaling_factors.get(refrigerant.strip(), 1.0)
 
-def check_oil_return(pipe_size_inch, refrigerant, evap_capacity_kw, duty_percentage=100.0):
+def check_oil_velocity(pipe_size_inch, refrigerant, evap_capacity_kw, required_oil_duty_pct=100.0):
     cf = get_correction_factor(pipe_size_inch)
-    if cf is None:
-        return False, f"No correction factor for pipe size {pipe_size_inch}"
+    if cf is None or cf == 0:
+        return False, f"No valid correction factor for pipe size {pipe_size_inch}"
 
-    base_min_duty = get_base_min_duty(refrigerant)
-    scaling_factor = get_scaling_factor(refrigerant)
+    base_min_kW = get_base_min_kW(refrigerant)
 
-    effective_flow = evap_capacity_kw * (duty_percentage / 100.0) * scaling_factor
-    min_required_flow = base_min_duty * cf
+    # CORRECT: min required capacity decreases as CF increases
+    required_min_capacity = base_min_kW / cf
 
-    if effective_flow >= min_required_flow:
-        return True, f"OK: {effective_flow:.2f} ≥ {min_required_flow:.2f}"
+    available_capacity = evap_capacity_kw * (required_oil_duty_pct / 100.0)
+
+    if available_capacity >= required_min_capacity:
+        return True, f"OK: {available_capacity:.2f} ≥ {required_min_capacity:.2f}"
     else:
-        return False, f"Insufficient flow for oil return ({effective_flow:.2f} < {min_required_flow:.2f})"
+        return False, f"Insufficient oil return: {available_capacity:.2f} < {required_min_capacity:.2f}"
