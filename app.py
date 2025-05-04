@@ -19,6 +19,9 @@ tool_selection = st.sidebar.radio("Select Tool", [
 st.text("")
 st.text("")
 st.text("")
+st.text("")
+st.text("")
+st.text("")
 st.sidebar.image("assets/logo.png", use_container_width=True)
 
 def system_pressure_checker_ui():
