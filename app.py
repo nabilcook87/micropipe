@@ -16,14 +16,7 @@ tool_selection = st.sidebar.radio("Select Tool", [
     "System Pressure Checker",
     "Oil Return Velocity Checker"
 ])
-st.sidebar.markdown(
-    """
-    <div style="text-align: center;">
-        <img src="assets/logo-nobackground-200.png" style="width: 80%; max-width: 180px;">
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+st.sidebar.image("assets/logo-nobackground-200.png", use_column_width=True)
 
 def system_pressure_checker_ui():
     st.subheader("System Pressure Rating Tool")
