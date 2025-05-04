@@ -22,6 +22,8 @@ st.sidebar.text("")
 st.sidebar.text("")
 st.sidebar.text("")
 st.sidebar.text("")
+st.sidebar.text("")
+st.sidebar.text("")
 st.sidebar.image("assets/logo.png", use_container_width=True)
 
 def system_pressure_checker_ui():
