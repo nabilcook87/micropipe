@@ -53,7 +53,7 @@ def check_oil_return(pipe_size_inch, refrigerant, evap_capacity_kw, duty_pct,
     delta_h2 = 76
                 
     # 🔥 Step 1: calculate min required mass flow at 100% duty
-    min_mass_flow = ((base_min_kw * cf * scaling) ** 1.08) / delta_h2
+    min_mass_flow = (base_min_kw * cf * scaling) / delta_h2
 
     # 🔥 Step 2: scale down actual flow for duty percentage
     actual_mass_flow = (evap_capacity_kw * (duty_pct / 100.0)) / delta_h
