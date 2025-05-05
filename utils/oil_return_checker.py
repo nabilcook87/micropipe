@@ -26,6 +26,7 @@ def get_scaling_factor(refrigerant):
 
 def check_oil_return(pipe_size_inch, refrigerant, evap_capacity_kw, duty_pct,
                      evap_temp, cond_temp, superheat, subcool):
+    return is_ok, message, min_oil_return
 
     cf = get_correction_factor(pipe_size_inch)
     if cf is None:
