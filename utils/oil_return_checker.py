@@ -1,3 +1,5 @@
+from utils.refrigerant_properties import RefrigerantProperties
+
 def get_correction_factor(pipe_size_inch):
     correction_factors = {
         "1/4": 0.10,
@@ -51,7 +53,8 @@ def get_scaling_factor(refrigerant):
     }
     return scaling_factors.get(refrigerant.strip(), 1.0)
 
-def check_oil_return(pipe_size_inch, refrigerant, evap_capacity_kw, duty_percentage=100.0):
+def check_oil_return(pipe_size_inch, refrigerant, evap_capacity_kw, duty_percentage=100.0,
+                     T_evap=None, T_cond=None, superheat=0, subcool=0):
     cf = get_correction_factor(pipe_size_inch)
     if cf is None:
         return False, f"No correction factor for pipe size {pipe_size_inch}"
@@ -59,7 +62,23 @@ def check_oil_return(pipe_size_inch, refrigerant, evap_capacity_kw, duty_percent
     base_min_duty = get_base_min_duty(refrigerant)
     scaling_factor = get_scaling_factor(refrigerant)
 
-    effective_flow = evap_capacity_kw * (duty_percentage / 100.0) * scaling_factor
+    # Thermodynamic correction using enthalpy difference
+    props = RefrigerantProperties()
+    try:
+        h_inlet = props.get_properties(refrigerant, T_cond - subcool)["enthalpy_liquid"]
+        h_evap = props.get_properties(refrigerant, T_evap)["enthalpy_vapor"]
+        h_evap_plus10 = props.get_properties(refrigerant, T_evap + 10)["enthalpy_vapor"]
+        Cp = (h_evap_plus10 - h_evap) / 10
+        h_exit = h_evap + superheat * Cp
+        delta_h = h_exit - h_inlet
+    except Exception as e:
+        return False, f"Error calculating enthalpy: {e}"
+
+    # Calculate mass flow from capacity and delta h
+    mass_flow = evap_capacity_kw / delta_h if delta_h > 0 else 0.01
+
+    # Apply duty scaling and refrigerant scaling factor
+    effective_flow = mass_flow * (duty_percentage / 100.0) * scaling_factor
     min_required_flow = base_min_duty * cf
 
     return_factor = min_required_flow / effective_flow
