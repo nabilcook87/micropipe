@@ -60,8 +60,7 @@ def check_oil_return(pipe_size_inch, refrigerant, evap_capacity_kw, duty_pct,
 
     full_mass_flow = evap_capacity_kw / delta_h if delta_h > 0 else 0.01
 
-def min_oil_return(min_mass_flow, full_mass_flow):
-    return (min_mass_flow / full_mass_flow) * 100
+    min_oil_return = (min_mass_flow / full_mass_flow) * 100
 
     # 🔥 Step 3: compare
     if actual_mass_flow >= min_mass_flow:
