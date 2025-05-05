@@ -168,6 +168,7 @@ elif tool_selection == "Oil Return Velocity Checker":
     from utils.refrigerant_properties import RefrigerantProperties
     from utils.pipe_length_volume_calc import get_pipe_id_mm
     from utils.oil_return_checker import check_oil_return
+    from utils.oil_return_checker import min_oil_return
 
     T_evap = evaporating_temp
     T_cond = condensing_temp
@@ -212,8 +213,8 @@ elif tool_selection == "Oil Return Velocity Checker":
     if velocity_m_s:
         st.metric("Refrigerant Velocity", f"{velocity_m_s:.2f} m/s")
 
-    if check_oil_return(min_oil_return):
-        st.metric("Min Oil Return %", f"{check_oil_return(min_oil_return):.1f} %")
+    if min_oil_return:
+        st.metric("Min Oil Return %", f"{min_oil_return:.1f} %")
     
     if is_ok:
         st.success(f"✅ {message}")
