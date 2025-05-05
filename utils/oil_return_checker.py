@@ -50,7 +50,7 @@ def check_oil_return(pipe_size_inch, refrigerant, evap_capacity_kw, duty_pct,
     if delta_h <= 0:
         return False, "❌ Invalid enthalpy values (Δh ≤ 0)"
 
-    delta_h2 = 93
+    delta_h2 = 90
                 
     # 🔥 Step 1: calculate min required mass flow at 100% duty
     min_mass_flow = (base_min_kw * cf * scaling) / delta_h2
