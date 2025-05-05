@@ -50,8 +50,16 @@ def check_oil_return(pipe_size_inch, refrigerant, evap_capacity_kw, duty_pct,
     if delta_h <= 0:
         return False, "❌ Invalid enthalpy values (Δh ≤ 0)"
 
+    try:
+        h_liq2 = props.get_properties(refrigerant, cond_temp)["enthalpy_liquid"]
+
+    delta_h2 = h_vap - h_liq2
+
+    if delta_h2 <= 0:
+        return False, "❌ Invalid enthalpy values (Δh2 ≤ 0)"
+                
     # 🔥 Step 1: calculate min required mass flow at 100% duty
-    min_mass_flow = (base_min_kw * cf * scaling) / delta_h
+    min_mass_flow = (base_min_kw * cf * scaling) / delta_h2
 
     # 🔥 Step 2: scale down actual flow for duty percentage
     actual_mass_flow = (evap_capacity_kw * (duty_pct / 100.0)) / delta_h
