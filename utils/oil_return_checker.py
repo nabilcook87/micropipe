@@ -62,10 +62,10 @@ def check_oil_return(pipe_size_inch, refrigerant, evap_capacity_kw, duty_pct,
 
     min_oil_return = (min_mass_flow / full_mass_flow) * 100
 
-    return is_ok, message, min_oil_return
-
     # 🔥 Step 3: compare
     if actual_mass_flow >= min_mass_flow:
         return True, f"✅ OK: {actual_mass_flow:.3f} kg/s ≥ {min_mass_flow:.3f} kg/s (min required)"
     else:
         return False, f"❌ Insufficient flow: {actual_mass_flow:.3f} < {min_mass_flow:.3f} kg/s (min required)"
+
+    return is_ok, message, min_oil_return
