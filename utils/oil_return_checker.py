@@ -26,7 +26,6 @@ def get_scaling_factor(refrigerant):
 
 def check_oil_return(pipe_size_inch, refrigerant, evap_capacity_kw, duty_pct,
                      evap_temp, cond_temp, superheat, subcool):
-    return is_ok, message, min_oil_return
 
     cf = get_correction_factor(pipe_size_inch)
     if cf is None:
@@ -62,6 +61,8 @@ def check_oil_return(pipe_size_inch, refrigerant, evap_capacity_kw, duty_pct,
     full_mass_flow = evap_capacity_kw / delta_h if delta_h > 0 else 0.01
 
     min_oil_return = (min_mass_flow / full_mass_flow) * 100
+
+    return is_ok, message, min_oil_return
 
     # 🔥 Step 3: compare
     if actual_mass_flow >= min_mass_flow:
