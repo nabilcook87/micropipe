@@ -3,7 +3,7 @@ from utils.refrigerant_properties import RefrigerantProperties
 
 def get_correction_factor(pipe_size_inch):
     correction_factors = {
-        "1/4": 0.05, "3/8": 0.1, "1/2": 0.18, "5/8": 0.35,
+        "1/4": 0.01, "3/8": 0.1, "1/2": 0.18, "5/8": 0.35,
         "3/4": 0.55, "7/8": 0.85, "1-1/8": 1.40, "1-3/8": 2.00,
         "1-5/8": 2.80, "2-1/8": 5.30, "2-5/8": 8.50, "3-1/8": 13.20,
         "3-5/8": 18.50, "4-1/8": 24.70
