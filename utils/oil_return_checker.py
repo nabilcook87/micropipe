@@ -20,7 +20,7 @@ def get_base_min_duty_kw(refrigerant):
 def get_scaling_factor(refrigerant):
     return {
         "R22": 1.00, "R134a": 0.947, "R404A": 1.04, "R407C": 1.00,
-        "R407F": 0.76, "R410A": 1.03, "R507A": 1.04, "R744": 1.20,
+        "R407F": 0.759, "R410A": 1.03, "R507A": 1.04, "R744": 1.20,
         "R448A": 1.04, "R449A": 1.04, "R32": 1.00, "R454A": 1.00
     }.get(refrigerant.strip(), 1.0)
 
