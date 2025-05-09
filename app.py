@@ -175,7 +175,7 @@ elif tool_selection == "Oil Return Velocity Checker":
     props = RefrigerantProperties()
     h_inlet = props.get_properties(refrigerant, T_cond - subcooling_K)["enthalpy_liquid"]
     h_evap = props.get_properties(refrigerant, T_evap)["enthalpy_vapor"]
-    h_evap_plus10 = props.get_properties(refrigerant, T_evap + 10)["enthalpy_vapor"]
+    h_evap_plus10 = props.get_properties(refrigerant, T_evap)["enthalpy_super"]
     Cp_vap = (h_evap_plus10 - h_evap) / 10
     h_exit = h_evap + superheat_K * Cp_vap
 
