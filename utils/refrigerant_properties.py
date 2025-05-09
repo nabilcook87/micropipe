@@ -47,6 +47,6 @@ class RefrigerantProperties:
             "density_liquid": density_liquid,
             "density_vapor": density_vapor,
             "enthalpy_liquid": enthalpy_liquid,
-            "enthalpy_vapor": enthalpy_vapor
+            "enthalpy_vapor": enthalpy_vapor,
             "enthalpy_super": enthalpy_super
         }
