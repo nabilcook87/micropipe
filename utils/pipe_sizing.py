@@ -21,7 +21,7 @@ class PipeSizer:
 
         props = self.refrigerant_props.get_properties(refrigerant, T_evap)
         h_vap = props["enthalpy_vapor"]
-        h_vap_plus = self.refrigerant_props.get_properties(refrigerant, T_evap + 10)["enthalpy_vapor"]
+        h_vap_plus = self.refrigerant_props.get_properties(refrigerant, T_evap)["enthalpy_super"]
         Cp_vapor = (h_vap_plus - h_vap) / 10
         h_subcooled = self.refrigerant_props.get_properties(refrigerant, T_cond)["enthalpy_liquid"]
 
