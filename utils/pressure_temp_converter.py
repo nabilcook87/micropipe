@@ -36,39 +36,45 @@ class PressureTemperatureConverter:
 
     def pressure_drop_to_temp_penalty(self, refrigerant, sat_temp_C, pressure_drop_kPa):
         """
-        Convert pressure drop (kPa) to temperature penalty (K) using real table interpolation of dp/dT.
+        Convert pressure drop (kPa) to temperature penalty (K) using table interpolation of dp/dT.
         """
         data = self.refrigerant_props.tables[refrigerant]
         temps = data["temperature_C"]
-        pressures_bar = data["pressure_bar"]
-        pressures_kPa = [p * 100 for p in pressures_bar]
+        pressures_kPa = [p * 100 for p in data["pressure_bar"]]
 
+        # Ensure temps are sorted
         for i in range(len(temps) - 1):
-            T1, T2 = temps[i], temps[i + 1]
-            if T1 <= sat_temp_C <= T2:
-                P1, P2 = pressures_kPa[i], pressures_kPa[i + 1]
-                # Interpolated slope
-                dp_dT = (P2 - P1) / (T2 - T1)
-                return pressure_drop_kPa / dp_dT
+            T1 = temps[i]
+            T2 = temps[i + 1]
 
-        # Outside range — clamp to edges
+            if T1 <= sat_temp_C <= T2:
+                P1 = pressures_kPa[i]
+                P2 = pressures_kPa[i + 1]
+
+                # Use linear interpolation for dp/dT at T = sat_temp_C
+                dPdT = (P2 - P1) / (T2 - T1)
+                return pressure_drop_kPa / dPdT
+
+        # If outside known temperature range
         return 0.0
 
     def temp_penalty_to_pressure_drop(self, refrigerant, sat_temp_C, temp_penalty_K):
         """
-        Convert temperature penalty (K) to pressure drop (kPa) using real table interpolation of dp/dT.
+        Convert temperature penalty (K) to pressure drop (kPa) using table interpolation of dp/dT.
         """
         data = self.refrigerant_props.tables[refrigerant]
         temps = data["temperature_C"]
-        pressures_bar = data["pressure_bar"]
-        pressures_kPa = [p * 100 for p in pressures_bar]
+        pressures_kPa = [p * 100 for p in data["pressure_bar"]]
 
         for i in range(len(temps) - 1):
-            T1, T2 = temps[i], temps[i + 1]
+            T1 = temps[i]
+            T2 = temps[i + 1]
+
             if T1 <= sat_temp_C <= T2:
-                P1, P2 = pressures_kPa[i], pressures_kPa[i + 1]
-                # Interpolated slope
-                dp_dT = (P2 - P1) / (T2 - T1)
-                return temp_penalty_K * dp_dT
+                P1 = pressures_kPa[i]
+                P2 = pressures_kPa[i + 1]
+
+                dPdT = (P2 - P1) / (T2 - T1)
+                return temp_penalty_K * dPdT
 
         return 0.0
