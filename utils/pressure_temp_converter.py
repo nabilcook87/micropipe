@@ -38,12 +38,23 @@ class PressureTemperatureConverter:
     def pressure_drop_to_temp_penalty(self, refrigerant, sat_temp_C, pressure_drop_kPa):
         """
         Adaptive interpolation: calculates dp/dT using the two surrounding points in the refrigerant table.
+        Handles edge cases by using the first or last segment when outside bounds.
         """
         data = self.refrigerant_props.tables[refrigerant]
         temps = np.array(data["temperature_C"])
         pressures_kPa = np.array(data["pressure_bar"]) * 100
 
-        # Find index where temp[i] <= T <= temp[i+1]
+        # Below range: use slope of first segment
+        if sat_temp_C <= temps[0]:
+            dp_dT = (pressures_kPa[1] - pressures_kPa[0]) / (temps[1] - temps[0])
+            return pressure_drop_kPa / dp_dT
+
+        # Above range: use slope of last segment
+        if sat_temp_C >= temps[-1]:
+            dp_dT = (pressures_kPa[-1] - pressures_kPa[-2]) / (temps[-1] - temps[-2])
+            return pressure_drop_kPa / dp_dT
+
+        # Inside range
         for i in range(len(temps) - 1):
             T1 = temps[i]
             T2 = temps[i + 1]
@@ -52,20 +63,28 @@ class PressureTemperatureConverter:
                 P1 = pressures_kPa[i]
                 P2 = pressures_kPa[i + 1]
 
-                # Linear dp/dT across actual table segment
                 dp_dT = (P2 - P1) / (T2 - T1)
 
                 return pressure_drop_kPa / dp_dT
 
-        return 0.0  # Out of bounds
+        return 0.0  # Should never reach here
 
     def temp_penalty_to_pressure_drop(self, refrigerant, sat_temp_C, temp_penalty_K):
         """
         Adaptive interpolation: calculates dp/dT using the two surrounding points in the refrigerant table.
+        Handles edge cases by using the first or last segment when outside bounds.
         """
         data = self.refrigerant_props.tables[refrigerant]
         temps = np.array(data["temperature_C"])
         pressures_kPa = np.array(data["pressure_bar"]) * 100
+
+        if sat_temp_C <= temps[0]:
+            dp_dT = (pressures_kPa[1] - pressures_kPa[0]) / (temps[1] - temps[0])
+            return temp_penalty_K * dp_dT
+
+        if sat_temp_C >= temps[-1]:
+            dp_dT = (pressures_kPa[-1] - pressures_kPa[-2]) / (temps[-1] - temps[-2])
+            return temp_penalty_K * dp_dT
 
         for i in range(len(temps) - 1):
             T1 = temps[i]
