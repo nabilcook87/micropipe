@@ -36,13 +36,18 @@ class PressureTemperatureConverter:
 
     def pressure_drop_to_temp_penalty(self, refrigerant, sat_temp_C, pressure_drop_kPa):
         """
-        True interpolation: evaluate pressures at T - ε and T + ε using get_properties (which interpolates).
+        Accurate dp/dT using central difference on interpolated pressure data.
         """
-        eps = 0.01  # Small step in °C for accurate central difference
-        p_low = self.refrigerant_props.get_properties(refrigerant, sat_temp_C - eps)["pressure_bar"] * 100
-        p_high = self.refrigerant_props.get_properties(refrigerant, sat_temp_C + eps)["pressure_bar"] * 100
+        eps = 0.01  # Small step in °C
 
-        dp_dT = (p_high - p_low) / (2 * eps)  # Central difference: more accurate
+        temps = np.array(self.refrigerant_props.tables[refrigerant]["temperature_C"])
+        pressures = np.array(self.refrigerant_props.tables[refrigerant]["pressure_bar"]) * 100  # bar to kPa
+
+        # Use numpy interpolation directly
+        p_low = np.interp(sat_temp_C - eps, temps, pressures)
+        p_high = np.interp(sat_temp_C + eps, temps, pressures)
+
+        dp_dT = (p_high - p_low) / (2 * eps)
 
         if dp_dT == 0:
             return 0.0
@@ -51,11 +56,15 @@ class PressureTemperatureConverter:
 
     def temp_penalty_to_pressure_drop(self, refrigerant, sat_temp_C, temp_penalty_K):
         """
-        True interpolation: use central difference of pressure at T ± ε to compute dp/dT.
+        Accurate dp/dT using central difference on interpolated pressure data.
         """
         eps = 0.01
-        p_low = self.refrigerant_props.get_properties(refrigerant, sat_temp_C - eps)["pressure_bar"] * 100
-        p_high = self.refrigerant_props.get_properties(refrigerant, sat_temp_C + eps)["pressure_bar"] * 100
+
+        temps = np.array(self.refrigerant_props.tables[refrigerant]["temperature_C"])
+        pressures = np.array(self.refrigerant_props.tables[refrigerant]["pressure_bar"]) * 100  # bar to kPa
+
+        p_low = np.interp(sat_temp_C - eps, temps, pressures)
+        p_high = np.interp(sat_temp_C + eps, temps, pressures)
 
         dp_dT = (p_high - p_low) / (2 * eps)
 
