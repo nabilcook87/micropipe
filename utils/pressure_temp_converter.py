@@ -58,7 +58,6 @@ class PressureTemperatureConverter:
         # If outside the range, clamp to edge values
         return 0.0
 
-
     def temp_penalty_to_pressure_drop(self, refrigerant, sat_temp_C, temp_penalty_K):
         """
         Convert temperature penalty (K) to pressure drop (kPa) using interpolation.
