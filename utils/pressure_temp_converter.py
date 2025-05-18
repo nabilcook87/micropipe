@@ -36,29 +36,39 @@ class PressureTemperatureConverter:
 
     def pressure_drop_to_temp_penalty(self, refrigerant, sat_temp_C, pressure_drop_kPa):
         """
-        Convert pressure drop (kPa) to temperature penalty (K) using interpolated pressure values.
+        Convert pressure drop (kPa) to temperature penalty (K) using real table interpolation of dp/dT.
         """
-        delta_T = 0.1  # Small step for numerical derivative
+        data = self.refrigerant_props.tables[refrigerant]
+        temps = data["temperature_C"]
+        pressures_bar = data["pressure_bar"]
+        pressures_kPa = [p * 100 for p in pressures_bar]
 
-        p1 = self.refrigerant_props.get_properties(refrigerant, sat_temp_C)["pressure_bar"] * 100
-        p2 = self.refrigerant_props.get_properties(refrigerant, sat_temp_C + delta_T)["pressure_bar"] * 100
+        for i in range(len(temps) - 1):
+            T1, T2 = temps[i], temps[i + 1]
+            if T1 <= sat_temp_C <= T2:
+                P1, P2 = pressures_kPa[i], pressures_kPa[i + 1]
+                # Interpolated slope
+                dp_dT = (P2 - P1) / (T2 - T1)
+                return pressure_drop_kPa / dp_dT
 
-        dp_dT = (p2 - p1) / delta_T
-
-        if dp_dT == 0:
-            return 0.0
-
-        return pressure_drop_kPa / dp_dT
+        # Outside range — clamp to edges
+        return 0.0
 
     def temp_penalty_to_pressure_drop(self, refrigerant, sat_temp_C, temp_penalty_K):
         """
-        Convert temperature penalty (K) to pressure drop (kPa) using interpolated pressure values.
+        Convert temperature penalty (K) to pressure drop (kPa) using real table interpolation of dp/dT.
         """
-        delta_T = 0.1  # Same delta for consistency
+        data = self.refrigerant_props.tables[refrigerant]
+        temps = data["temperature_C"]
+        pressures_bar = data["pressure_bar"]
+        pressures_kPa = [p * 100 for p in pressures_bar]
 
-        p1 = self.refrigerant_props.get_properties(refrigerant, sat_temp_C)["pressure_bar"] * 100
-        p2 = self.refrigerant_props.get_properties(refrigerant, sat_temp_C + delta_T)["pressure_bar"] * 100
+        for i in range(len(temps) - 1):
+            T1, T2 = temps[i], temps[i + 1]
+            if T1 <= sat_temp_C <= T2:
+                P1, P2 = pressures_kPa[i], pressures_kPa[i + 1]
+                # Interpolated slope
+                dp_dT = (P2 - P1) / (T2 - T1)
+                return temp_penalty_K * dp_dT
 
-        dp_dT = (p2 - p1) / delta_T
-
-        return temp_penalty_K * dp_dT
+        return 0.0
