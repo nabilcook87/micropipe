@@ -37,42 +37,46 @@ class PressureTemperatureConverter:
 
     def pressure_drop_to_temp_penalty(self, refrigerant, sat_temp_C, pressure_drop_kPa):
         """
-        Compute temperature penalty (K) from pressure drop (kPa) by interpolating dp/dT from table.
+        Convert pressure drop to temperature penalty using dp/dT from coarse table data.
         """
         data = self.refrigerant_props.tables[refrigerant]
         temps = np.array(data["temperature_C"])
-        pressures_kPa = np.array(data["pressure_bar"]) * 100  # bar to kPa
+        pressures_kPa = np.array(data["pressure_bar"]) * 100
 
-        # Find the bracketing temperatures
-        for i in range(len(temps) - 1):
-            T1 = temps[i]
-            T2 = temps[i + 1]
-            if T1 <= sat_temp_C <= T2:
-                P1 = pressures_kPa[i]
-                P2 = pressures_kPa[i + 1]
+        # Interpolate pressure at T - 5 and T + 5 to compute a slope over a wider window
+        t_low = sat_temp_C - 5
+        t_high = sat_temp_C + 5
 
-                # Interpolated dp/dT across actual segment
-                dp_dT = (P2 - P1) / (T2 - T1)
-                return pressure_drop_kPa / dp_dT
+        if t_low < temps[0] or t_high > temps[-1]:
+            return 0.0  # Outside bounds
 
-        return 0.0  # Out of bounds
+        p_low = np.interp(t_low, temps, pressures_kPa)
+        p_high = np.interp(t_high, temps, pressures_kPa)
+
+        dp_dT = (p_high - p_low) / (10.0)
+
+        if dp_dT == 0:
+            return 0.0
+
+        return pressure_drop_kPa / dp_dT
 
     def temp_penalty_to_pressure_drop(self, refrigerant, sat_temp_C, temp_penalty_K):
         """
-        Compute pressure drop (kPa) from temperature penalty (K) using dp/dT from nearest table points.
+        Convert temperature penalty to pressure drop using dp/dT from coarse table data.
         """
         data = self.refrigerant_props.tables[refrigerant]
         temps = np.array(data["temperature_C"])
-        pressures_kPa = np.array(data["pressure_bar"]) * 100  # bar to kPa
+        pressures_kPa = np.array(data["pressure_bar"]) * 100
 
-        for i in range(len(temps) - 1):
-            T1 = temps[i]
-            T2 = temps[i + 1]
-            if T1 <= sat_temp_C <= T2:
-                P1 = pressures_kPa[i]
-                P2 = pressures_kPa[i + 1]
+        t_low = sat_temp_C - 5
+        t_high = sat_temp_C + 5
 
-                dp_dT = (P2 - P1) / (T2 - T1)
-                return temp_penalty_K * dp_dT
+        if t_low < temps[0] or t_high > temps[-1]:
+            return 0.0
 
-        return 0.0
+        p_low = np.interp(t_low, temps, pressures_kPa)
+        p_high = np.interp(t_high, temps, pressures_kPa)
+
+        dp_dT = (p_high - p_low) / (10.0)
+
+        return temp_penalty_K * dp_dT
