@@ -1,5 +1,6 @@
 # /utils/pressure_temp_converter.py
 
+import numpy as np
 from utils.refrigerant_properties import RefrigerantProperties
 
 class PressureTemperatureConverter:
