@@ -36,29 +36,46 @@ class PressureTemperatureConverter:
 
     def pressure_drop_to_temp_penalty(self, refrigerant, sat_temp_C, pressure_drop_kPa):
         """
-        Convert pressure drop (kPa) to temperature penalty (K) at a given saturation temperature.
+        Convert pressure drop (kPa) to temperature penalty (K) at a given saturation temperature using interpolation.
         """
-        delta_T = 0.5  # Small temperature step for numerical differentiation
-        p1 = self.refrigerant_props.get_properties(refrigerant, sat_temp_C)["pressure_bar"] * 100  # bar ➔ kPa
-        p2 = self.refrigerant_props.get_properties(refrigerant, sat_temp_C + delta_T)["pressure_bar"] * 100  # bar ➔ kPa
+        data = self.refrigerant_props.tables[refrigerant]
+        temps = data["temperature_C"]
+        pressures = data["pressure_bar"]
+        pressures_kPa = [p * 100 for p in pressures]  # Convert bar to kPa
 
-        dp_dT = (p2 - p1) / delta_T  # kPa/K
+        # Find two points around sat_temp_C
+        for i in range(len(temps) - 1):
+            if temps[i] <= sat_temp_C <= temps[i + 1]:
+                T1, T2 = temps[i], temps[i + 1]
+                P1, P2 = pressures_kPa[i], pressures_kPa[i + 1]
+                dP_dT = (P2 - P1) / (T2 - T1)  # kPa/K
 
-        if dp_dT == 0:
-            return 0.0  # Avoid division by zero
+                if dP_dT == 0:
+                    return 0.0
 
-        temp_penalty_K = pressure_drop_kPa / dp_dT
-        return temp_penalty_K
+                return pressure_drop_kPa / dP_dT
+
+        # If outside the range, clamp to edge values
+        return 0.0
+
 
     def temp_penalty_to_pressure_drop(self, refrigerant, sat_temp_C, temp_penalty_K):
         """
-        Convert temperature penalty (K) to equivalent pressure drop (kPa) at a given saturation temperature.
+        Convert temperature penalty (K) to pressure drop (kPa) using interpolation.
         """
-        delta_T = 0.5  # Small temperature step for numerical differentiation
-        p1 = self.refrigerant_props.get_properties(refrigerant, sat_temp_C)["pressure_bar"] * 100  # bar ➔ kPa
-        p2 = self.refrigerant_props.get_properties(refrigerant, sat_temp_C + delta_T)["pressure_bar"] * 100  # bar ➔ kPa
+        data = self.refrigerant_props.tables[refrigerant]
+        temps = data["temperature_C"]
+        pressures = data["pressure_bar"]
+        pressures_kPa = [p * 100 for p in pressures]  # Convert bar to kPa
 
-        dp_dT = (p2 - p1) / delta_T  # kPa/K
+        # Find two points around sat_temp_C
+        for i in range(len(temps) - 1):
+            if temps[i] <= sat_temp_C <= temps[i + 1]:
+                T1, T2 = temps[i], temps[i + 1]
+                P1, P2 = pressures_kPa[i], pressures_kPa[i + 1]
+                dP_dT = (P2 - P1) / (T2 - T1)  # kPa/K
 
-        pressure_drop_kPa = temp_penalty_K * dp_dT
-        return pressure_drop_kPa
+                return temp_penalty_K * dP_dT
+
+        # If outside the range, clamp to edge values
+        return 0.0
