@@ -37,36 +37,42 @@ class PressureTemperatureConverter:
 
     def pressure_drop_to_temp_penalty(self, refrigerant, sat_temp_C, pressure_drop_kPa):
         """
-        Accurate dp/dT using central difference on interpolated pressure data.
+        Compute temperature penalty (K) from pressure drop (kPa) by interpolating dp/dT from table.
         """
-        eps = 0.01  # Small step in °C
+        data = self.refrigerant_props.tables[refrigerant]
+        temps = np.array(data["temperature_C"])
+        pressures_kPa = np.array(data["pressure_bar"]) * 100  # bar to kPa
 
-        temps = np.array(self.refrigerant_props.tables[refrigerant]["temperature_C"])
-        pressures = np.array(self.refrigerant_props.tables[refrigerant]["pressure_bar"]) * 100  # bar to kPa
+        # Find the bracketing temperatures
+        for i in range(len(temps) - 1):
+            T1 = temps[i]
+            T2 = temps[i + 1]
+            if T1 <= sat_temp_C <= T2:
+                P1 = pressures_kPa[i]
+                P2 = pressures_kPa[i + 1]
 
-        # Use numpy interpolation directly
-        p_low = np.interp(sat_temp_C - eps, temps, pressures)
-        p_high = np.interp(sat_temp_C + eps, temps, pressures)
+                # Interpolated dp/dT across actual segment
+                dp_dT = (P2 - P1) / (T2 - T1)
+                return pressure_drop_kPa / dp_dT
 
-        dp_dT = (p_high - p_low) / (2 * eps)
-
-        if dp_dT == 0:
-            return 0.0
-
-        return pressure_drop_kPa / dp_dT
+        return 0.0  # Out of bounds
 
     def temp_penalty_to_pressure_drop(self, refrigerant, sat_temp_C, temp_penalty_K):
         """
-        Accurate dp/dT using central difference on interpolated pressure data.
+        Compute pressure drop (kPa) from temperature penalty (K) using dp/dT from nearest table points.
         """
-        eps = 0.01
+        data = self.refrigerant_props.tables[refrigerant]
+        temps = np.array(data["temperature_C"])
+        pressures_kPa = np.array(data["pressure_bar"]) * 100  # bar to kPa
 
-        temps = np.array(self.refrigerant_props.tables[refrigerant]["temperature_C"])
-        pressures = np.array(self.refrigerant_props.tables[refrigerant]["pressure_bar"]) * 100  # bar to kPa
+        for i in range(len(temps) - 1):
+            T1 = temps[i]
+            T2 = temps[i + 1]
+            if T1 <= sat_temp_C <= T2:
+                P1 = pressures_kPa[i]
+                P2 = pressures_kPa[i + 1]
 
-        p_low = np.interp(sat_temp_C - eps, temps, pressures)
-        p_high = np.interp(sat_temp_C + eps, temps, pressures)
+                dp_dT = (P2 - P1) / (T2 - T1)
+                return temp_penalty_K * dp_dT
 
-        dp_dT = (p_high - p_low) / (2 * eps)
-
-        return temp_penalty_K * dp_dT
+        return 0.0
