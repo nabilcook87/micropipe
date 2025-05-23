@@ -2,6 +2,7 @@
 
 import numpy as np
 from utils.refrigerant_properties import RefrigerantProperties
+from scipy.interpolate import interp1d
 
 class PressureTemperatureConverter:
     def __init__(self):
@@ -36,21 +37,19 @@ class PressureTemperatureConverter:
         return self.refrigerant_props.get_properties(refrigerant, temperature_C)["pressure_bar"]
 
     def pressure_drop_to_temp_penalty(self, refrigerant, sat_temp_C, pressure_drop_kPa):
-        """
-        Convert pressure drop to temperature penalty using dp/dT from coarse table data.
-        """
         data = self.refrigerant_props.tables[refrigerant]
         temps = np.array(data["temperature_C"])
         pressures_kPa = np.array(data["pressure_bar"]) * 100
 
-        # Interpolate pressure at T - 5 and T + 5 to compute a slope over a wider window
+        interp_func = interp1d(temps, pressures_kPa, kind='linear', fill_value='extrapolate')
+
         t_low = sat_temp_C - 5
         t_high = sat_temp_C + 5
 
-        p_low = np.interp(t_low, temps, pressures_kPa)
-        p_high = np.interp(t_high, temps, pressures_kPa)
+        p_low = interp_func(t_low)
+        p_high = interp_func(t_high)
 
-        dp_dT = (p_high - p_low) / (10)
+        dp_dT = (p_high - p_low) / 10
 
         if dp_dT == 0:
             return 0.0
@@ -58,19 +57,18 @@ class PressureTemperatureConverter:
         return pressure_drop_kPa / dp_dT
 
     def temp_penalty_to_pressure_drop(self, refrigerant, sat_temp_C, temp_penalty_K):
-        """
-        Convert temperature penalty to pressure drop using dp/dT from coarse table data.
-        """
         data = self.refrigerant_props.tables[refrigerant]
         temps = np.array(data["temperature_C"])
         pressures_kPa = np.array(data["pressure_bar"]) * 100
 
+        interp_func = interp1d(temps, pressures_kPa, kind='linear', fill_value='extrapolate')
+
         t_low = sat_temp_C - 5
         t_high = sat_temp_C + 5
 
-        p_low = np.interp(t_low, temps, pressures_kPa)
-        p_high = np.interp(t_high, temps, pressures_kPa)
+        p_low = interp_func(t_low)
+        p_high = interp_func(t_high)
 
-        dp_dT = (p_high - p_low) / (10)
+        dp_dT = (p_high - p_low) / 10
 
         return temp_penalty_K * dp_dT
