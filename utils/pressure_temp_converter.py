@@ -2,7 +2,6 @@
 
 import numpy as np
 from utils.refrigerant_properties import RefrigerantProperties
-from scipy.interpolate import interp1d
 
 class PressureTemperatureConverter:
     def __init__(self):
@@ -36,20 +35,28 @@ class PressureTemperatureConverter:
         """
         return self.refrigerant_props.get_properties(refrigerant, temperature_C)["pressure_bar"]
 
+    def _dp_dT(self, temps, pressures_kPa, sat_temp_C):
+        min_temp = temps[0]
+        max_temp = temps[-1]
+
+        # Clamp the window to available data range
+        t_low = max(sat_temp_C - 5, min_temp)
+        t_high = min(sat_temp_C + 5, max_temp)
+
+        p_low = np.interp(t_low, temps, pressures_kPa)
+        p_high = np.interp(t_high, temps, pressures_kPa)
+
+        if t_high == t_low:
+            return 0.0
+
+        return (p_high - p_low) / (t_high - t_low)
+
     def pressure_drop_to_temp_penalty(self, refrigerant, sat_temp_C, pressure_drop_kPa):
         data = self.refrigerant_props.tables[refrigerant]
         temps = np.array(data["temperature_C"])
         pressures_kPa = np.array(data["pressure_bar"]) * 100
 
-        interp_func = interp1d(temps, pressures_kPa, kind='linear', fill_value='extrapolate')
-
-        t_low = sat_temp_C - 5
-        t_high = sat_temp_C + 5
-
-        p_low = interp_func(t_low)
-        p_high = interp_func(t_high)
-
-        dp_dT = (p_high - p_low) / 10
+        dp_dT = self._dp_dT(temps, pressures_kPa, sat_temp_C)
 
         if dp_dT == 0:
             return 0.0
@@ -61,14 +68,6 @@ class PressureTemperatureConverter:
         temps = np.array(data["temperature_C"])
         pressures_kPa = np.array(data["pressure_bar"]) * 100
 
-        interp_func = interp1d(temps, pressures_kPa, kind='linear', fill_value='extrapolate')
-
-        t_low = sat_temp_C - 5
-        t_high = sat_temp_C + 5
-
-        p_low = interp_func(t_low)
-        p_high = interp_func(t_high)
-
-        dp_dT = (p_high - p_low) / 10
+        dp_dT = self._dp_dT(temps, pressures_kPa, sat_temp_C)
 
         return temp_penalty_K * dp_dT
