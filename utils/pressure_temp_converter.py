@@ -47,9 +47,6 @@ class PressureTemperatureConverter:
         t_low = sat_temp_C - 5
         t_high = sat_temp_C + 5
 
-        if t_low < temps[0] or t_high > temps[-1]:
-            return 0.0  # Outside bounds
-
         p_low = np.interp(t_low, temps, pressures_kPa)
         p_high = np.interp(t_high, temps, pressures_kPa)
 
@@ -70,9 +67,6 @@ class PressureTemperatureConverter:
 
         t_low = sat_temp_C - 5
         t_high = sat_temp_C + 5
-
-        if t_low < temps[0] or t_high > temps[-1]:
-            return 0.0
 
         p_low = np.interp(t_low, temps, pressures_kPa)
         p_high = np.interp(t_high, temps, pressures_kPa)
