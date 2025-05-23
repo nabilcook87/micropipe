@@ -44,8 +44,8 @@ class PressureTemperatureConverter:
         pressures_kPa = np.array(data["pressure_bar"]) * 100
 
         # Interpolate pressure at T - 5 and T + 5 to compute a slope over a wider window
-        t_low = max(sat_temp_C - 5, -50)
-        t_high = min(sat_temp_C + 5, 60)
+        t_low = sat_temp_C - 5
+        t_high = sat_temp_C + 5
 
         if t_low < temps[0] or t_high > temps[-1]:
             return 0.0  # Outside bounds
@@ -53,7 +53,7 @@ class PressureTemperatureConverter:
         p_low = np.interp(t_low, temps, pressures_kPa)
         p_high = np.interp(t_high, temps, pressures_kPa)
 
-        dp_dT = (p_high - p_low) / (t_high - t_low)
+        dp_dT = (p_high - p_low) / (10)
 
         if dp_dT == 0:
             return 0.0
@@ -68,8 +68,8 @@ class PressureTemperatureConverter:
         temps = np.array(data["temperature_C"])
         pressures_kPa = np.array(data["pressure_bar"]) * 100
 
-        t_low = max(sat_temp_C - 5, -50)
-        t_high = min(sat_temp_C + 5, 60)
+        t_low = sat_temp_C - 5
+        t_high = sat_temp_C + 5
 
         if t_low < temps[0] or t_high > temps[-1]:
             return 0.0
@@ -77,6 +77,6 @@ class PressureTemperatureConverter:
         p_low = np.interp(t_low, temps, pressures_kPa)
         p_high = np.interp(t_high, temps, pressures_kPa)
 
-        dp_dT = (p_high - p_low) / (t_high - t_low)
+        dp_dT = (p_high - p_low) / (10)
 
         return temp_penalty_K * dp_dT
