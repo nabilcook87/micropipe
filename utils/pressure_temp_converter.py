@@ -36,20 +36,31 @@ class PressureTemperatureConverter:
         return self.refrigerant_props.get_properties(refrigerant, temperature_C)["pressure_bar"]
 
     def _dp_dT(self, temps, pressures_kPa, sat_temp_C):
-        min_temp = temps[0]
-        max_temp = temps[-1]
+        # Ensure inputs are sorted
+        temps = np.array(temps)
+        pressures_kPa = np.array(pressures_kPa)
 
-        # Clamp the window to available data range
-        t_low = max(sat_temp_C - 5, min_temp)
-        t_high = min(sat_temp_C + 5, max_temp)
+        # Find the index where sat_temp_C would be inserted
+        idx = np.searchsorted(temps, sat_temp_C)
 
-        p_low = np.interp(t_low, temps, pressures_kPa)
-        p_high = np.interp(t_high, temps, pressures_kPa)
+        # Choose two nearest temperatures to form a valid slope
+        if idx == 0:
+            # sat_temp_C is below the range, use first two points
+            t1, t2 = temps[0], temps[1]
+        elif idx >= len(temps):
+            # sat_temp_C is above the range, use last two points
+            t1, t2 = temps[-2], temps[-1]
+        else:
+            # sat_temp_C is within range, pick closest neighbors
+            t1, t2 = temps[idx - 1], temps[idx]
 
-        if t_high == t_low:
+        p1 = np.interp(t1, temps, pressures_kPa)
+        p2 = np.interp(t2, temps, pressures_kPa)
+
+        if t2 == t1:
             return 0.0
 
-        return (p_high - p_low) / (t_high - t_low)
+        return (p2 - p1) / (t2 - t1)
 
     def pressure_drop_to_temp_penalty(self, refrigerant, sat_temp_C, pressure_drop_kPa):
         data = self.refrigerant_props.tables[refrigerant]
@@ -57,11 +68,7 @@ class PressureTemperatureConverter:
         pressures_kPa = np.array(data["pressure_bar"]) * 100
 
         dp_dT = self._dp_dT(temps, pressures_kPa, sat_temp_C)
-
-        if dp_dT == 0:
-            return 0.0
-
-        return pressure_drop_kPa / dp_dT
+        return pressure_drop_kPa / dp_dT if dp_dT != 0 else 0.0
 
     def temp_penalty_to_pressure_drop(self, refrigerant, sat_temp_C, temp_penalty_K):
         data = self.refrigerant_props.tables[refrigerant]
@@ -69,5 +76,4 @@ class PressureTemperatureConverter:
         pressures_kPa = np.array(data["pressure_bar"]) * 100
 
         dp_dT = self._dp_dT(temps, pressures_kPa, sat_temp_C)
-
         return temp_penalty_K * dp_dT
