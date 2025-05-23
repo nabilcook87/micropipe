@@ -53,7 +53,7 @@ class PressureTemperatureConverter:
         p_low = np.interp(t_low, temps, pressures_kPa)
         p_high = np.interp(t_high, temps, pressures_kPa)
 
-        dp_dT = (p_high - p_low) / (10.0)
+        dp_dT = (p_high - p_low) / (t_high - t_low)
 
         if dp_dT == 0:
             return 0.0
@@ -77,6 +77,6 @@ class PressureTemperatureConverter:
         p_low = np.interp(t_low, temps, pressures_kPa)
         p_high = np.interp(t_high, temps, pressures_kPa)
 
-        dp_dT = (p_high - p_low) / (10.0)
+        dp_dT = (p_high - p_low) / (t_high - t_low)
 
         return temp_penalty_K * dp_dT
