@@ -37,23 +37,33 @@ class PressureTemperatureConverter:
 
     def pressure_drop_to_temp_penalty(self, refrigerant, sat_temp_C, pressure_drop_kPa):
         """
-        Convert pressure drop to temperature penalty using dp/dT from coarse table data.
+        Convert pressure drop to temperature penalty using dp/dT from coarse table data,
+        with adaptive window near edges.
         """
         data = self.refrigerant_props.tables[refrigerant]
         temps = np.array(data["temperature_C"])
         pressures_kPa = np.array(data["pressure_bar"]) * 100
 
-        # Interpolate pressure at T - 5 and T + 5 to compute a slope over a wider window
-        t_low = sat_temp_C - 5
-        t_high = sat_temp_C + 5
+        min_temp = temps[0]
+        max_temp = temps[-1]
 
-        if t_low < temps[0] or t_high > temps[-1]:
-            return 0.0  # Outside bounds
+        # Shrink window if near edge
+        delta = 5.0
+        if sat_temp_C - delta < min_temp:
+            delta = sat_temp_C - min_temp
+        if sat_temp_C + delta > max_temp:
+            delta = max_temp - sat_temp_C
+
+        if delta <= 0:
+            return 0.0  # Cannot compute slope if window is zero or negative
+
+        t_low = sat_temp_C - delta
+        t_high = sat_temp_C + delta
 
         p_low = np.interp(t_low, temps, pressures_kPa)
         p_high = np.interp(t_high, temps, pressures_kPa)
 
-        dp_dT = (p_high - p_low) / (10.0)
+        dp_dT = (p_high - p_low) / (2 * delta)
 
         if dp_dT == 0:
             return 0.0
@@ -62,21 +72,32 @@ class PressureTemperatureConverter:
 
     def temp_penalty_to_pressure_drop(self, refrigerant, sat_temp_C, temp_penalty_K):
         """
-        Convert temperature penalty to pressure drop using dp/dT from coarse table data.
+        Convert temperature penalty to pressure drop using dp/dT from coarse table data,
+        with adaptive window near edges.
         """
         data = self.refrigerant_props.tables[refrigerant]
         temps = np.array(data["temperature_C"])
         pressures_kPa = np.array(data["pressure_bar"]) * 100
 
-        t_low = sat_temp_C - 5
-        t_high = sat_temp_C + 5
+        min_temp = temps[0]
+        max_temp = temps[-1]
 
-        if t_low < temps[0] or t_high > temps[-1]:
-            return 0.0
+        # Shrink window if near edge
+        delta = 5.0
+        if sat_temp_C - delta < min_temp:
+            delta = sat_temp_C - min_temp
+        if sat_temp_C + delta > max_temp:
+            delta = max_temp - sat_temp_C
+
+        if delta <= 0:
+            return 0.0  # Cannot compute slope if window is zero or negative
+
+        t_low = sat_temp_C - delta
+        t_high = sat_temp_C + delta
 
         p_low = np.interp(t_low, temps, pressures_kPa)
         p_high = np.interp(t_high, temps, pressures_kPa)
 
-        dp_dT = (p_high - p_low) / (10.0)
+        dp_dT = (p_high - p_low) / (2 * delta)
 
         return temp_penalty_K * dp_dT
