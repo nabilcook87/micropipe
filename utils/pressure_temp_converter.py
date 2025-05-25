@@ -38,37 +38,45 @@ class PressureTemperatureConverter:
     def pressure_drop_to_temp_penalty(self, refrigerant, sat_temp_C, pressure_drop_kPa):
         data = self.refrigerant_props.tables[refrigerant]
         temps = np.array(data["temperature_C"])
-        pressures_kPa = np.array(data["pressure_bar"]) * 100
+        pressures_Pa = np.array(data["pressure_bar"]) * 1e5  # Convert to Pascals
 
         if not (temps[0] <= sat_temp_C <= temps[-1]):
             return 0.0
 
-        # Compute forward 2-point slopes and assign to left-hand temps
-        dp_dT_array = np.diff(pressures_kPa) / np.diff(temps)
-        slope_temps = temps[:-1]  # Each slope corresponds to the left edge of interval
+        # Compute log slopes
+        lnP = np.log(pressures_Pa)
+        dlnP_dT = np.diff(lnP) / np.diff(temps)
+        slope_temps = temps[:-1]
 
-        # Interpolate slope at requested temperature
-        dp_dT = np.interp(sat_temp_C, slope_temps, dp_dT_array)
+        slope = np.interp(sat_temp_C, slope_temps, dlnP_dT)
 
-        if abs(dp_dT) < 1e-6:
+        if abs(slope) < 1e-12:
             return 0.0
 
-        return pressure_drop_kPa / dp_dT
+        delta_lnP = pressure_drop_kPa * 1e3 / np.interp(sat_temp_C, temps, pressures_Pa)
+        delta_T = delta_lnP / slope
+
+        return delta_T
 
     def temp_penalty_to_pressure_drop(self, refrigerant, sat_temp_C, temp_penalty_K):
         data = self.refrigerant_props.tables[refrigerant]
         temps = np.array(data["temperature_C"])
-        pressures_kPa = np.array(data["pressure_bar"]) * 100
+        pressures_Pa = np.array(data["pressure_bar"]) * 1e5  # Pascals
 
         if not (temps[0] <= sat_temp_C <= temps[-1]):
             return 0.0
 
-        dp_dT_array = np.diff(pressures_kPa) / np.diff(temps)
+        lnP = np.log(pressures_Pa)
+        dlnP_dT = np.diff(lnP) / np.diff(temps)
         slope_temps = temps[:-1]
 
-        dp_dT = np.interp(sat_temp_C, slope_temps, dp_dT_array)
+        slope = np.interp(sat_temp_C, slope_temps, dlnP_dT)
 
-        if abs(dp_dT) < 1e-6:
+        if abs(slope) < 1e-12:
             return 0.0
 
-        return temp_penalty_K * dp_dT
+        P = np.interp(sat_temp_C, temps, pressures_Pa)
+        delta_lnP = slope * temp_penalty_K
+        delta_P = P * (np.exp(delta_lnP) - 1)
+
+        return delta_P / 1e3  # back to kPa
