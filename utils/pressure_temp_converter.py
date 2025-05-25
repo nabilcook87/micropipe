@@ -43,11 +43,12 @@ class PressureTemperatureConverter:
         if not (temps[0] <= sat_temp_C <= temps[-1]):
             return 0.0
 
-        dp_dT_array = np.empty_like(temps, dtype=float)
-        dp_dT_array[:-1] = np.diff(pressures_kPa) / np.diff(temps)
-        dp_dT_array[-1] = dp_dT_array[-2]  # Extend final slope
+        # Compute forward 2-point slopes and assign to left-hand temps
+        dp_dT_array = np.diff(pressures_kPa) / np.diff(temps)
+        slope_temps = temps[:-1]  # Each slope corresponds to the left edge of interval
 
-        dp_dT = np.interp(sat_temp_C, temps, dp_dT_array)
+        # Interpolate slope at requested temperature
+        dp_dT = np.interp(sat_temp_C, slope_temps, dp_dT_array)
 
         if abs(dp_dT) < 1e-6:
             return 0.0
@@ -62,11 +63,10 @@ class PressureTemperatureConverter:
         if not (temps[0] <= sat_temp_C <= temps[-1]):
             return 0.0
 
-        dp_dT_array = np.empty_like(temps, dtype=float)
-        dp_dT_array[:-1] = np.diff(pressures_kPa) / np.diff(temps)
-        dp_dT_array[-1] = dp_dT_array[-2]  # Extend final slope
+        dp_dT_array = np.diff(pressures_kPa) / np.diff(temps)
+        slope_temps = temps[:-1]
 
-        dp_dT = np.interp(sat_temp_C, temps, dp_dT_array)
+        dp_dT = np.interp(sat_temp_C, slope_temps, dp_dT_array)
 
         if abs(dp_dT) < 1e-6:
             return 0.0
