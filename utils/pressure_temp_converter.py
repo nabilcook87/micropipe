@@ -40,27 +40,20 @@ class PressureTemperatureConverter:
         temps = np.array(data["temperature_C"])
         pressures_kPa = np.array(data["pressure_bar"]) * 100
 
-        # Find nearest index
+        if sat_temp_C <= temps[0] or sat_temp_C >= temps[-1]:
+            return 0.0
+
+        # Find bounding indices
         idx = np.searchsorted(temps, sat_temp_C)
-
-        # Clamp to valid index range
-        if idx == 0:
-            idx = 1
-        elif idx >= len(temps):
-            idx = len(temps) - 1
-
-        # Get two bounding points for slope
         t1 = temps[idx - 1]
         t2 = temps[idx]
         p1 = pressures_kPa[idx - 1]
         p2 = pressures_kPa[idx]
 
-        # Handle exact match (flat slope)
-        if t1 == t2:
-            return 0.0
-
+        # Linear interpolation for dp/dT between the two real points
         dp_dT = (p2 - p1) / (t2 - t1)
-        if dp_dT == 0:
+
+        if abs(dp_dT) < 1e-6:
             return 0.0
 
         return pressure_drop_kPa / dp_dT
@@ -70,20 +63,18 @@ class PressureTemperatureConverter:
         temps = np.array(data["temperature_C"])
         pressures_kPa = np.array(data["pressure_bar"]) * 100
 
+        if sat_temp_C <= temps[0] or sat_temp_C >= temps[-1]:
+            return 0.0
+
         idx = np.searchsorted(temps, sat_temp_C)
-
-        if idx == 0:
-            idx = 1
-        elif idx >= len(temps):
-            idx = len(temps) - 1
-
         t1 = temps[idx - 1]
         t2 = temps[idx]
         p1 = pressures_kPa[idx - 1]
         p2 = pressures_kPa[idx]
 
-        if t1 == t2:
+        dp_dT = (p2 - p1) / (t2 - t1)
+
+        if abs(dp_dT) < 1e-6:
             return 0.0
 
-        dp_dT = (p2 - p1) / (t2 - t1)
         return temp_penalty_K * dp_dT
