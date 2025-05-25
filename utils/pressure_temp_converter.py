@@ -40,30 +40,26 @@ class PressureTemperatureConverter:
         temps = np.array(data["temperature_C"])
         pressures_kPa = np.array(data["pressure_bar"]) * 100
 
-        min_temp = temps[0]
-        max_temp = temps[-1]
-        full_delta = 5.0
+        # Find nearest index
+        idx = np.searchsorted(temps, sat_temp_C)
 
-        if sat_temp_C - full_delta < min_temp:
-            # Too close to lower edge – right-side window
-            t_low = sat_temp_C
-            t_high = min(sat_temp_C + 2 * full_delta, max_temp)
-        elif sat_temp_C + full_delta > max_temp:
-            # Too close to upper edge – left-side window
-            t_low = max(sat_temp_C - 2 * full_delta, min_temp)
-            t_high = sat_temp_C
-        else:
-            # Use symmetric window
-            t_low = sat_temp_C - full_delta
-            t_high = sat_temp_C + full_delta
+        # Clamp to valid index range
+        if idx == 0:
+            idx = 1
+        elif idx >= len(temps):
+            idx = len(temps) - 1
 
-        if t_low == t_high:
+        # Get two bounding points for slope
+        t1 = temps[idx - 1]
+        t2 = temps[idx]
+        p1 = pressures_kPa[idx - 1]
+        p2 = pressures_kPa[idx]
+
+        # Handle exact match (flat slope)
+        if t1 == t2:
             return 0.0
 
-        p_low = np.interp(t_low, temps, pressures_kPa)
-        p_high = np.interp(t_high, temps, pressures_kPa)
-        dp_dT = (p_high - p_low) / (t_high - t_low)
-
+        dp_dT = (p2 - p1) / (t2 - t1)
         if dp_dT == 0:
             return 0.0
 
@@ -74,25 +70,20 @@ class PressureTemperatureConverter:
         temps = np.array(data["temperature_C"])
         pressures_kPa = np.array(data["pressure_bar"]) * 100
 
-        min_temp = temps[0]
-        max_temp = temps[-1]
-        full_delta = 5.0
+        idx = np.searchsorted(temps, sat_temp_C)
 
-        if sat_temp_C - full_delta < min_temp:
-            t_low = sat_temp_C
-            t_high = min(sat_temp_C + 2 * full_delta, max_temp)
-        elif sat_temp_C + full_delta > max_temp:
-            t_low = max(sat_temp_C - 2 * full_delta, min_temp)
-            t_high = sat_temp_C
-        else:
-            t_low = sat_temp_C - full_delta
-            t_high = sat_temp_C + full_delta
+        if idx == 0:
+            idx = 1
+        elif idx >= len(temps):
+            idx = len(temps) - 1
 
-        if t_low == t_high:
+        t1 = temps[idx - 1]
+        t2 = temps[idx]
+        p1 = pressures_kPa[idx - 1]
+        p2 = pressures_kPa[idx]
+
+        if t1 == t2:
             return 0.0
 
-        p_low = np.interp(t_low, temps, pressures_kPa)
-        p_high = np.interp(t_high, temps, pressures_kPa)
-        dp_dT = (p_high - p_low) / (t_high - t_low)
-
+        dp_dT = (p2 - p1) / (t2 - t1)
         return temp_penalty_K * dp_dT
