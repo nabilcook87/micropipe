@@ -43,15 +43,12 @@ class PressureTemperatureConverter:
         if sat_temp_C <= temps[0] or sat_temp_C >= temps[-1]:
             return 0.0
 
-        # Find bounding indices
-        idx = np.searchsorted(temps, sat_temp_C)
-        t1 = temps[idx - 1]
-        t2 = temps[idx]
-        p1 = pressures_kPa[idx - 1]
-        p2 = pressures_kPa[idx]
+        # Compute central dp/dT values between adjacent temperature points
+        dp_dT_array = np.diff(pressures_kPa) / np.diff(temps)
+        temp_centers = (temps[:-1] + temps[1:]) / 2  # midpoints
 
-        # Linear interpolation for dp/dT between the two real points
-        dp_dT = (p2 - p1) / (t2 - t1)
+        # Interpolate dp/dT at the target temperature
+        dp_dT = np.interp(sat_temp_C, temp_centers, dp_dT_array)
 
         if abs(dp_dT) < 1e-6:
             return 0.0
@@ -66,13 +63,10 @@ class PressureTemperatureConverter:
         if sat_temp_C <= temps[0] or sat_temp_C >= temps[-1]:
             return 0.0
 
-        idx = np.searchsorted(temps, sat_temp_C)
-        t1 = temps[idx - 1]
-        t2 = temps[idx]
-        p1 = pressures_kPa[idx - 1]
-        p2 = pressures_kPa[idx]
+        dp_dT_array = np.diff(pressures_kPa) / np.diff(temps)
+        temp_centers = (temps[:-1] + temps[1:]) / 2
 
-        dp_dT = (p2 - p1) / (t2 - t1)
+        dp_dT = np.interp(sat_temp_C, temp_centers, dp_dT_array)
 
         if abs(dp_dT) < 1e-6:
             return 0.0
