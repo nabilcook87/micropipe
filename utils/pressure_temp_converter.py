@@ -40,15 +40,14 @@ class PressureTemperatureConverter:
         temps = np.array(data["temperature_C"])
         pressures_kPa = np.array(data["pressure_bar"]) * 100
 
-        if sat_temp_C <= temps[0] or sat_temp_C >= temps[-1]:
+        if not (temps[0] <= sat_temp_C <= temps[-1]):
             return 0.0
 
-        # Compute central dp/dT values between adjacent temperature points
-        dp_dT_array = np.diff(pressures_kPa) / np.diff(temps)
-        temp_centers = (temps[:-1] + temps[1:]) / 2  # midpoints
+        dp_dT_array = np.empty_like(temps, dtype=float)
+        dp_dT_array[:-1] = np.diff(pressures_kPa) / np.diff(temps)
+        dp_dT_array[-1] = dp_dT_array[-2]  # Extend final slope
 
-        # Interpolate dp/dT at the target temperature
-        dp_dT = np.interp(sat_temp_C, temp_centers, dp_dT_array)
+        dp_dT = np.interp(sat_temp_C, temps, dp_dT_array)
 
         if abs(dp_dT) < 1e-6:
             return 0.0
@@ -60,13 +59,14 @@ class PressureTemperatureConverter:
         temps = np.array(data["temperature_C"])
         pressures_kPa = np.array(data["pressure_bar"]) * 100
 
-        if sat_temp_C <= temps[0] or sat_temp_C >= temps[-1]:
+        if not (temps[0] <= sat_temp_C <= temps[-1]):
             return 0.0
 
-        dp_dT_array = np.diff(pressures_kPa) / np.diff(temps)
-        temp_centers = (temps[:-1] + temps[1:]) / 2
+        dp_dT_array = np.empty_like(temps, dtype=float)
+        dp_dT_array[:-1] = np.diff(pressures_kPa) / np.diff(temps)
+        dp_dT_array[-1] = dp_dT_array[-2]  # Extend final slope
 
-        dp_dT = np.interp(sat_temp_C, temp_centers, dp_dT_array)
+        dp_dT = np.interp(sat_temp_C, temps, dp_dT_array)
 
         if abs(dp_dT) < 1e-6:
             return 0.0
