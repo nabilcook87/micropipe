@@ -12,13 +12,15 @@ class RefrigerantProperties:
             self.tables = json.load(file)
 
     def interpolate(self, x_array, y_array, x):
-        """Linear interpolation with out-of-bounds protection."""
+        """Logarithmic interpolation with out-of-bounds protection."""
         if x <= x_array[0]:
             return y_array[0]
         elif x >= x_array[-1]:
             return y_array[-1]
         else:
-            return np.interp(x, x_array, y_array)
+            log_y_array = np.log(y_array)
+            log_y = np.interp(x, x_array, log_y_array)
+            return np.exp(log_y)
 
     def get_properties(self, refrigerant, temperature_C):
         """Return pressure, densities, enthalpies at given temperature."""
