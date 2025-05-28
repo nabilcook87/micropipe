@@ -12,15 +12,16 @@ class RefrigerantProperties:
             self.tables = json.load(file)
 
     def interpolate(self, x_array, y_array, x):
-        """Linear interpolation with out-of-bounds protection."""
+        """Cubic spline interpolation with out-of-bounds protection."""
         if x <= x_array[0]:
             return y_array[0]
         elif x >= x_array[-1]:
             return y_array[-1]
         else:
-            return np.interp(x, x_array, y_array)
+            spline = CubicSpline(x_array, y_array, extrapolate=False)
+            return float(spline(x))
     
-    def interpolate2(self, x_array, y_array, x):
+    def interpolate_log(self, x_array, y_array, x):
         """Logarithmic interpolation with out-of-bounds protection."""
         if x <= x_array[0]:
             return y_array[0]
@@ -46,9 +47,9 @@ class RefrigerantProperties:
         enthalpy_vapor_array = np.array(data["enthalpy_vapor"])
         enthalpy_super_array = np.array(data["enthalpy_super"])
         
-        pressure_bar = self.interpolate2(temp_array, pressure_array, temperature_C)
+        pressure_bar = self.interpolate_log(temp_array, pressure_array, temperature_C)
         density_liquid = self.interpolate(temp_array, density_liquid_array, temperature_C)
-        density_vapor = self.interpolate2(temp_array, density_vapor_array, temperature_C)
+        density_vapor = self.interpolate_log(temp_array, density_vapor_array, temperature_C)
         enthalpy_liquid = self.interpolate(temp_array, enthalpy_liquid_array, temperature_C)
         enthalpy_vapor = self.interpolate(temp_array, enthalpy_vapor_array, temperature_C)
         enthalpy_super = self.interpolate(temp_array, enthalpy_super_array, temperature_C)
