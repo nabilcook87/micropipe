@@ -3,6 +3,7 @@
 import json
 import numpy as np
 import os
+from scipy.interpolate import CubicSpline
 
 class RefrigerantProperties:
     def __init__(self):
