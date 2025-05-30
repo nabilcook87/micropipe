@@ -9,7 +9,7 @@ class PressureTemperatureConverter:
 
     def pressure_to_temp(self, refrigerant, target_pressure_bar):
         """
-        Find saturation temperature for a given pressure using interpolation.
+        Find saturation temperature for a given pressure using ln interpolation.
         """
         data = self.refrigerant_props.tables[refrigerant]
         pressures = data["pressure_bar"]
@@ -17,11 +17,14 @@ class PressureTemperatureConverter:
 
         for i in range(len(pressures) - 1):
             if pressures[i] <= target_pressure_bar <= pressures[i + 1]:
-                # Linear interpolation
                 x1, x2 = pressures[i], pressures[i + 1]
                 y1, y2 = temperatures[i], temperatures[i + 1]
-                slope = (y2 - y1) / (x2 - x1)
-                return y1 + slope * (target_pressure_bar - x1)
+
+                import math
+                ln_x1, ln_x2 = math.log(x1), math.log(x2)
+                ln_target = math.log(target_pressure_bar)
+                slope = (y2 - y1) / (ln_x2 - ln_x1)
+                return y1 + slope * (ln_target - ln_x1)
 
         # Outside range — clamp to min or max
         if target_pressure_bar < pressures[0]:
@@ -31,9 +34,31 @@ class PressureTemperatureConverter:
 
     def temp_to_pressure(self, refrigerant, temperature_C):
         """
-        Find saturation pressure for a given temperature.
+        Find saturation pressure for a given temperature using ln interpolation.
         """
-        return self.refrigerant_props.get_properties(refrigerant, temperature_C)["pressure_bar"]
+        import math
+
+        data = self.refrigerant_props.tables[refrigerant]
+        pressures = data["pressure_bar"]
+        temperatures = data["temperature_C"]
+
+        for i in range(len(temperatures) - 1):
+            if temperatures[i] <= temperature_C <= temperatures[i + 1]:
+                y1, y2 = temperatures[i], temperatures[i + 1]
+                x1, x2 = pressures[i], pressures[i + 1]
+
+                ln_x1, ln_x2 = math.log(x1), math.log(x2)
+                slope = (y2 - y1) / (ln_x2 - ln_x1)
+
+                # Rearranged to get ln(P) from T: ln(P) = (T - y1)/slope + ln(x1)
+                ln_target = (temperature_C - y1) / slope + math.log(x1)
+                return math.exp(ln_target)
+
+        # Outside range — clamp to min or max
+        if temperature_C < temperatures[0]:
+            return pressures[0]
+        else:
+            return pressures[-1]
 
     def pressure_drop_to_temp_penalty(self, refrigerant, sat_temp_C, pressure_drop_kPa):
         data = self.refrigerant_props.tables[refrigerant]
