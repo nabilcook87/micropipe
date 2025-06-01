@@ -187,7 +187,7 @@ elif tool_selection == "Oil Return Velocity Checker":
         ID_m = ID_mm / 1000.0
         area_m2 = 3.1416 * (ID_m / 2) ** 2
         density_sat = RefrigerantProperties().get_properties(refrigerant, T_evap)["density_vapor"]
-        evap_abs = props.get_properties(refrigerant, T_evap)["pressure_bar"]
+        evap_abs = props.get_properties(refrigerant, T_evap)["pressure_bar"] * 100
         if refrigerant == "R404A": density_inc = 0.000000050841 * evap_abs ** (2.2103 - 0.0033893 * superheat_K) + 0.00019548 * evap_abs
         if refrigerant == "R134a": density_inc = 0.000045636 * evap_abs ** (1.2778 - 0.0011264 * superheat_K) + 0.0014541 * math.log(evap_abs)
         if refrigerant == "R407F": density_inc = 0.000015299 * evap_abs ** (1.4172 - 0.0012683 * superheat_K) + 0.0024504 * math.log(evap_abs)
