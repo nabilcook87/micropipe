@@ -187,11 +187,11 @@ elif tool_selection == "Oil Return Velocity Checker":
         ID_m = ID_mm / 1000.0
         area_m2 = 3.1416 * (ID_m / 2) ** 2
         density_sat = RefrigerantProperties().get_properties(refrigerant, T_evap)["density_vapor"]
-        evap_abs = T_evap + 273.15
-        if refrigerant == "R404A": density_inc = 0.0013653 * math.exp(-0.009843 * (superheat_K + 0.01) + 0.000067922 * evap_abs ** 2) - 0.14949 / (superheat_K + 0.01)
-        if refrigerant == "R134a": density_inc = 9261.8 * math.exp(-3222 / evap_abs - 0.0069892 * superheat_K) + 0.000019006 * evap_abs
-        if refrigerant == "R407F": density_inc = 34345 * math.exp(-3441.5 / evap_abs - 0.0086318 * superheat_K) + 0.000042375 * evap_abs
-        if refrigerant == "R744": density_inc = 0.000000058795 * (1.067 ** evap_abs) * superheat_K ** -0.4805 + 0.11679
+        evap_abs = props.get_properties(refrigerant, T_evap)["pressure_bar"]
+        if refrigerant == "R404A": density_inc = 0.000000050841 * evap_abs ** (2.2103 - 0.0033893 * superheat_K) + 0.00019548 * evap_abs
+        if refrigerant == "R134a": density_inc = 0.000045636 * evap_abs ** (1.2778 - 0.0011264 * superheat_K) + 0.0014541 * math.log(evap_abs)
+        if refrigerant == "R407F": density_inc = 0.000015299 * evap_abs ** (1.4172 - 0.0012683 * superheat_K) + 0.0024504 * math.log(evap_abs)
+        if refrigerant == "R744": density_inc = 113.73 * math.exp(-19362 / evap_abs - 0.035066 * superheat_K) + 0.00016222 * evap_abs
         density_change = (density_inc * superheat_K) / 2
         density = density_sat - density_change
         velocity_m_s = adjusted_mass_flow_kg_s / (area_m2 * density)
