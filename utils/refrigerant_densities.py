@@ -20,6 +20,8 @@ class RefrigerantDensities:
             raise ValueError(f"Refrigerant '{refrigerant}' not found.")
 
         superheat_axis = np.array(table["superheat"], dtype=np.float64)
+        # Replace exact 0 with a small value to avoid log(0)
+        superheat_axis[superheat_axis == 0] = 0.01
 
         # Extract and sort evap temp keys (excluding "superheat")
         evap_keys = [k for k in table if k != "superheat"]
@@ -27,10 +29,6 @@ class RefrigerantDensities:
 
         # Build 2D data matrix (rows = evap, cols = superheat)
         data_matrix = np.array([table[k] for k in map(str, evap_vals)], dtype=np.float64)
-
-        # Check inputs
-        if evap_temp_K <= 0 or superheat_K <= 0:
-            raise ValueError("Both evap_temp and superheat must be > 0 for log-log interpolation.")
 
         # Interpolation in log space
         log_evap_vals = np.log(evap_vals)
