@@ -32,9 +32,9 @@ class RefrigerantDensities:
 
         # Extract available values
         superheats = table["superheat"]
-        evap_temp_strs = [k for k in table if k != "superheat"]
-        evap_temp_floats = [float(k) for k in evap_temp_strs]
-        matrix = np.array([table[f"{int(k)}"] for k in evap_temp_floats])
+        evap_temp_keys = [k for k in table if k != "superheat"]
+        evap_temp_floats = sorted([float(k) for k in evap_temp_keys])
+        matrix = np.array([table[f"{k:.2f}"] for k in evap_temp_floats])
 
         # Interpolate along superheat (x-direction) at each evap temp (y-values)
         interp_vals = []
