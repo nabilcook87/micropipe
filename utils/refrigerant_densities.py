@@ -43,5 +43,5 @@ class RefrigerantDensities:
             interp_vals.append(val)
 
         # Interpolate final value along evap temp (y-direction)
-        result = self.interpolate_ln(evap_temps, interp_vals, evap_temp)
+        result = self.interpolate_ln(evap_temp_floats, interp_vals, evap_temp)
         return result
