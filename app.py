@@ -191,6 +191,9 @@ elif tool_selection == "Oil Return Velocity Checker":
         density_sat = RefrigerantProperties().get_properties(refrigerant, T_evap)["density_vapor"]
         density = (density_super + density_sat) / 2
         velocity_m_s = adjusted_mass_flow_kg_s / (area_m2 * density)
+        MinMassFlux = (0.85 ** 2) * ((density * 9.81 * ID_m * (950 - density)) ** 0.5)
+        MinMassFlow = MinMassFlux / area_m2
+        MOR = (MinMassFlow / mass_flow_kg_s) * 100
     else:
         velocity_m_s = None
 
@@ -206,12 +209,6 @@ elif tool_selection == "Oil Return Velocity Checker":
         superheat=superheat_K,
         subcool=subcooling_K
     )
-
-    MinMassFlux = (0.85 ** 2) * ((density * 9.81 * ID_m * (950 - density)) ** 0.5)
-
-    MinMassFlow = MinMassFlux / area_m2
-
-    MOR = (MinMassFlow / mass_flow_kg_s) * 100
     
     st.divider()
     st.subheader("Results")
