@@ -12,9 +12,13 @@ class RefrigerantDensities:
             self.tables = json.load(file)
 
     def interpolate_ln(self, x_array, y_array, x):
-        """1D log-log interpolation"""
         x_array = np.array(x_array)
         y_array = np.array(y_array)
+
+        # Prevent log(0) or log(negative)
+        if x <= 0 or np.any(x_array <= 0) or np.any(y_array <= 0):
+            return float("nan")
+
         log_x = np.log(x_array)
         log_y = np.log(y_array)
         log_x_val = np.log(x)
