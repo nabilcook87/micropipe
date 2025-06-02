@@ -23,25 +23,29 @@ class RefrigerantDensities:
 
     def get_density(self, refrigerant, evap_temp, superheat):
         """
-        Perform 2D ln-ln interpolation using evaporating temperature (rows)
-        and superheat (columns) for a given refrigerant.
+        Perform 2D ln-ln interpolation using evap_temp (K) and superheat (K)
         """
         table = self.tables.get(refrigerant)
         if table is None:
-            raise ValueError(f"Refrigerant '{refrigerant}' not found in the data.")
+            raise ValueError(f"Refrigerant '{refrigerant}' not found.")
 
-        # Extract available values
         superheats = table["superheat"]
-        evap_temp_keys = [k for k in table if k != "superheat"]
-        evap_temp_floats = sorted([float(k) for k in evap_temp_keys])
-        matrix = np.array([table[f"{k:.2f}"] for k in evap_temp_floats])
 
-        # Interpolate along superheat (x-direction) at each evap temp (y-values)
-        interp_vals = []
-        for row in matrix:
-            val = self.interpolate_ln(superheats, row, superheat)
-            interp_vals.append(val)
+        # Parse available evaporating temperature keys from JSON
+        evap_keys = [k for k in table if k != "superheat"]
+        evap_temps = sorted([float(k) for k in evap_keys])
+    
+        # Safely load rows based on actual string keys
+        matrix = []
+        for t in evap_temps:
+            key = next((k for k in table if abs(float(k) - t) < 0.001), None)
+            if key is None:
+                raise KeyError(f"Temperature {t} K not found in table keys.")
+            matrix.append(table[key])
+        matrix = np.array(matrix)
 
-        # Interpolate final value along evap temp (y-direction)
-        result = self.interpolate_ln(evap_temp_floats, interp_vals, evap_temp)
-        return result
+        # 1D interpolation across superheat for each evap temp row
+        interp_vals = [self.interpolate_ln(superheats, row, superheat) for row in matrix]
+
+        # Final interpolation across evap temp
+        return self.interpolate_ln(evap_temps, interp_vals, evap_temp)
