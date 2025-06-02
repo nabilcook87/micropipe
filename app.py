@@ -206,12 +206,18 @@ elif tool_selection == "Oil Return Velocity Checker":
         superheat=superheat_K,
         subcool=subcooling_K
     )
+
+    MinMassFlux = (0.85 ** 2) * ((density * 9.81 * ID_m * (950 - density)) ** 0.5)
+
+    MinMassFlow = MinMassFlux / area_m2
+
+    MOR = (MinMassFlow / mass_flow_kg_s) * 100
     
     st.divider()
     st.subheader("Results")
 
     if velocity_m_s:
-        col1, col2, col3 = st.columns(3)
+        col1, col2, col3, col4 = st.columns(4)
 
         with col1:
             st.metric("Refrigerant Velocity", f"{velocity_m_s:.2f} m/s")
@@ -221,6 +227,9 @@ elif tool_selection == "Oil Return Velocity Checker":
 
         with col3:
             st.metric("Suction Density", f"{density_super:.2f} kg/m3")
+
+        with col4:
+            st.metric("MOR (%)", f"{MOR:.1f} %")
     
     if is_ok:
         st.success(f"✅ {message}")
