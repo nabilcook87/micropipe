@@ -35,21 +35,21 @@ class RefrigerantDensities:
 
         superheats = table["superheat"]
 
-        # Parse available evaporating temperature keys from JSON
+        # Filter and sort only temperature keys
         evap_keys = [k for k in table if k != "superheat"]
         evap_temps = sorted([float(k) for k in evap_keys])
-    
-        # Safely load rows based on actual string keys
+
+        # Match floating point keys reliably
         matrix = []
         for t in evap_temps:
-            key = next((k for k in table if abs(float(k) - t) < 0.001), None)
+            key = next((k for k in evap_keys if abs(float(k) - t) < 0.001), None)
             if key is None:
                 raise KeyError(f"Temperature {t} K not found in table keys.")
             matrix.append(table[key])
         matrix = np.array(matrix)
 
-        # 1D interpolation across superheat for each evap temp row
+        # Interpolate across superheat (x-direction)
         interp_vals = [self.interpolate_ln(superheats, row, superheat) for row in matrix]
 
-        # Final interpolation across evap temp
+        # Interpolate across evap temp (y-direction)
         return self.interpolate_ln(evap_temps, interp_vals, evap_temp)
