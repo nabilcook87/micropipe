@@ -11,45 +11,43 @@ class RefrigerantDensities:
         with open(data_path, 'r') as file:
             self.tables = json.load(file)
 
-    def interpolate_ln(self, x_array, y_array, x):
-        x_array = np.array(x_array)
-        y_array = np.array(y_array)
-
-        # Prevent log(0) or log(negative)
-        if x <= 0 or np.any(x_array <= 0) or np.any(y_array <= 0):
-            return float("nan")
-
-        log_x = np.log(x_array)
-        log_y = np.log(y_array)
-        log_x_val = np.log(x)
-        log_y_val = np.interp(log_x_val, log_x, log_y)
-        return np.exp(log_y_val)
-
-    def get_density(self, refrigerant, evap_temp, superheat):
+    def get_density(self, refrigerant, evap_temp_K, superheat_K):
         """
-        Perform 2D ln-ln interpolation using evap_temp (K) and superheat (K)
+        2D log-log interpolation using evap_temp (K) and superheat (K).
         """
         table = self.tables.get(refrigerant)
         if table is None:
             raise ValueError(f"Refrigerant '{refrigerant}' not found.")
 
-        superheats = table["superheat"]
+        superheat_axis = np.array(table["superheat"], dtype=np.float64)
 
-        # Filter and sort only temperature keys
+        # Extract and sort evap temp keys (excluding "superheat")
         evap_keys = [k for k in table if k != "superheat"]
-        evap_temps = sorted([float(k) for k in evap_keys])
+        evap_vals = np.array(sorted([float(k) for k in evap_keys]), dtype=np.float64)
 
-        # Match floating point keys reliably
-        matrix = []
-        for t in evap_temps:
-            key = next((k for k in evap_keys if abs(float(k) - t) < 0.001), None)
-            if key is None:
-                raise KeyError(f"Temperature {t} K not found in table keys.")
-            matrix.append(table[key])
-        matrix = np.array(matrix)
+        # Build 2D data matrix (rows = evap, cols = superheat)
+        data_matrix = np.array([table[k] for k in map(str, evap_vals)], dtype=np.float64)
 
-        # Interpolate across superheat (x-direction)
-        interp_vals = [self.interpolate_ln(superheats, row, superheat) for row in matrix]
+        # Check inputs
+        if evap_temp_K <= 0 or superheat_K <= 0:
+            raise ValueError("Both evap_temp and superheat must be > 0 for log-log interpolation.")
 
-        # Interpolate across evap temp (y-direction)
-        return self.interpolate_ln(evap_temps, interp_vals, evap_temp)
+        # Interpolation in log space
+        log_evap_vals = np.log(evap_vals)
+        log_superheat = np.log(superheat_axis)
+        log_data = np.log(data_matrix)
+
+        # Target point
+        log_x = np.log(evap_temp_K)
+        log_y = np.log(superheat_K)
+
+        # First interpolate along superheat axis (each row)
+        interp_log_z = np.array([
+            np.interp(log_y, log_superheat, row)
+            for row in log_data
+        ])
+
+        # Then interpolate across evaporating temp axis
+        final_log_density = np.interp(log_x, log_evap_vals, interp_log_z)
+
+        return float(np.exp(final_log_density))
