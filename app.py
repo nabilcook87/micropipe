@@ -187,7 +187,7 @@ elif tool_selection == "Oil Return Velocity Checker":
     if ID_mm is not None:
         ID_m = ID_mm / 1000.0
         area_m2 = 3.1416 * (ID_m / 2) ** 2
-        density_super = RefrigerantDensities().get_density(refrigerant, T_evap + 273.15, superheat_K + 0.01)
+        density_super = RefrigerantDensities().get_density(refrigerant, T_evap + 273.15, superheat_K)
         density_sat = RefrigerantProperties().get_properties(refrigerant, T_evap)["density_vapor"]
         density = (density_super + density_sat) / 2
         velocity_m_s = adjusted_mass_flow_kg_s / (area_m2 * density)
@@ -211,13 +211,16 @@ elif tool_selection == "Oil Return Velocity Checker":
     st.subheader("Results")
 
     if velocity_m_s:
-        col1, col2 = st.columns(2)
+        col1, col2, col3 = st.columns(3)
 
         with col1:
             st.metric("Refrigerant Velocity", f"{velocity_m_s:.2f} m/s")
 
         with col2:
             st.metric("Minimum Oil Return (%)", f"{min_oil_return:.1f} %")
+
+        with col3:
+            st.metric("Suction Density", f"{density_super:.2f} kg/m3")
     
     if is_ok:
         st.success(f"✅ {message}")
