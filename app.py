@@ -181,11 +181,12 @@ elif tool_selection == "Oil Return Velocity Checker":
     hdiff_10K = h_10K - h_evap
     hdiff_custom = hdiff_10K * superheat_K / 10
     h_super = h_evap + hdiff_custom
+    h_foroil = (h_evap + h_super) / 2
     
     delta_h = h_evap - h_inlet
-    delta_h_super = h_super - h_inlet
+    delta_h_foroil = h_foroil - h_inlet
     mass_flow_kg_s = evap_capacity_kw / delta_h if delta_h > 0 else 0.01
-    mass_flow_foroil = evap_capacity_kw / delta_h_super if delta_h_super > 0 else 0.01
+    mass_flow_foroil = evap_capacity_kw / delta_h_foroil if delta_h_foroil > 0 else 0.01
 
     adjusted_mass_flow_kg_s = mass_flow_kg_s * (required_oil_duty_pct / 100.0)
 
