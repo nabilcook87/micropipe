@@ -177,9 +177,15 @@ elif tool_selection == "Oil Return Velocity Checker":
     props = RefrigerantProperties()
     h_inlet = props.get_properties(refrigerant, T_cond - subcooling_K)["enthalpy_liquid"]
     h_evap = props.get_properties(refrigerant, T_evap)["enthalpy_vapor"]
+    h_10K = props.get_properties(refrigerant, T_evap)["enthalpy_super"]
+    hdiff_10K = h_10K - h_evap
+    hdiff_custom = hdiff_10K * superheat_K / 10
+    h_super = h_evap + hdiff_custom
     
     delta_h = h_evap - h_inlet
+    delta_h_super = h_super - h_inlet
     mass_flow_kg_s = evap_capacity_kw / delta_h if delta_h > 0 else 0.01
+    mass_flow_foroil = evap_capacity_kw / delta_h_super if delta_h_super > 0 else 0.01
 
     adjusted_mass_flow_kg_s = mass_flow_kg_s * (required_oil_duty_pct / 100.0)
 
@@ -196,7 +202,7 @@ elif tool_selection == "Oil Return Velocity Checker":
         oil_density = (oil_density_sat + oil_density_super) / 2
         MinMassFlux = (0.882 ** 2) * ((density * 9.81 * ID_m * (oil_density - density)) ** 0.5)
         MinMassFlow = MinMassFlux * area_m2
-        MOR = (MinMassFlow / mass_flow_kg_s) * 100
+        MOR = (MinMassFlow / mass_flow_foroil) * 100
     else:
         velocity_m_s = None
 
