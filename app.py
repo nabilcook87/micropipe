@@ -224,18 +224,15 @@ elif tool_selection == "Oil Return Velocity Checker":
     st.subheader("Results")
 
     if velocity_m_s:
-        col1, col2, col3, col4 = st.columns(4)
+        col1, col2, col3 = st.columns(3)
 
         with col1:
             st.metric("Refrigerant Velocity", f"{velocity_m_s:.2f} m/s")
 
         with col2:
-            st.metric("Minimum Oil Return (%)", f"{min_oil_return:.1f} %")
-
-        with col3:
             st.metric("Suction Density", f"{density_super:.2f} kg/m3")
 
-        with col4:
+        with col3:
             st.metric("MOR (%)", f"{MOR:.1f} %")
     
     if is_ok:
