@@ -179,7 +179,7 @@ elif tool_selection == "Oil Return Velocity Checker":
     h_evap = props.get_properties(refrigerant, T_evap)["enthalpy_vapor"]
     h_10K = props.get_properties(refrigerant, T_evap)["enthalpy_super"]
     hdiff_10K = h_10K - h_evap
-    hdiff_custom = hdiff_10K * min(superheat_K, 30) / 10
+    hdiff_custom = hdiff_10K * min(max(superheat_K, 5), 30) / 10
     h_super = h_evap + hdiff_custom
     h_foroil = (h_evap + h_super) / 2
     
@@ -195,13 +195,15 @@ elif tool_selection == "Oil Return Velocity Checker":
         ID_m = ID_mm / 1000.0
         area_m2 = 3.1416 * (ID_m / 2) ** 2
         density_super = RefrigerantDensities().get_density(refrigerant, T_evap + 273.15, superheat_K)
+        density_super_foroil = RefrigerantDensities().get_density(refrigerant, T_evap + 273.15, max(superheat_K, 5))
         density_sat = RefrigerantProperties().get_properties(refrigerant, T_evap)["density_vapor"]
         density = (density_super + density_sat) / 2
+        density_foroil = (density_super_foroil + density_sat) / 2
         velocity_m_s = adjusted_mass_flow_kg_s / (area_m2 * density)
         oil_density_sat = (-0.886666666666667 * T_evap) + 961.577777777778
-        oil_density_super = (-0.886666666666667 * (T_evap + min(superheat_K, 30))) + 961.577777777778
+        oil_density_super = (-0.886666666666667 * (T_evap + min(max(superheat_K, 5), 30))) + 961.577777777778
         oil_density = (oil_density_sat + oil_density_super) / 2
-        MinMassFlux = (0.898 ** 2) * ((density * 9.81 * ID_m * (oil_density - density)) ** 0.5)
+        MinMassFlux = (0.898 ** 2) * ((density_foroil * 9.81 * ID_m * (oil_density - density_foroil)) ** 0.5)
         MinMassFlow = MinMassFlux * area_m2
         MOR = (MinMassFlow / mass_flow_foroil) * 100
     else:
