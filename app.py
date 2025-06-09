@@ -170,6 +170,7 @@ elif tool_selection == "Oil Return Velocity Checker":
     from utils.refrigerant_densities import RefrigerantDensities
     from utils.pipe_length_volume_calc import get_pipe_id_mm
     from utils.oil_return_checker import check_oil_return
+    from utils.oil_densities import OilDensities
 
     T_evap = evaporating_temp
     T_cond = condensing_temp
@@ -200,8 +201,8 @@ elif tool_selection == "Oil Return Velocity Checker":
         density = (density_super + density_sat) / 2
         density_foroil = (density_super_foroil + density_sat) / 2
         velocity_m_s = adjusted_mass_flow_kg_s / (area_m2 * density)
-        oil_density_sat = (0.000952898550724779 * (T_evap ** 3)) + (0.129922360248441 * (T_evap ** 2)) + (2.16387163561132 * T_evap) + 915.018633540369
-        oil_density_super = (0.000952898550724779 * ((T_evap + min(max(superheat_K, 5), 30)) ** 3)) + (0.129922360248441 * ((T_evap + min(max(superheat_K, 5), 30)) ** 2)) + (2.16387163561132 * (T_evap + min(max(superheat_K, 5), 30))) + 915.018633540369
+        oil_density_sat = OilDensities().get_oil_density(refrigerant, T_evap)
+        oil_density_super = OilDensities().get_oil_density(refrigerant, (T_evap + min(max(superheat_K, 5), 30)))
         oil_density = (oil_density_sat + oil_density_super) / 2
         
         if refrigerant == "R404A": jg_half = 0.9081
