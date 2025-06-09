@@ -170,7 +170,6 @@ elif tool_selection == "Oil Return Velocity Checker":
     from utils.refrigerant_densities import RefrigerantDensities
     from utils.pipe_length_volume_calc import get_pipe_id_mm
     from utils.oil_return_checker import check_oil_return
-    from utils.oil_densities import OilDensities
 
     T_evap = evaporating_temp
     T_cond = condensing_temp
@@ -201,16 +200,13 @@ elif tool_selection == "Oil Return Velocity Checker":
         density = (density_super + density_sat) / 2
         density_foroil = (density_super_foroil + density_sat) / 2
         velocity_m_s = adjusted_mass_flow_kg_s / (area_m2 * density)
-        oil_density_sat = OilDensities().get_oil_density(refrigerant, T_evap)
-        oil_density_super = OilDensities().get_oil_density(refrigerant, (T_evap + min(max(superheat_K, 5), 30)))
-        oil_density = (oil_density_sat + oil_density_super) / 2
         
         if refrigerant == "R404A": jg_half = 0.891
         if refrigerant == "R134a": jg_half = 0.9165
         if refrigerant == "R407F": jg_half = 0.9113
         if refrigerant == "R744": jg_half = 0.9113
         
-        MinMassFlux = (jg_half ** 2) * ((density_foroil * 9.81 * ID_m * (oil_density - density_foroil)) ** 0.5)
+        MinMassFlux = (jg_half ** 2) * ((density_foroil * 9.81 * ID_m * (970 - density_foroil)) ** 0.5)
         MinMassFlow = MinMassFlux * area_m2
         MOR = (MinMassFlow / mass_flow_foroil) * 100
     else:
