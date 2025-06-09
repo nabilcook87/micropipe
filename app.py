@@ -206,7 +206,7 @@ elif tool_selection == "Oil Return Velocity Checker":
         if refrigerant == "R407F": jg_half = 0.9113
         if refrigerant == "R744": jg_half = 0.9113
         
-        MinMassFlux = (jg_half ** 2) * ((density_foroil * 9.81 * ID_m * (970 - density_foroil)) ** 0.5)
+        MinMassFlux = (jg_half ** 2) * ((density_foroil * 9.81 * ID_m * (oil_density - density_foroil)) ** 0.5)
         MinMassFlow = MinMassFlux * area_m2
         MOR = (MinMassFlow / mass_flow_foroil) * 100
     else:
