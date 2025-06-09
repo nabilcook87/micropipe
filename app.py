@@ -203,7 +203,7 @@ elif tool_selection == "Oil Return Velocity Checker":
         oil_density_sat = (0.0555952380952371 * (T_evap ** 2)) + (1.2369047619047 * T_evap) + 934.35714285714
         oil_density_super = (0.0555952380952371 * ((T_evap + min(max(superheat_K, 5), 30)) ** 2)) + (1.2369047619047 * (T_evap + min(max(superheat_K, 5), 30))) + 934.35714285714
         oil_density = (oil_density_sat + oil_density_super) / 2
-        MinMassFlux = (0.9041 ** 2) * ((density_foroil * 9.81 * ID_m * (oil_density - density_foroil)) ** 0.5)
+        MinMassFlux = (0.9042 ** 2) * ((density_foroil * 9.81 * ID_m * (oil_density - density_foroil)) ** 0.5)
         MinMassFlow = MinMassFlux * area_m2
         MOR = (MinMassFlow / mass_flow_foroil) * 100
     else:
