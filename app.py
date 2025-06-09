@@ -200,8 +200,8 @@ elif tool_selection == "Oil Return Velocity Checker":
         density = (density_super + density_sat) / 2
         density_foroil = (density_super_foroil + density_sat) / 2
         velocity_m_s = adjusted_mass_flow_kg_s / (area_m2 * density)
-        oil_density_sat = (0.00000109312014928697 * (T_evap ** 4)) - (0.000208806295985298 * (T_evap ** 3)) + (0.00917502707601692 * (T_evap ** 2)) - (0.334636487048833 * T_evap) + 957.412149295551
-        oil_density_super = (0.00000109312014928697 * ((T_evap + min(max(superheat_K, 5), 30)) ** 4)) - (0.000208806295985298 * ((T_evap + min(max(superheat_K, 5), 30)) ** 3)) + (0.00917502707601692 * ((T_evap + min(max(superheat_K, 5), 30)) ** 2)) - (0.334636487048833 * (T_evap + min(max(superheat_K, 5), 30))) + 957.412149295551
+        oil_density_sat = (-2.92832167830825E-06 * (T_evap ** 4)) - (0.000139439264439378 * (T_evap ** 3)) + (0.0159290015531792 * (T_evap ** 2)) - (0.494146594179947 * T_evap) + 956.477855477128
+        oil_density_super = (-2.92832167830825E-06 * ((T_evap + min(max(superheat_K, 5), 30)) ** 4)) - (-0.000139439264439378 * ((T_evap + min(max(superheat_K, 5), 30)) ** 3)) + (0.0159290015531792 * ((T_evap + min(max(superheat_K, 5), 30)) ** 2)) - (0.494146594179947 * (T_evap + min(max(superheat_K, 5), 30))) + 956.477855477128
         oil_density = (oil_density_sat + oil_density_super) / 2
         MinMassFlux = (0.898 ** 2) * ((density_foroil * 9.81 * ID_m * (oil_density - density_foroil)) ** 0.5)
         MinMassFlow = MinMassFlux * area_m2
