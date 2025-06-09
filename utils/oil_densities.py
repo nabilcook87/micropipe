@@ -21,30 +21,17 @@ class RefrigerantDensities:
             spline = CubicSpline(x_array, y_array, extrapolate=False)
             return float(spline(x))
 
-    def get_oildensity(self, refrigerant, evap_temp_K, superheat_K):
-        """
-        2D log-linear interpolation using linear input axes and log-transformed densities.
-        """
-        table = self.tables.get(refrigerant)
-        if table is None:
-            raise ValueError(f"Refrigerant '{refrigerant}' not found.")
+    def get_oildensity(self, refrigerant, temperature_C):
+        if refrigerant not in self.tables:
+            raise ValueError(f"Refrigerant '{refrigerant}' not found in database.")
 
-        # Superheat axis and evap temp axis
-        superheat_axis = np.array(table["superheat"], dtype=np.float64)
-        evap_keys = [k for k in table if k != "superheat"]
-        evap_vals = np.array(sorted([float(k) for k in evap_keys]), dtype=np.float64)
+        data = self.tables[refrigerant]
 
-        # Data matrix (densities), log-transformed
-        data_matrix = np.array([table[k] for k in map(str, evap_vals)], dtype=np.float64)
-        log_data = np.log(data_matrix)
+        temp_array = np.array(data["temperature_C"])
+        oildensity_array = np.array(data["oil_density"])
+        
+        oil_density = self.interpolates(temp_array, oildensity_array, temperature_C)
 
-        # First interpolate along superheat (x-direction)
-        interp_log_z = np.array([
-            np.interp(superheat_K, superheat_axis, row)
-            for row in log_data
-        ])
-
-        # Then interpolate along evap temp (y-direction)
-        final_log_density = np.interp(evap_temp_K, evap_vals, interp_log_z)
-
-        return float(np.exp(final_log_density))
+        return {
+            "oil_density": oil_density,
+        }
