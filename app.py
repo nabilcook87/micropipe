@@ -181,7 +181,7 @@ elif tool_selection == "Oil Return Velocity Checker":
     hdiff_10K = h_10K - h_evap
     hdiff_custom = hdiff_10K * min(max(superheat_K, 5), 30) / 10
     h_super = h_evap + hdiff_custom
-    h_foroil = (h_evap * 0.67) + (h_super * 0.33)
+    h_foroil = (h_evap * 0.665) + (h_super * 0.335)
     
     delta_h = h_evap - h_inlet
     delta_h_foroil = h_foroil - h_inlet
