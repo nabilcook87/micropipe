@@ -12,7 +12,7 @@ class RefrigerantDensities:
         with open(data_path, 'r') as file:
             self.tables = json.load(file)
 
-    def interpolates(self, x_array, y_array, x):
+    def interpolate(self, x_array, y_array, x):
         """Cubic spline interpolation with out-of-bounds protection."""
         if x <= x_array[0]:
             return y_array[0]
@@ -22,7 +22,7 @@ class RefrigerantDensities:
             spline = CubicSpline(x_array, y_array, extrapolate=False)
             return float(spline(x))
 
-    def get_oildensity(self, refrigerant, temperature_C):
+    def get_oil_density(self, refrigerant, temperature_C):
         if refrigerant not in self.tables:
             raise ValueError(f"Refrigerant '{refrigerant}' not found in database.")
 
@@ -31,8 +31,6 @@ class RefrigerantDensities:
         temp_array = np.array(data["temperature_C"])
         oildensity_array = np.array(data["oil_density"])
         
-        oil_density = self.interpolates(temp_array, oildensity_array, temperature_C)
+        oil_density = self.interpolate(temp_array, oildensity_array, temperature_C)
 
-        return {
-            "oil_density": oil_density,
-        }
+        return oil_density
