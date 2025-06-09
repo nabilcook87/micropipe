@@ -195,7 +195,7 @@ elif tool_selection == "Oil Return Velocity Checker":
         ID_m = ID_mm / 1000.0
         area_m2 = 3.1416 * (ID_m / 2) ** 2
         density_super = RefrigerantDensities().get_density(refrigerant, T_evap + 273.15, superheat_K)
-        density_super_foroil = RefrigerantDensities().get_density(refrigerant, T_evap + 273.15, max(superheat_K, 5))
+        density_super_foroil = RefrigerantDensities().get_density(refrigerant, T_evap + 273.15, min(max(superheat_K, 5), 30))
         density_sat = RefrigerantProperties().get_properties(refrigerant, T_evap)["density_vapor"]
         density = (density_super + density_sat) / 2
         density_foroil = (density_super_foroil + density_sat) / 2
