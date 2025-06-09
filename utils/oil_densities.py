@@ -7,11 +7,11 @@ import os
 class RefrigerantDensities:
     def __init__(self):
         base_path = os.path.dirname(os.path.dirname(__file__))
-        data_path = os.path.join(base_path, 'data', 'refrigerant_densities.json')
+        data_path = os.path.join(base_path, 'data', 'oil_densities.json')
         with open(data_path, 'r') as file:
             self.tables = json.load(file)
 
-    def get_density(self, refrigerant, evap_temp_K, superheat_K):
+    def get_oildensity(self, refrigerant, evap_temp_K, superheat_K):
         """
         2D log-linear interpolation using linear input axes and log-transformed densities.
         """
