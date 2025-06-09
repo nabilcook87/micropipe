@@ -201,7 +201,7 @@ elif tool_selection == "Oil Return Velocity Checker":
         density_foroil = (density_super_foroil + density_sat) / 2
         velocity_m_s = adjusted_mass_flow_kg_s / (area_m2 * density)
         
-        if refrigerant == "R404A": jg_half = 0.896
+        if refrigerant == "R404A": jg_half = 0.8955
         if refrigerant == "R134a": jg_half = 0.9165
         if refrigerant == "R407F": jg_half = 0.9113
         if refrigerant == "R744": jg_half = 0.9113
