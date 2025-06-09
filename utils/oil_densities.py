@@ -5,7 +5,7 @@ import numpy as np
 import os
 from scipy.interpolate import CubicSpline
 
-class RefrigerantDensities:
+class OilDensities:
     def __init__(self):
         base_path = os.path.dirname(os.path.dirname(__file__))
         data_path = os.path.join(base_path, 'data', 'oil_densities.json')
