@@ -11,6 +11,16 @@ class RefrigerantDensities:
         with open(data_path, 'r') as file:
             self.tables = json.load(file)
 
+    def interpolates(self, x_array, y_array, x):
+        """Cubic spline interpolation with out-of-bounds protection."""
+        if x <= x_array[0]:
+            return y_array[0]
+        elif x >= x_array[-1]:
+            return y_array[-1]
+        else:
+            spline = CubicSpline(x_array, y_array, extrapolate=False)
+            return float(spline(x))
+
     def get_oildensity(self, refrigerant, evap_temp_K, superheat_K):
         """
         2D log-linear interpolation using linear input axes and log-transformed densities.
