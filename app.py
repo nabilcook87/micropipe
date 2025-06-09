@@ -200,8 +200,8 @@ elif tool_selection == "Oil Return Velocity Checker":
         density = (density_super + density_sat) / 2
         density_foroil = (density_super_foroil + density_sat) / 2
         velocity_m_s = adjusted_mass_flow_kg_s / (area_m2 * density)
-        oil_density_sat = (0.0582142857142864 * (T_evap ** 2)) + (1.29404761904775 * T_evap) + 930.5
-        oil_density_super = (0.0582142857142864 * ((T_evap + min(max(superheat_K, 5), 30)) ** 2)) + (1.29404761904775 * (T_evap + min(max(superheat_K, 5), 30))) + 930.5
+        oil_density_sat = (0.0611904761904762 * (T_evap ** 2)) + (1.37142857142854 * T_evap) + 928.178571428568
+        oil_density_super = (0.0611904761904762 * ((T_evap + min(max(superheat_K, 5), 30)) ** 2)) + (1.37142857142854 * (T_evap + min(max(superheat_K, 5), 30))) + 928.178571428568
         oil_density = (oil_density_sat + oil_density_super) / 2
         
         if refrigerant == "R404A": jg_half = 0.9059
