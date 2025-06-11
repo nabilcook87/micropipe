@@ -234,9 +234,9 @@ elif tool_selection == "Oil Return Velocity Checker":
             st.metric("MOR (%)", f"{MOR:.1f} %")
 
     if required_oil_duty_pct >= MOR:
-        return True, f"✅ OK", min_oil_return
+        return True, f"✅ OK"
     else:
-        return False, f"❌ Insufficient flow", min_oil_return
+        return False, f"❌ Insufficient flow"
     
     if is_ok:
         st.success(f"✅ {message}")
