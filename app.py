@@ -194,6 +194,7 @@ elif tool_selection == "Oil Return Velocity Checker":
     if ID_mm is not None:
         ID_m = ID_mm / 1000.0
         st.write("ID_mm:", ID_mm)
+        st.write("ID_m:", ID_m)
         area_m2 = 3.1416 * (ID_m / 2) ** 2
         density_super = RefrigerantDensities().get_density(refrigerant, T_evap + 273.15, superheat_K)
         st.write("density_super:", density_super)
@@ -218,10 +219,14 @@ elif tool_selection == "Oil Return Velocity Checker":
         if refrigerant == "R134a": jg_half = 0.903
         if refrigerant == "R407F": jg_half = 0.8985
         if refrigerant == "R744": jg_half = 0.8512
+        st.write("jg_half:", jg_half)
         
         MinMassFlux = (jg_half ** 2) * ((density_foroil * 9.81 * ID_m * (oil_density - density_foroil)) ** 0.5)
+        st.write("MinMassFluxy:", MinMassFlux)
         MinMassFlow = MinMassFlux * area_m2
+        st.write("MinMassFlow:", MinMassFlow)
         MOR = (MinMassFlow / mass_flow_foroil) * 100
+        st.write("MOR:", MOR)
     else:
         velocity_m_s = None
 
