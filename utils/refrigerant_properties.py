@@ -20,6 +20,7 @@ class RefrigerantProperties:
             return y_array[-1]
         else:
             spline = CubicSpline(x_array, y_array, extrapolate=False)
+            st.write("spline:", spline)
             return float(spline(x))
     
     def interpolate_log(self, x_array, y_array, x):
@@ -48,8 +49,8 @@ class RefrigerantProperties:
         enthalpy_vapor_array = np.array(data["enthalpy_vapor"])
         enthalpy_super_array = np.array(data["enthalpy_super"])
         
-        pressure_bar = self.interpolate_log(temp_array, pressure_array, temperature_C)
-        density_liquid = self.interpolate(temp_array, density_liquid_array, temperature_C)
+        # pressure_bar = self.interpolate_log(temp_array, pressure_array, temperature_C)
+        # density_liquid = self.interpolate(temp_array, density_liquid_array, temperature_C)
         density_vapor = self.interpolate_log(temp_array, density_vapor_array, temperature_C)
         enthalpy_liquid = self.interpolate(temp_array, enthalpy_liquid_array, temperature_C)
         enthalpy_vapor = self.interpolate(temp_array, enthalpy_vapor_array, temperature_C)
