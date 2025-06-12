@@ -193,7 +193,7 @@ elif tool_selection == "Oil Return Velocity Checker":
     # Calculate velocity for transparency
     if ID_mm is not None:
         ID_m = ID_mm / 1000.0
-        print("ID_mm:", ID_mm)
+        st.write("ID_mm:", ID_mm)
         area_m2 = 3.1416 * (ID_m / 2) ** 2
         density_super = RefrigerantDensities().get_density(refrigerant, T_evap + 273.15, superheat_K)
         density_super_foroil = RefrigerantDensities().get_density(refrigerant, T_evap + 273.15, min(max(superheat_K, 5), 30))
