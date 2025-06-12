@@ -234,9 +234,6 @@ elif tool_selection == "Oil Return Velocity Checker":
         with col3:
             st.metric("MOR (%)", f"{MOR:.1f} %")
 
-        with col4:ID_mm
-            st.metric("ID", f"{MOR:.1f} %")
-
     is_ok, message = (True, "✅ OK") if required_oil_duty_pct >= MOR else (False, "❌ Insufficient flow")
 
     if is_ok:
