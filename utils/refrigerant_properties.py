@@ -20,7 +20,7 @@ class RefrigerantProperties:
             return y_array[-1]
         else:
             spline = CubicSpline(x_array, y_array, extrapolate=False)
-            st.write("spline:", spline)
+            # st.write("spline:", spline)
             return float(spline(x))
     
     def interpolate_log(self, x_array, y_array, x):
