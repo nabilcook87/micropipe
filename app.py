@@ -179,28 +179,28 @@ elif tool_selection == "Oil Return Velocity Checker":
 
     props = RefrigerantProperties()
     h_inlet = props.get_properties(refrigerant, T_cond - subcooling_K)["enthalpy_liquid"]
-    st.write("h_inlet:", h_inlet)
+    # st.write("h_inlet:", h_inlet)
     h_evap = props.get_properties(refrigerant, T_evap)["enthalpy_vapor"]
-    st.write("h_evap:", h_evap)
+    # st.write("h_evap:", h_evap)
     h_10K = props.get_properties(refrigerant, T_evap)["enthalpy_super"]
-    st.write("h_10K:", h_10K)
+    # st.write("h_10K:", h_10K)
     hdiff_10K = h_10K - h_evap
-    st.write("hdiff_10K:", hdiff_10K)
+    # st.write("hdiff_10K:", hdiff_10K)
     hdiff_custom = hdiff_10K * min(max(superheat_K, 5), 30) / 10
-    st.write("hdiff_custom:", hdiff_custom)
+    # st.write("hdiff_custom:", hdiff_custom)
     h_super = h_evap + hdiff_custom
-    st.write("h_super:", h_super)
+    # st.write("h_super:", h_super)
     h_foroil = (h_evap + h_super) / 2
-    st.write("h_foroil:", h_foroil)
+    # st.write("h_foroil:", h_foroil)
     
     delta_h = h_evap - h_inlet
-    st.write("delta_h:", delta_h)
+    # st.write("delta_h:", delta_h)
     delta_h_foroil = h_foroil - h_inlet
-    st.write("delta_h_foroil:", delta_h_foroil)
+    # st.write("delta_h_foroil:", delta_h_foroil)
     mass_flow_kg_s = evap_capacity_kw / delta_h if delta_h > 0 else 0.01
-    st.write("mass_flow_kg_s:", mass_flow_kg_s)
+    # st.write("mass_flow_kg_s:", mass_flow_kg_s)
     mass_flow_foroil = evap_capacity_kw / delta_h_foroil if delta_h_foroil > 0 else 0.01
-    st.write("mass_flow_foroil:", mass_flow_foroil)
+    # st.write("mass_flow_foroil:", mass_flow_foroil)
 
     adjusted_mass_flow_kg_s = mass_flow_kg_s * (required_oil_duty_pct / 100.0)
     # st.write("adjusted_mass_flow_kg_s:", adjusted_mass_flow_kg_s)
