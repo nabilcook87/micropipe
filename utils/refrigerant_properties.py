@@ -57,9 +57,9 @@ class RefrigerantProperties:
         enthalpy_vapor = self.interpolate(temp_array, enthalpy_vapor_array, temperature_C)
         enthalpy_super = self.interpolate(temp_array, enthalpy_super_array, temperature_C)
 
-        st.write("temp_array:", temp_array)
-        st.write("enthalpy_super_array:", enthalpy_super_array)
-        st.write("temperature_C:", temperature_C)
+        # st.write("temp_array:", temp_array)
+        # st.write("enthalpy_super_array:", enthalpy_super_array)
+        # st.write("temperature_C:", temperature_C)
         
         return {
             "pressure_bar": pressure_bar,
