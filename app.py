@@ -235,6 +235,7 @@ elif tool_selection == "Oil Return Velocity Checker":
         if refrigerant == "R134a": jg_half = 0.903
         if refrigerant == "R407F": jg_half = 0.8985
         if refrigerant == "R744": jg_half = 0.8512
+        if refrigerant == "R455A": jg_half = 0.8985
         st.write("jg_half:", jg_half)
         
         MinMassFlux = (jg_half ** 2) * ((density_foroil * 9.81 * ID_m * (oil_density - density_foroil)) ** 0.5)
