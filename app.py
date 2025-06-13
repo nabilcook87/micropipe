@@ -250,12 +250,14 @@ elif tool_selection == "Oil Return Velocity Checker":
     # Oil return check
     adjusted_duty_kw = evap_capacity_kw * (required_oil_duty_pct / 100.0)
     # st.write("adjusted_duty_kw:", adjusted_duty_kw)
+
+    reynolds = (density x velocity_m_s x ID_m) / 1
     
     st.divider()
     st.subheader("Results")
 
     if velocity_m_s:
-        col1, col2, col3 = st.columns(3)
+        col1, col2, col3, col4 = st.columns(4)
 
         with col1:
             st.metric("Refrigerant Velocity", f"{velocity_m_s:.2f} m/s")
@@ -265,6 +267,9 @@ elif tool_selection == "Oil Return Velocity Checker":
 
         with col3:
             st.metric("MOR (%)", f"{MOR:.1f} %")
+
+        with col4:
+            st.metric("Re", f"{reynolds:.1f}")
 
     is_ok, message = (True, "✅ OK") if required_oil_duty_pct >= MOR else (False, "❌ Insufficient flow")
 
