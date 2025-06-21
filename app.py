@@ -91,7 +91,7 @@ elif tool_selection == "Pressure ↔ Temperature Converter":
     refrigerant = st.selectbox("Refrigerant", [
         "R404A", "R134a", "R407F", "R744", "R410A",
         "R407C", "R507A", "R448A", "R449A", "R22", "R32", "R454A", "R454C", "R455A", "R407A",
-        "R290", "R1270", "R600a", "R717", "R1234ze", "R1234yf", "R12", "R11", "R454B", "R450A", "R513A"
+        "R290", "R1270", "R600a", "R717", "R1234ze", "R1234yf", "R12", "R11", "R454B", "R450A", "R513A", "R23", "R508B", "R502"
     ])
     mode = st.radio("Convert:", ["Pressure ➞ Temperature", "Temperature ➞ Pressure"])
 
@@ -111,7 +111,7 @@ elif tool_selection == "Pressure Drop ↔ Temperature Penalty":
     refrigerant = st.selectbox("Refrigerant", [
         "R404A", "R134a", "R407F", "R744", "R410A",
         "R407C", "R507A", "R448A", "R449A", "R22", "R32", "R454A", "R454C", "R455A", "R407A",
-        "R290", "R1270", "R600a", "R717", "R1234ze", "R1234yf", "R12", "R11", "R454B", "R450A", "R513A"
+        "R290", "R1270", "R600a", "R717", "R1234ze", "R1234yf", "R12", "R11", "R454B", "R450A", "R513A", "R23", "R508B", "R502"
     ])
     T_sat = st.number_input("Saturation Temperature (°C)", value=-10.0)
     direction = st.radio("Convert:", ["ΔP ➞ ΔT", "ΔT ➞ ΔP"])
@@ -134,7 +134,7 @@ elif tool_selection == "Oil Return Velocity Checker":
     refrigerant = st.selectbox("Refrigerant", [
         "R404A", "R134a", "R407F", "R744", "R410A",
         "R407C", "R507A", "R448A", "R449A", "R22", "R32", "R454A", "R454C", "R455A", "R407A",
-        "R290", "R1270", "R600a", "R717", "R1234ze", "R1234yf", "R12", "R11", "R454B", "R450A", "R513A"
+        "R290", "R1270", "R600a", "R717", "R1234ze", "R1234yf", "R12", "R11", "R454B", "R450A", "R513A", "R23", "R508B", "R502"
     ])
 
     # Load pipe data
