@@ -242,7 +242,7 @@ elif tool_selection == "Oil Return Velocity Checker":
         if refrigerant == "R502": jg_half = 0.8873
         if refrigerant == "R507A": jg_half = 0.9178
         if refrigerant == "R449A": jg_half = 0.8898
-        if refrigerant == "R448A": jg_half = 0.8898
+        if refrigerant == "R448A": jg_half = 0.8951
         if refrigerant == "R717": jg_half = 0.8898
         # st.write("jg_half:", jg_half)
         
