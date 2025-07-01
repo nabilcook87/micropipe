@@ -268,7 +268,8 @@ elif tool_selection == "Oil Return Velocity Checker":
         # st.write("MinMassFlow:", MinMassFlow)
         MOR_pre = (MinMassFlow / mass_flow_foroil) * 100
         MOR_correctliq = T_cond - subcooling_K
-        MOR_correction = (0.00000461020482461793 * (MOR_correctliq ** 2)) + (0.000217910548009675 * MOR_correctliq) - 0.012074621594626
+        if refrigerant == "R744": MOR_correction = (0.000225755013421421 * MOR_correctliq) - 0.00280879370374927
+        else: MOR_correction = (0.00000461020482461793 * (MOR_correctliq ** 2)) + (0.000217910548009675 * MOR_correctliq) - 0.012074621594626
         MOR = (1 - MOR_correction) * MOR_pre
         # st.write("MOR:", MOR)
     else:
