@@ -266,7 +266,10 @@ elif tool_selection == "Oil Return Velocity Checker":
         # st.write("MinMassFluxy:", MinMassFlux)
         MinMassFlow = MinMassFlux * area_m2
         # st.write("MinMassFlow:", MinMassFlow)
-        MOR = (MinMassFlow / mass_flow_foroil) * 100
+        MOR_pre = (MinMassFlow / mass_flow_foroil) * 100
+        MOR_correctliq = T_cond - subcooling_K
+        MOR_correction = (0.00000461020482461793 * (MOR_correctliq ** 2)) + (0.000217910548009675 * MOR_correctliq) - 0.012074621594626
+        MOR = (1 - MOR_correction) * MOR_pre
         # st.write("MOR:", MOR)
     else:
         velocity_m_s = None
