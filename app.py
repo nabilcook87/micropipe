@@ -232,34 +232,34 @@ elif tool_selection == "Oil Return Velocity Checker":
         # st.write("oil_density:", oil_density)
         
         if refrigerant == "R404A": jg_half = 0.89
-        if refrigerant == "R134a": jg_half = 0.903
-        if refrigerant == "R407F": jg_half = 0.8985
-        if refrigerant == "R744": jg_half = 0.8487
-        if refrigerant == "R407A": jg_half = 0.8968
-        if refrigerant == "R410A": jg_half = 0.9043
-        if refrigerant == "R407C": jg_half = 0.8877
-        if refrigerant == "R22": jg_half = 0.8898
-        if refrigerant == "R502": jg_half = 0.8873
-        if refrigerant == "R507A": jg_half = 0.9178
-        if refrigerant == "R449A": jg_half = 0.8974
-        if refrigerant == "R448A": jg_half = 0.8951
-        if refrigerant == "R717": jg_half = 0.8898
-        if refrigerant == "R290": jg_half = 0.903
-        if refrigerant == "R1270": jg_half = 0.9022
-        if refrigerant == "R600a": jg_half = 0.907
-        if refrigerant == "R1234ze": jg_half = 0.8967
-        if refrigerant == "R1234yf": jg_half = 0.8982
-        if refrigerant == "R12": jg_half = 0.9064
-        if refrigerant == "R11": jg_half = 0.9085
-        if refrigerant == "R454B": jg_half = 0.8944
-        if refrigerant == "R450A": jg_half = 0.8949
-        if refrigerant == "R513A": jg_half = 0.8961
-        if refrigerant == "R454A": jg_half = 0.8974
-        if refrigerant == "R455A": jg_half = 0.8962
-        if refrigerant == "R454C": jg_half = 0.898
-        if refrigerant == "R32": jg_half = 0.8993
-        if refrigerant == "R23": jg_half = 0.8962
-        if refrigerant == "R508B": jg_half = 0.8959
+        elif refrigerant == "R134a": jg_half = 0.903
+        elif refrigerant == "R407F": jg_half = 0.8985
+        elif refrigerant == "R744": jg_half = 0.8487
+        elif refrigerant == "R407A": jg_half = 0.8968
+        elif refrigerant == "R410A": jg_half = 0.9043
+        elif refrigerant == "R407C": jg_half = 0.8877
+        elif refrigerant == "R22": jg_half = 0.8898
+        elif refrigerant == "R502": jg_half = 0.8873
+        elif refrigerant == "R507A": jg_half = 0.9178
+        elif refrigerant == "R449A": jg_half = 0.8974
+        elif refrigerant == "R448A": jg_half = 0.8951
+        elif refrigerant == "R717": jg_half = 0.8898
+        elif refrigerant == "R290": jg_half = 0.903
+        elif refrigerant == "R1270": jg_half = 0.9022
+        elif refrigerant == "R600a": jg_half = 0.907
+        elif refrigerant == "R1234ze": jg_half = 0.8967
+        elif refrigerant == "R1234yf": jg_half = 0.8982
+        elif refrigerant == "R12": jg_half = 0.9064
+        elif refrigerant == "R11": jg_half = 0.9085
+        elif refrigerant == "R454B": jg_half = 0.8944
+        elif refrigerant == "R450A": jg_half = 0.8949
+        elif refrigerant == "R513A": jg_half = 0.8961
+        elif refrigerant == "R454A": jg_half = 0.8974
+        elif refrigerant == "R455A": jg_half = 0.8962
+        elif refrigerant == "R454C": jg_half = 0.898
+        elif refrigerant == "R32": jg_half = 0.8993
+        elif refrigerant == "R23": jg_half = 0.8962
+        elif refrigerant == "R508B": jg_half = 0.8959
         # st.write("jg_half:", jg_half)
         
         MinMassFlux = (jg_half ** 2) * ((density_foroil * 9.81 * ID_m * (oil_density - density_foroil)) ** 0.5)
@@ -269,17 +269,17 @@ elif tool_selection == "Oil Return Velocity Checker":
         MOR_pre = (MinMassFlow / mass_flow_foroil) * 100
         MOR_correctliq = T_cond - subcooling_K
         if refrigerant == "R744": MOR_correction = (0.000225755013421421 * MOR_correctliq) - 0.00280879370374927
-        if refrigerant == "R407A": MOR_correction = (0.00000414431651323856 * (MOR_correctliq ** 2)) + (0.000381908525139781 * MOR_correctliq) - 0.0163450053041212
-        if refrigerant == "R449A": MOR_correction = (0.00000414431651323856 * (MOR_correctliq ** 2)) + (0.000381908525139781 * MOR_correctliq) - 0.0163450053041212
-        if refrigerant == "R448A": MOR_correction = (0.00000414431651323856 * (MOR_correctliq ** 2)) + (0.000381908525139781 * MOR_correctliq) - 0.0163450053041212
-        if refrigerant == "R502": MOR_correction = (0.00000414431651323856 * (MOR_correctliq ** 2)) + (0.000381908525139781 * MOR_correctliq) - 0.0163450053041212
-        if refrigerant == "R507A": MOR_correction = (0.000302619054048837 * MOR_correctliq) - 0.00930188913363997
-        if refrigerant == "R22": MOR_correction = (0.000108153843367715 * MOR_correctliq) - 0.00329248681202757
-        if refrigerant == "R407C": MOR_correction = (0.00000420322918839302 * (MOR_correctliq ** 2)) + (0.000269608915211859 * MOR_correctliq) - 0.0134546663857195
-        if refrigerant == "R410A": MOR_correction = 0
-        if refrigerant == "R407F": MOR_correction = (0.00000347332380289385 * (MOR_correctliq ** 2)) + (0.000239205332540693 * MOR_correctliq) - 0.0121545316131988
-        if refrigerant == "R134a": MOR_correction = 0
-        if refrigerant == "R404A": MOR_correction = (0.0000156507169104918 * (MOR_correctliq ** 2)) + (0.000689621839324826 * MOR_correctliq) - 0.0392
+        elif refrigerant == "R407A": MOR_correction = (0.00000414431651323856 * (MOR_correctliq ** 2)) + (0.000381908525139781 * MOR_correctliq) - 0.0163450053041212
+        elif refrigerant == "R449A": MOR_correction = (0.00000414431651323856 * (MOR_correctliq ** 2)) + (0.000381908525139781 * MOR_correctliq) - 0.0163450053041212
+        elif refrigerant == "R448A": MOR_correction = (0.00000414431651323856 * (MOR_correctliq ** 2)) + (0.000381908525139781 * MOR_correctliq) - 0.0163450053041212
+        elif refrigerant == "R502": MOR_correction = (0.00000414431651323856 * (MOR_correctliq ** 2)) + (0.000381908525139781 * MOR_correctliq) - 0.0163450053041212
+        elif refrigerant == "R507A": MOR_correction = (0.000302619054048837 * MOR_correctliq) - 0.00930188913363997
+        elif refrigerant == "R22": MOR_correction = (0.000108153843367715 * MOR_correctliq) - 0.00329248681202757
+        elif refrigerant == "R407C": MOR_correction = (0.00000420322918839302 * (MOR_correctliq ** 2)) + (0.000269608915211859 * MOR_correctliq) - 0.0134546663857195
+        elif refrigerant == "R410A": MOR_correction = 0
+        elif refrigerant == "R407F": MOR_correction = (0.00000347332380289385 * (MOR_correctliq ** 2)) + (0.000239205332540693 * MOR_correctliq) - 0.0121545316131988
+        elif refrigerant == "R134a": MOR_correction = 0
+        elif refrigerant == "R404A": MOR_correction = (0.0000156507169104918 * (MOR_correctliq ** 2)) + (0.000689621839324826 * MOR_correctliq) - 0.0392
         else: MOR_correction = (0.00000461020482461793 * (MOR_correctliq ** 2)) + (0.000217910548009675 * MOR_correctliq) - 0.012074621594626
         MOR = (1 - MOR_correction) * MOR_pre
         # st.write("MOR:", MOR)
