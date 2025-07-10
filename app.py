@@ -293,7 +293,7 @@ elif tool_selection == "Oil Return Velocity Checker":
         elif refrigerant == "R407C": MOR_correction2 = (-0.00000665735727676349 * (T_evap ** 2)) - (0.000894860288947537 * T_evap) - 0.0116054361757929
         elif refrigerant == "R410A": MOR_correction2 = (-0.000672268853990701 * T_evap) - 0.0111802230098585
         elif refrigerant == "R407F": MOR_correction2 = (0.00000263731418614519 * (T_evap ** 2)) - (0.000683997257738699 * T_evap) - 0.0126005968942147
-        elif refrigerant == "R134a": MOR_correction2 = 0
+        elif refrigerant == "R134a": MOR_correction2 = (-0.00000823045532174214 * (T_evap ** 2)) - (0.00108063672211041 * T_evap) - 0.0217411206961643
         elif refrigerant == "R404A": MOR_correction2 = (0.00000342378568620316 * (T_evap ** 2)) - (0.000329572335134041 * T_evap) - 0.00706087606597149
         else: MOR_correction2 = (-0.000711441807827186 * T_evap) - 0.0118194116436425
         
