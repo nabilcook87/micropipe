@@ -295,7 +295,7 @@ elif tool_selection == "Oil Return Velocity Checker":
         elif refrigerant == "R407F": MOR_correction2 = (0.00000263731418614519 * (T_evap ** 2)) – (0.000683997257738699 * T_evap) - 0.0126005968942147
         elif refrigerant == "R134a": MOR_correction2 = 0
         elif refrigerant == "R404A": MOR_correction2 = (0.00000342378568620316 * (T_evap ** 2)) – (0.000329572335134041 * T_evap) - 0.00706087606597149
-        else: MOR_correction2 
+        else: MOR_correction2 = (-0.000711441807827186 * T_evap) - 0.0118194116436425
         
         MOR = (1 - MOR_correction) * (1 - MOR_correction2) * MOR_pre
         # st.write("MOR:", MOR)
