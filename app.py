@@ -244,22 +244,22 @@ elif tool_selection == "Oil Return Velocity Checker":
         elif refrigerant == "R449A": jg_half = 0.8974
         elif refrigerant == "R448A": jg_half = 0.8951
         elif refrigerant == "R717": jg_half = 0.8898
-        elif refrigerant == "R290": jg_half = 0.903
-        elif refrigerant == "R1270": jg_half = 0.9022
-        elif refrigerant == "R600a": jg_half = 0.907
-        elif refrigerant == "R1234ze": jg_half = 0.8967
-        elif refrigerant == "R1234yf": jg_half = 0.8982
-        elif refrigerant == "R12": jg_half = 0.9064
-        elif refrigerant == "R11": jg_half = 0.9085
-        elif refrigerant == "R454B": jg_half = 0.8944
-        elif refrigerant == "R450A": jg_half = 0.8949
-        elif refrigerant == "R513A": jg_half = 0.8961
-        elif refrigerant == "R454A": jg_half = 0.8974
-        elif refrigerant == "R455A": jg_half = 0.8962
-        elif refrigerant == "R454C": jg_half = 0.898
+        elif refrigerant == "R290": jg_half = 0.9006
+        elif refrigerant == "R1270": jg_half = 0.9002
+        elif refrigerant == "R600a": jg_half = 0.9044
+        elif refrigerant == "R1234ze": jg_half = 0.8962
+        elif refrigerant == "R1234yf": jg_half = 0.8972
+        elif refrigerant == "R12": jg_half = 0.9062
+        elif refrigerant == "R11": jg_half = 0.9076
+        elif refrigerant == "R454B": jg_half = 0.894
+        elif refrigerant == "R450A": jg_half = 0.8942
+        elif refrigerant == "R513A": jg_half = 0.8951
+        elif refrigerant == "R454A": jg_half = 0.8969
+        elif refrigerant == "R455A": jg_half = 0.8955
+        elif refrigerant == "R454C": jg_half = 0.8974
         elif refrigerant == "R32": jg_half = 0.8993
-        elif refrigerant == "R23": jg_half = 0.8962
-        elif refrigerant == "R508B": jg_half = 0.8959
+        elif refrigerant == "R23": jg_half = 0.8955
+        elif refrigerant == "R508B": jg_half = 0.8951
         # st.write("jg_half:", jg_half)
         
         MinMassFlux = (jg_half ** 2) * ((density_foroil * 9.81 * ID_m * (oil_density - density_foroil)) ** 0.5)
