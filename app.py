@@ -232,7 +232,7 @@ elif tool_selection == "Oil Return Velocity Checker":
         # st.write("oil_density:", oil_density)
         
         if refrigerant == "R404A": jg_half = 0.860772464072673
-        elif refrigerant == "R134a": jg_half = 0.875849847934857
+        elif refrigerant == "R134a": jg_half = 0.869986729796935
         elif refrigerant == "R407F": jg_half = 0.874876140488571
         elif refrigerant == "R744": jg_half = 0.872650170296212
         elif refrigerant == "R407A": jg_half = 0.873220837829883
