@@ -214,6 +214,7 @@ elif tool_selection == "Oil Return Velocity Checker":
         # st.write("area_m2:", area_m2)
         density_super = RefrigerantDensities().get_density(refrigerant, T_evap + 273.15, superheat_K)
         # st.write("density_super:", density_super)
+        density_density = RefrigerantDensities().get_density(refrigerant, T_evap + 273.15, ((superheat_K + 5) / 2))
         density_super_foroil = RefrigerantDensities().get_density(refrigerant, T_evap + 273.15, min(max(superheat_K, 5), 30))
         # st.write("density_super_foroil:", density_super_foroil)
         density_sat = RefrigerantProperties().get_properties(refrigerant, T_evap)["density_vapor"]
@@ -223,7 +224,7 @@ elif tool_selection == "Oil Return Velocity Checker":
         # st.write("density:", density)
         density_foroil = (density_super_foroil + density_sat) / 2
         # st.write("density_foroil:", density_foroil)
-        velocity_m_s = adjusted_mass_flow_kg_s / (area_m2 * density)
+        velocity_m_s = adjusted_mass_flow_kg_s / (area_m2 * density_density)
         # st.write("velocity_m_s:", velocity_m_s)
         oil_density_sat = (-0.00356060606060549 * (T_evap ** 2)) - (0.957878787878808 * T_evap) + 963.595454545455
         # st.write("oil_density_sat:", oil_density_sat)
