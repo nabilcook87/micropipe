@@ -231,18 +231,18 @@ elif tool_selection == "Oil Return Velocity Checker":
         oil_density = (oil_density_sat + oil_density_super) / 2
         # st.write("oil_density:", oil_density)
         
-        if refrigerant == "R404A": jg_half = 0.89
-        elif refrigerant == "R134a": jg_half = 0.8995
-        elif refrigerant == "R407F": jg_half = 0.8985
-        elif refrigerant == "R744": jg_half = 0.8519
-        elif refrigerant == "R407A": jg_half = 0.8968
-        elif refrigerant == "R410A": jg_half = 0.9043
-        elif refrigerant == "R407C": jg_half = 0.8877
-        elif refrigerant == "R22": jg_half = 0.8898
-        elif refrigerant == "R502": jg_half = 0.8873
-        elif refrigerant == "R507A": jg_half = 0.9178
-        elif refrigerant == "R449A": jg_half = 0.8974
-        elif refrigerant == "R448A": jg_half = 0.8951
+        if refrigerant == "R404A": jg_half = 0.843814509949152
+        elif refrigerant == "R134a": jg_half = 0.852821518763216
+        elif refrigerant == "R407F": jg_half = 0.851873412572262
+        elif refrigerant == "R744": jg_half = 0.89390576325626
+        elif refrigerant == "R407A": jg_half = 0.85026163204764
+        elif refrigerant == "R410A": jg_half = 0.882120407173721
+        elif refrigerant == "R407C": jg_half = 0.841633865709957
+        elif refrigerant == "R22": jg_half = 0.843624888710961
+        elif refrigerant == "R502": jg_half = 0.841254623233576
+        elif refrigerant == "R507A": jg_half = 0.870171862057676
+        elif refrigerant == "R449A": jg_half = 0.850830495762212
+        elif refrigerant == "R448A": jg_half = 0.848649851523018
         elif refrigerant == "R717": jg_half = 0.8898
         elif refrigerant == "R290": jg_half = 0.9006
         elif refrigerant == "R1270": jg_half = 0.9002
