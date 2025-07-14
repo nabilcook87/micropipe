@@ -244,23 +244,23 @@ elif tool_selection == "Oil Return Velocity Checker":
         elif refrigerant == "R507A": jg_half = 0.887709710291009
         elif refrigerant == "R449A": jg_half = 0.867980496631757
         elif refrigerant == "R448A": jg_half = 0.86578818145833
-        elif refrigerant == "R717": jg_half = 0.8898
-        elif refrigerant == "R290": jg_half = 0.9006
-        elif refrigerant == "R1270": jg_half = 0.9002
-        elif refrigerant == "R600a": jg_half = 0.9044
-        elif refrigerant == "R1234ze": jg_half = 0.8962
-        elif refrigerant == "R1234yf": jg_half = 0.8972
-        elif refrigerant == "R12": jg_half = 0.9062
-        elif refrigerant == "R11": jg_half = 0.9076
-        elif refrigerant == "R454B": jg_half = 0.894
-        elif refrigerant == "R450A": jg_half = 0.8942
-        elif refrigerant == "R513A": jg_half = 0.8951
-        elif refrigerant == "R454A": jg_half = 0.8969
-        elif refrigerant == "R455A": jg_half = 0.8955
-        elif refrigerant == "R454C": jg_half = 0.8974
-        elif refrigerant == "R32": jg_half = 0.8993
-        elif refrigerant == "R23": jg_half = 0.8955
-        elif refrigerant == "R508B": jg_half = 0.8951
+        elif refrigerant == "R717": jg_half = 0.87
+        elif refrigerant == "R290": jg_half = 0.844975139695726
+        elif refrigerant == "R1270": jg_half = 0.849089717732815
+        elif refrigerant == "R600a": jg_half = 0.84339338979887
+        elif refrigerant == "R1234ze": jg_half = 0.867821375349728
+        elif refrigerant == "R1234yf": jg_half = 0.860767472602571
+        elif refrigerant == "R12": jg_half = 0.8735441986466
+        elif refrigerant == "R11": jg_half = 0.864493203834913
+        elif refrigerant == "R454B": jg_half = 0.869102255850291
+        elif refrigerant == "R450A": jg_half = 0.865387140496035
+        elif refrigerant == "R513A": jg_half = 0.861251244627232
+        elif refrigerant == "R454A": jg_half = 0.868161104592492
+        elif refrigerant == "R455A": jg_half = 0.865687329727713
+        elif refrigerant == "R454C": jg_half = 0.866423016875524
+        elif refrigerant == "R32": jg_half = 0.875213309852597
+        elif refrigerant == "R23": jg_half = 0.865673418568001
+        elif refrigerant == "R508B": jg_half = 0.864305626845382
         # st.write("jg_half:", jg_half)
         
         MinMassFlux = (jg_half ** 2) * ((density_foroil * 9.81 * ID_m * (oil_density - density_foroil)) ** 0.5)
