@@ -228,7 +228,8 @@ elif tool_selection == "Oil Return Velocity Checker":
         st.write("velocity_m_s1:", velocity_m_s1)
         velocity_m_s2 = adjusted_mass_flow_kg_s / (area_m2 * density_super2)
         st.write("velocity_m_s2:", velocity_m_s2)
-        velocity_m_s = (velocity_m_s1 * 0.845556941374478) + (velocity_m_s2 * 0.154443058625522)
+        velocity1_prop = (-0.00280805561137312 * max(superheat_K, 5)) + 1.01404027805687
+        velocity_m_s = (velocity_m_s1 * velocity1_prop) + (velocity_m_s2 * (1 - velocity1_prop))
         oil_density_sat = (-0.00356060606060549 * (T_evap ** 2)) - (0.957878787878808 * T_evap) + 963.595454545455
         # st.write("oil_density_sat:", oil_density_sat)
         oil_density_super = (-0.00356060606060549 * ((T_evap + min(max(superheat_K, 5), 30)) ** 2)) - (0.957878787878808 * (T_evap + min(max(superheat_K, 5), 30))) + 963.595454545455
