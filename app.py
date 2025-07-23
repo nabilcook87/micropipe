@@ -250,7 +250,7 @@ elif tool_selection == "Oil Return Velocity Checker":
         elif refrigerant == "R507A": jg_half = 0.887709710291009
         elif refrigerant == "R449A": jg_half = 0.867980496631757
         elif refrigerant == "R448A": jg_half = 0.86578818145833
-        elif refrigerant == "R717": jg_half = 0.87
+        elif refrigerant == "R717": jg_half = 0.854957410951708
         elif refrigerant == "R290": jg_half = 0.844975139695726
         elif refrigerant == "R1270": jg_half = 0.849089717732815
         elif refrigerant == "R600a": jg_half = 0.84339338979887
