@@ -326,7 +326,6 @@ elif tool_selection == "Oil Return Velocity Checker":
 
     reynolds = (density * velocity_m_s * ID_m) / 1
     
-    st.divider()
     st.subheader("Results")
 
     if velocity_m_s:
