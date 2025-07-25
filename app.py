@@ -140,33 +140,34 @@ elif tool_selection == "Oil Return Velocity Checker":
             "R290", "R1270", "R600a", "R717", "R1234ze", "R1234yf", "R12", "R11", "R454B", "R450A", "R513A", "R23", "R508B", "R502"
         ])
 
-        # Load pipe data
-        pipe_data = pd.read_csv("data/pipe_pressure_ratings_full.csv")
+    # Load pipe data
+    pipe_data = pd.read_csv("data/pipe_pressure_ratings_full.csv")
 
-        # 1. Select Pipe Material
+     # 1. Select Pipe Material
     with col2:
         pipe_materials = sorted(pipe_data["Material"].dropna().unique())
         selected_material = st.selectbox("Pipe Material", pipe_materials)
 
-        # 2. Filter pipe sizes for selected material
-        material_df = pipe_data[pipe_data["Material"] == selected_material]
-        pipe_sizes = sorted(material_df["Nominal Size (inch)"].dropna().astype(str).unique())
+    # 2. Filter pipe sizes for selected material
+    material_df = pipe_data[pipe_data["Material"] == selected_material]
+    pipe_sizes = sorted(material_df["Nominal Size (inch)"].dropna().astype(str).unique())
+    
     with col1:
         selected_size = st.selectbox("Nominal Pipe Size (inch)", pipe_sizes)
 
-        # 3. Gauge (if applicable)
-        gauge_options = material_df[material_df["Nominal Size (inch)"].astype(str) == selected_size]
-        if "Gauge" in gauge_options.columns and gauge_options["Gauge"].notna().any():
-            gauges = sorted(gauge_options["Gauge"].dropna().unique())
-    with col2:    
+    # 3. Gauge (if applicable)
+    gauge_options = material_df[material_df["Nominal Size (inch)"].astype(str) == selected_size]
+    if "Gauge" in gauge_options.columns and gauge_options["Gauge"].notna().any():
+        gauges = sorted(gauge_options["Gauge"].dropna().unique())
+        with col2:    
             selected_gauge = st.selectbox("Copper Gauge", gauges)
-            selected_pipe_row = gauge_options[gauge_options["Gauge"] == selected_gauge].iloc[0]
-        else:
-            selected_pipe_row = gauge_options.iloc[0]
+        selected_pipe_row = gauge_options[gauge_options["Gauge"] == selected_gauge].iloc[0]
+    else:
+        selected_pipe_row = gauge_options.iloc[0]
 
-        # Pipe parameters
-        pipe_size_inch = selected_pipe_row["Nominal Size (inch)"]
-        ID_mm = selected_pipe_row["ID_mm"]
+    # Pipe parameters
+    pipe_size_inch = selected_pipe_row["Nominal Size (inch)"]
+    ID_mm = selected_pipe_row["ID_mm"]
 
     with col1:
         evap_capacity_kw = st.number_input("Evaporator Capacity (kW)", min_value=0.1, value=10.0)
