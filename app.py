@@ -128,7 +128,7 @@ elif tool_selection == "Pressure Drop ↔ Temperature Penalty":
 elif tool_selection == "System Pressure Checker":
     system_pressure_checker_ui()
 
-elif tool_selection == "Oil Return Checker":
+elif tool_selection == "Oil Return Velocity Checker":
     st.subheader("Oil Return Checker")
 
     col1, col2 = st.columns(2)
