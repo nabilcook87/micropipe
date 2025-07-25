@@ -184,7 +184,7 @@ elif tool_selection == "Oil Return Checker":
     from utils.pipe_length_volume_calc import get_pipe_id_mm
     from utils.oil_return_checker import check_oil_return
 
-    T_evap = (evaporating_temp + (evaporating_temp - max_penalty)) / 2
+    T_evap = evaporating_temp
     T_cond = condensing_temp
 
     props = RefrigerantProperties()
