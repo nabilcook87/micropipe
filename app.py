@@ -163,10 +163,11 @@ elif tool_selection == "Oil Return Velocity Checker":
     ID_mm = selected_pipe_row["ID_mm"]
 
     evap_capacity_kw = st.number_input("Evaporator Capacity (kW)", min_value=0.1, value=10.0)
-    evaporating_temp = st.number_input("Evaporating Temperature (°C)", value=-10)
+    evaporating_temp = st.number_input("Evaporating Temperature (°C)", value=-10.0)
     condensing_temp = st.number_input("Condensing Temperature (°C)", value=40.0)
     subcooling_K = st.number_input("Subcooling (K)", value=3.0)
     superheat_K = st.number_input("Superheat (K)", value=5.0)
+    max_penalty = st.number_input("Max Penalty (K)", value=1.0)
     required_oil_duty_pct = st.number_input("Required Oil Return Duty (%)", min_value=0.0, max_value=100.0, value=100.0, step=5.0)
 
     from utils.refrigerant_properties import RefrigerantProperties
