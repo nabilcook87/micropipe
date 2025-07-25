@@ -131,6 +131,9 @@ elif tool_selection == "System Pressure Checker":
 elif tool_selection == "Oil Return Velocity Checker":
     st.subheader("Oil Return Velocity Checker")
 
+    col1, col2 = st.columns(2)
+
+    with col1:
     refrigerant = st.selectbox("Refrigerant", [
         "R404A", "R134a", "R407F", "R744", "R410A",
         "R407C", "R507A", "R448A", "R449A", "R22", "R32", "R454A", "R454C", "R455A", "R407A",
@@ -141,18 +144,21 @@ elif tool_selection == "Oil Return Velocity Checker":
     pipe_data = pd.read_csv("data/pipe_pressure_ratings_full.csv")
 
     # 1. Select Pipe Material
+    with col2:
     pipe_materials = sorted(pipe_data["Material"].dropna().unique())
     selected_material = st.selectbox("Pipe Material", pipe_materials)
 
     # 2. Filter pipe sizes for selected material
     material_df = pipe_data[pipe_data["Material"] == selected_material]
     pipe_sizes = sorted(material_df["Nominal Size (inch)"].dropna().astype(str).unique())
+    with col1:
     selected_size = st.selectbox("Nominal Pipe Size (inch)", pipe_sizes)
 
     # 3. Gauge (if applicable)
     gauge_options = material_df[material_df["Nominal Size (inch)"].astype(str) == selected_size]
     if "Gauge" in gauge_options.columns and gauge_options["Gauge"].notna().any():
         gauges = sorted(gauge_options["Gauge"].dropna().unique())
+    with col2:    
         selected_gauge = st.selectbox("Copper Gauge", gauges)
         selected_pipe_row = gauge_options[gauge_options["Gauge"] == selected_gauge].iloc[0]
     else:
@@ -162,10 +168,12 @@ elif tool_selection == "Oil Return Velocity Checker":
     pipe_size_inch = selected_pipe_row["Nominal Size (inch)"]
     ID_mm = selected_pipe_row["ID_mm"]
 
+    with col1:
     evap_capacity_kw = st.number_input("Evaporator Capacity (kW)", min_value=0.1, value=10.0)
     evaporating_temp = st.number_input("Evaporating Temperature (°C)", value=-10.0)
     condensing_temp = st.number_input("Condensing Temperature (°C)", value=40.0)
     subcooling_K = st.number_input("Subcooling (K)", value=3.0)
+    with col2:
     superheat_K = st.number_input("Superheat (K)", value=5.0)
     max_penalty = st.number_input("Max Penalty (K)", value=1.0)
     required_oil_duty_pct = st.number_input("Required Oil Return Duty (%)", min_value=0.0, max_value=100.0, value=100.0, step=5.0)
