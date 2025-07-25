@@ -15,7 +15,7 @@ tool_selection = st.sidebar.radio("Select Tool", [
     "Pressure ↔ Temperature Converter",
     "Pressure Drop ↔ Temperature Penalty",
     "System Pressure Checker",
-    "Oil Return Velocity Checker"
+    "Oil Return Checker"
 ])
 st.sidebar.text("")
 st.sidebar.text("")
@@ -128,7 +128,7 @@ elif tool_selection == "Pressure Drop ↔ Temperature Penalty":
 elif tool_selection == "System Pressure Checker":
     system_pressure_checker_ui()
 
-elif tool_selection == "Oil Return Velocity Checker":
+elif tool_selection == "Oil Return Checker":
     st.subheader("Oil Return Checker")
 
     col1, col2 = st.columns(2)
