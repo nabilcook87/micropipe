@@ -194,7 +194,9 @@ elif tool_selection == "Oil Return Checker":
     # st.write("h_evap:", h_evap)
     h_10K = props.get_properties(refrigerant, T_evap)["enthalpy_super"]
     # st.write("h_10K:", h_10K)
-    hdiff_10K = h_10K - h_evap
+    h_10K_pen = props.get_properties(refrigerant, T_evap - max_penalty)["enthalpy_super"]
+    h_10K_av = (h_10K + h_10K_pen) / 2
+    hdiff_10K = h_10K_av - h_evap
     # st.write("hdiff_10K:", hdiff_10K)
     hdiff_custom = hdiff_10K * min(max(superheat_K, 5), 30) / 10
     # st.write("hdiff_custom:", hdiff_custom)
