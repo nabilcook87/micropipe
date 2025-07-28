@@ -170,7 +170,7 @@ elif tool_selection == "Oil Return Checker":
     ID_mm = selected_pipe_row["ID_mm"]
 
     with col1:
-        evap_capacity_kw = st.number_input("Evaporator Capacity (kW)", min_value=0.03, value=20000)
+        evap_capacity_kw = st.number_input("Evaporator Capacity (kW)", min_value=0.03, max_value=20000.0, value=10.0)
         evaporating_temp = st.number_input("Evaporating Temperature (°C)", value=-10.0)
         condensing_temp = st.number_input("Condensing Temperature (°C)", value=40.0)
         subcooling_K = st.number_input("Subcooling (K)", value=3.0)
