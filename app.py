@@ -195,7 +195,9 @@ elif tool_selection == "Oil Return Checker":
     h_10K = props.get_properties(refrigerant, T_evap)["enthalpy_super"]
     st.write("h_10K:", h_10K)
     h_10K_pen = props.get_properties(refrigerant, T_evap - max_penalty)["enthalpy_super"]
+    st.write("h_10K_pen:", h_10K_pen)
     h_10K_av = (h_10K + h_10K_pen) / 2
+    st.write("h_10K_av:", h_10K_av)
     hdiff_10K = h_10K_av - h_evap
     st.write("hdiff_10K:", hdiff_10K)
     hdiff_custom = hdiff_10K * min(max(superheat_K, 5), 30) / 10
@@ -227,13 +229,17 @@ elif tool_selection == "Oil Return Checker":
         density_super = RefrigerantDensities().get_density(refrigerant, T_evap - max_penalty + 273.15, superheat_K)
         st.write("density_super:", density_super)
         density_super2a = RefrigerantDensities().get_density(refrigerant, T_evap + 273.15, ((superheat_K + 5) / 2))
+        st.write("density_super2a:", density_super2a)
         density_super2b = RefrigerantDensities().get_density(refrigerant, T_evap - max_penalty + 273.15, ((superheat_K + 5) / 2))
+        st.write("density_super2b:", density_super2b)
         density_super2 = (density_super2a + density_super2b) / 2
+        st.write("density_super2:", density_super2)
         density_super_foroil = RefrigerantDensities().get_density(refrigerant, T_evap - max_penalty + 273.15, min(max(superheat_K, 5), 30))
         st.write("density_super_foroil:", density_super_foroil)
         density_sat = RefrigerantProperties().get_properties(refrigerant, T_evap)["density_vapor"]
         st.write("density_sat:", density_sat)
         density_5K = RefrigerantDensities().get_density(refrigerant, T_evap + 273.15, 5)
+        st.write("density_5K:", density_5K)
         density = (density_super + density_5K) / 2
         st.write("density:", density)
         density_foroil = (density_super_foroil + density_sat) / 2
@@ -245,7 +251,9 @@ elif tool_selection == "Oil Return Checker":
         if refrigerant == "R744": velocity1_prop = (-0.0142814388381874 * max(superheat_K, 5)) + 1.07140719419094
         elif refrigerant == "R717": velocity1_prop = 1
         else: velocity1_prop = (-0.00280805561137312 * max(superheat_K, 5)) + 1.01404027805687
+        st.write("velocity1_prop:", velocity1_prop)
         velocity_m_s = (velocity_m_s1 * velocity1_prop) + (velocity_m_s2 * (1 - velocity1_prop))
+        st.write("velocity_m_s:", velocity_m_s)
         oil_density_sat = (-0.00356060606060549 * (T_evap ** 2)) - (0.957878787878808 * T_evap) + 963.595454545455
         st.write("oil_density_sat:", oil_density_sat)
         oil_density_super = (-0.00356060606060549 * ((T_evap - max_penalty + min(max(superheat_K, 5), 30)) ** 2)) - (0.957878787878808 * (T_evap - max_penalty + min(max(superheat_K, 5), 30))) + 963.595454545455
@@ -289,8 +297,10 @@ elif tool_selection == "Oil Return Checker":
         MinMassFlow = MinMassFlux * area_m2
         st.write("MinMassFlow:", MinMassFlow)
         MOR_pre = (MinMassFlow / mass_flow_foroil) * 100
+        st.write("MOR_pre:", MOR_pre)
         
         MOR_correctliq = T_cond - subcooling_K
+        st.write("MOR_correctliq:", MOR_correctliq)
         if refrigerant == "R744": MOR_correction = (0.000225755013421421 * MOR_correctliq) - 0.00280879370374927
         elif refrigerant == "R407A": MOR_correction = (0.00000414431651323856 * (MOR_correctliq ** 2)) + (0.000381908525139781 * MOR_correctliq) - 0.0163450053041212
         elif refrigerant == "R449A": MOR_correction = (0.00000414431651323856 * (MOR_correctliq ** 2)) + (0.000381908525139781 * MOR_correctliq) - 0.0163450053041212
@@ -304,6 +314,7 @@ elif tool_selection == "Oil Return Checker":
         elif refrigerant == "R134a": MOR_correction = (0.000195224660107459 * MOR_correctliq) - 0.00591757011487048
         elif refrigerant == "R404A": MOR_correction = (0.0000156507169104918 * (MOR_correctliq ** 2)) + (0.000689621839324826 * MOR_correctliq) - 0.0392
         else: MOR_correction = (0.00000461020482461793 * (MOR_correctliq ** 2)) + (0.000217910548009675 * MOR_correctliq) - 0.012074621594626
+        st.write("MOR_correction:", MOR_correction)
 
         if refrigerant == "R744": MOR_correction2 = (-0.0000176412848988908 * (T_evap ** 2)) - (0.00164308248808803 * T_evap) - 0.0184308798286039
         elif refrigerant == "R407A": MOR_correction2 = (-0.000864076433837511 * T_evap) - 0.0145018190416687
@@ -318,6 +329,7 @@ elif tool_selection == "Oil Return Checker":
         elif refrigerant == "R134a": MOR_correction2 = (-0.00000823045532174214 * (T_evap ** 2)) - (0.00108063672211041 * T_evap) - 0.0217411206961643
         elif refrigerant == "R404A": MOR_correction2 = (0.00000342378568620316 * (T_evap ** 2)) - (0.000329572335134041 * T_evap) - 0.00706087606597149
         else: MOR_correction2 = (-0.000711441807827186 * T_evap) - 0.0118194116436425
+        st.write("MOR_correction2:", MOR_correction2)
         
         MOR = (1 - MOR_correction) * (1 - MOR_correction2) * MOR_pre
         st.write("MOR:", MOR)
