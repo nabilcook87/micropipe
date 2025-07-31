@@ -352,7 +352,10 @@ elif tool_selection == "Oil Return Checker":
             st.metric("Suction Density", f"{density:.2f} kg/m3")
 
         with col3:
-            st.metric("MOR (%)", f"{MOR:.1f} %")
+            if MOR == "":
+                st.metric("MOR (%)", "")
+            else:
+                st.metric("MOR (%)", f"{MOR:.1f} %")
 
         with col4:
             st.metric("Re", f"{reynolds:.1f}")
