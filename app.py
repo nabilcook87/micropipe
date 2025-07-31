@@ -230,7 +230,7 @@ elif tool_selection == "Oil Return Checker":
         # st.write("density_super2b:", density_super2b)
         density_super2 = (density_super2a + density_super2b) / 2
         # st.write("density_super2:", density_super2)
-        density_super_foroil = RefrigerantDensities().get_density(refrigerant, T_evap - max_penalty + 273.15, min(max(superheat_K, 5), 30) + max_penalty)
+        density_super_foroil = RefrigerantDensities().get_density(refrigerant, T_evap + 273.15, min(max(superheat_K, 5), 30))
         # st.write("density_super_foroil:", density_super_foroil)
         density_sat = RefrigerantProperties().get_properties(refrigerant, T_evap)["density_vapor"]
         # st.write("density_sat:", density_sat)
