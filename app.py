@@ -360,7 +360,10 @@ elif tool_selection == "Oil Return Checker":
         with col4:
             st.metric("Re", f"{reynolds:.1f}")
 
-    is_ok, message = (True, "✅ OK") if required_oil_duty_pct >= MOR else (False, "❌ Insufficient flow")
+    if isinstance(MOR, (int, float)):
+        is_ok, message = (True, "✅ OK") if required_oil_duty_pct >= MOR else (False, "❌ Insufficient flow")
+    else:
+        is_ok, message = (False, "")
 
     if is_ok:
         st.success(f"{message}")
