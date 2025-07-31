@@ -171,8 +171,8 @@ elif tool_selection == "Oil Return Checker":
 
     with col1:
         evap_capacity_kw = st.number_input("Evaporator Capacity (kW)", min_value=0.03, max_value=20000.0, value=10.0, step=1.0)
-        if refrigerant == "R23": evaporating_temp = st.number_input("Evaporating Temperature (°C)", min_value=-100.0, value=-80.0, step=1.0)
-        elif refrigerant == "R508B": evaporating_temp = st.number_input("Evaporating Temperature (°C)", min_value=-100.0, value=-80.0, step=1.0)
+        if refrigerant == "R23": evaporating_temp = st.number_input("Evaporating Temperature (°C)", min_value=-100.0, max_value=-20.0, value=-80.0, step=1.0)
+        elif refrigerant == "R508B": evaporating_temp = st.number_input("Evaporating Temperature (°C)", min_value=-100.0, max_value=-20.0, value=-80.0, step=1.0)
         elif refrigerant == "R744": evaporating_temp = st.number_input("Evaporating Temperature (°C)", min_value=-50.0, max_value=20.0, value=-10.0, step=1.0)
         else: evaporating_temp = st.number_input("Evaporating Temperature (°C)", min_value=-50.0, max_value=30.0, value=-10.0, step=1.0)
         condensing_temp = st.number_input("Condensing Temperature (°C)", value=40.0)
