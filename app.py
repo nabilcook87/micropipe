@@ -327,7 +327,9 @@ elif tool_selection == "Oil Return Checker":
         else: MOR_correction2 = (-0.000711441807827186 * T_evap) - 0.0118194116436425
         # st.write("MOR_correction2:", MOR_correction2)
         
-        MOR = (1 - MOR_correction) * (1 - MOR_correction2) * MOR_pre
+        if T_evap < -40: MOR = ""
+        elif T_evap > 4: MOR = ""
+        else: MOR = (1 - MOR_correction) * (1 - MOR_correction2) * MOR_pre
         # st.write("MOR:", MOR)
     else:
         velocity_m_s = None
