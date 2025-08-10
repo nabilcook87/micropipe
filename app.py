@@ -179,7 +179,11 @@ elif tool_selection == "Oil Return Checker":
         elif refrigerant == "R508B": condensing_temp = st.number_input("Max Liquid Temperature (°C)", min_value=-100.0, max_value=10.0, value=-30.0, step=1.0)
         elif refrigerant == "R744": condensing_temp = st.number_input("Max Liquid Temperature (°C)", min_value=-50.0, max_value=30.0, value=15.0, step=1.0)
         else: condensing_temp = st.number_input("Max Liquid Temperature (°C)", min_value=-50.0, max_value=60.0, value=40.0, step=1.0)
-        subcooling_K = st.number_input("Subcooling (K)", value=3.0)
+        if refrigerant == "R23": minliq_temp = st.number_input("Min Liquid Temperature (°C)", min_value=-100.0, max_value=10.0, value=-40.0, step=1.0)
+        elif refrigerant == "R508B": minliq_temp = st.number_input("Min Liquid Temperature (°C)", min_value=-100.0, max_value=10.0, value=-40.0, step=1.0)
+        elif refrigerant == "R744": minliq_temp = st.number_input("Min Liquid Temperature (°C)", min_value=-50.0, max_value=30.0, value=10.0, step=1.0)
+        else: minliq_temp = st.number_input("Min Liquid Temperature (°C)", min_value=-50.0, max_value=60.0, value=20.0, step=1.0)
+    
     with col2:
         superheat_K = st.number_input("Superheat (K)", min_value=0.0, max_value=60.0, value=5.0, step=1.0)
         max_penalty = st.number_input("Max Penalty (K)", min_value=0.0, max_value=6.0, value=1.0, step=0.1)
@@ -194,7 +198,7 @@ elif tool_selection == "Oil Return Checker":
     T_cond = condensing_temp
 
     props = RefrigerantProperties()
-    h_inlet = props.get_properties(refrigerant, T_cond - subcooling_K)["enthalpy_liquid"]
+    h_inlet = props.get_properties(refrigerant, T_cond)["enthalpy_liquid"]
     # st.write("h_inlet:", h_inlet)
     h_evap = props.get_properties(refrigerant, T_evap)["enthalpy_vapor"]
     # st.write("h_evap:", h_evap)
