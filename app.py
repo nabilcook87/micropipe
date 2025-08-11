@@ -179,10 +179,10 @@ elif tool_selection == "Oil Return Checker":
         elif refrigerant == "R508B": condensing_temp = st.number_input("Max Liquid Temperature (°C)", min_value=-100.0, max_value=10.0, value=-30.0, step=1.0)
         elif refrigerant == "R744": condensing_temp = st.number_input("Max Liquid Temperature (°C)", min_value=-50.0, max_value=30.0, value=15.0, step=1.0)
         else: condensing_temp = st.number_input("Max Liquid Temperature (°C)", min_value=-50.0, max_value=60.0, value=40.0, step=1.0)
-        if refrigerant == "R23": minliq_temp = st.number_input("Min Liquid Temperature (°C)", min_value=max(-100.0, evaporating_temp), max_value=10.0, value=-40.0, step=1.0)
-        elif refrigerant == "R508B": minliq_temp = st.number_input("Min Liquid Temperature (°C)", min_value=max(-100.0, evaporating_temp), max_value=10.0, value=-40.0, step=1.0)
-        elif refrigerant == "R744": minliq_temp = st.number_input("Min Liquid Temperature (°C)", min_value=max(-50.0, evaporating_temp), max_value=30.0, value=10.0, step=1.0)
-        else: minliq_temp = st.number_input("Min Liquid Temperature (°C)", min_value=max(-50.0, evaporating_temp), max_value=60.0, value=20.0, step=1.0)
+        if refrigerant == "R23": minliq_temp = st.number_input("Min Liquid Temperature (°C)", min_value=max(-100.0, evaporating_temp), max_value=min(10.0, condensing_temp), value=-40.0, step=1.0)
+        elif refrigerant == "R508B": minliq_temp = st.number_input("Min Liquid Temperature (°C)", min_value=max(-100.0, evaporating_temp), max_value=min(10.0, condensing_temp), value=-40.0, step=1.0)
+        elif refrigerant == "R744": minliq_temp = st.number_input("Min Liquid Temperature (°C)", min_value=max(-50.0, evaporating_temp), max_value=min(30.0, condensing_temp), value=10.0, step=1.0)
+        else: minliq_temp = st.number_input("Min Liquid Temperature (°C)", min_value=max(-50.0, evaporating_temp), max_value=min(60.0, condensing_temp), value=20.0, step=1.0)
     
     with col2:
         superheat_K = st.number_input("Superheat (K)", min_value=0.0, max_value=60.0, value=5.0, step=1.0)
