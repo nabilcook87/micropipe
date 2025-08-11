@@ -198,6 +198,8 @@ elif tool_selection == "Oil Return Checker":
     T_cond = condensing_temp
 
     props = RefrigerantProperties()
+    h_in = props.get_properties(refrigerant, T_cond)["enthalpy_liquid2"]
+    # for velocity
     h_inlet = props.get_properties(refrigerant, T_cond)["enthalpy_liquid"]
     # st.write("h_inlet:", h_inlet)
     h_evap = props.get_properties(refrigerant, T_evap)["enthalpy_vapor"]
@@ -213,8 +215,8 @@ elif tool_selection == "Oil Return Checker":
     h_foroil = (h_evap + h_super) / 2
     # st.write("h_foroil:", h_foroil)
     
-    delta_h = h_evap - h_inlet
-    # st.write("delta_h:", delta_h)
+    delta_h = h_evap - h_in
+    # st.write("delta_h:", delta_h) for velocity
     delta_h_foroil = h_foroil - h_inlet
     # st.write("delta_h_foroil:", delta_h_foroil)
     mass_flow_kg_s = evap_capacity_kw / delta_h if delta_h > 0 else 0.01
