@@ -43,6 +43,7 @@ class RefrigerantProperties:
         data = self.tables[refrigerant]
 
         temp_array = np.array(data["temperature_C"])
+        bubble_array = np.array(data["temperature_C"])
         pressure_array = np.array(data["pressure_bar"])
         density_liquid_array = np.array(data["density_liquid"])
         density_vapor_array = np.array(data["density_vapor"])
