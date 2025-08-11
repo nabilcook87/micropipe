@@ -55,7 +55,7 @@ class RefrigerantProperties:
         density_liquid = self.interpolate(temp_array, density_liquid_array, temperature_C)
         density_vapor = self.interpolate_log(temp_array, density_vapor_array, temperature_C)
         enthalpy_liquid = self.interpolate(temp_array, enthalpy_liquid_array, temperature_C)
-        enthalpy_liquid2 = self.interpolate(bubble_array, enthalpy_liquid_array, bubblepoint_C)
+        enthalpy_liquid2 = self.interpolate(bubble_array, enthalpy_liquid_array, temperature_C)
         enthalpy_vapor = self.interpolate(temp_array, enthalpy_vapor_array, temperature_C)
         enthalpy_super = self.interpolate(temp_array, enthalpy_super_array, temperature_C)
 
