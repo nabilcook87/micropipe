@@ -43,7 +43,7 @@ class RefrigerantProperties:
         data = self.tables[refrigerant]
 
         temp_array = np.array(data["temperature_C"])
-        bubble_array = np.array(data["temperature_C"])
+        bubble_array = np.array(data["bubblepoint_C"])
         pressure_array = np.array(data["pressure_bar"])
         density_liquid_array = np.array(data["density_liquid"])
         density_vapor_array = np.array(data["density_vapor"])
@@ -55,6 +55,7 @@ class RefrigerantProperties:
         density_liquid = self.interpolate(temp_array, density_liquid_array, temperature_C)
         density_vapor = self.interpolate_log(temp_array, density_vapor_array, temperature_C)
         enthalpy_liquid = self.interpolate(temp_array, enthalpy_liquid_array, temperature_C)
+        enthalpy_liquid2 = self.interpolate(bubble_array, enthalpy_liquid_array, bubblepoint_C)
         enthalpy_vapor = self.interpolate(temp_array, enthalpy_vapor_array, temperature_C)
         enthalpy_super = self.interpolate(temp_array, enthalpy_super_array, temperature_C)
 
@@ -67,6 +68,7 @@ class RefrigerantProperties:
             "density_liquid": density_liquid,
             "density_vapor": density_vapor,
             "enthalpy_liquid": enthalpy_liquid,
+            "enthalpy_liquid2": enthalpy_liquid2,
             "enthalpy_vapor": enthalpy_vapor,
             "enthalpy_super": enthalpy_super
         }
