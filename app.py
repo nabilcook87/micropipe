@@ -241,11 +241,6 @@ elif tool_selection == "Oil Return Checker":
             on_change=on_change_evap,
         )
 
-        # Display
-        st.write(f"Evaporating Temp: {ss.evap_temp} °C")
-        st.write(f"Min Liquid Temp: {ss.minliq_temp} °C")
-        st.write(f"Condensing Temp: {ss.cond_temp} °C")
-
     with col2:
         superheat_K = st.number_input("Superheat (K)", min_value=0.0, max_value=60.0, value=5.0, step=1.0)
         max_penalty = st.number_input("Max Penalty (K)", min_value=0.0, max_value=6.0, value=1.0, step=0.1)
