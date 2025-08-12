@@ -184,8 +184,6 @@ elif tool_selection == "Oil Return Checker":
         # elif refrigerant == "R744": minliq_temp = st.number_input("Min Liquid Temperature (°C)", min_value=max(-50.0, evaporating_temp), max_value=min(30.0, condensing_temp), value=condensing_temp, step=1.0)
         # else: minliq_temp = st.number_input("Min Liquid Temperature (°C)", min_value=max(-50.0, evaporating_temp), max_value=min(60.0, condensing_temp), value=condensing_temp, step=1.0)
 
-        import streamlit as st
-
         # --- Base ranges per refrigerant ---
         if refrigerant in ("R23", "R508B"):
             evap_min, evap_max, evap_default = -100.0, -20.0, -80.0
@@ -200,70 +198,64 @@ elif tool_selection == "Oil Return Checker":
             cond_min, cond_max, cond_default = -50.0, 60.0, 40.0
             minliq_min, minliq_max, minliq_default = -50.0, 60.0, 20.0
 
-        # --- Init state (current & previous to detect what changed) ---
-        for k, v in {
-            "cond_temp": cond_default,
-            "minliq_temp": minliq_default,
-            "evap_temp": evap_default,
-            "prev_cond_temp": cond_default,
-            "prev_minliq_temp": minliq_default,
-            "prev_evap_temp": evap_default,
-        }.items():
-            st.session_state.setdefault(k, v)
+        # --- Initialize widget-backed state once ---
+        ss = st.session_state
+        ss.setdefault("cond_temp",   cond_default)
+        ss.setdefault("minliq_temp", minliq_default)
+        ss.setdefault("evap_temp",   evap_default)
 
-        # --- Inputs with inclusive caps (≤) ---
-        condensing_temp = st.number_input(
-            "Max Liquid Temperature (°C)",
-            min_value=cond_min, max_value=cond_max,
-            value=st.session_state.cond_temp, step=1.0, key="cond_temp"
-        )
+        # --- Callbacks: only mutate session_state here ---
+        def on_change_cond():
+            # Do NOT pull minliq down; just ensure cond ≥ minliq
+            if ss.cond_temp < ss.minliq_temp:
+                ss.cond_temp = ss.minliq_temp
 
-        minliq_temp = st.number_input(
+        def on_change_minliq():
+            # Keep minliq ≤ cond
+            if ss.minliq_temp > ss.cond_temp:
+                ss.minliq_temp = ss.cond_temp
+            # Downstream clamp: evap ≤ minliq
+            if ss.evap_temp > ss.minliq_temp:
+                ss.evap_temp = ss.minliq_temp
+
+        def on_change_evap():
+            # Clamp evap ≤ minliq
+            if ss.evap_temp > ss.minliq_temp:
+                ss.evap_temp = ss.minliq_temp
+
+        # --- Widgets with dynamic, inclusive bounds ---
+        st.number_input(
             "Min Liquid Temperature (°C)",
-            min_value=minliq_min, max_value=min(condensing_temp, minliq_max),
-            value=st.session_state.minliq_temp, step=1.0, key="minliq_temp"
+            min_value=minliq_min,
+            max_value=min(ss.get("cond_temp", cond_default), minliq_max),
+            step=1.0,
+            key="minliq_temp",
+            on_change=on_change_minliq,
         )
 
-        evaporating_temp = st.number_input(
+        st.number_input(
+            "Max Liquid Temperature (°C)",
+            min_value=max(cond_min, ss.get("minliq_temp", minliq_default)),
+            max_value=cond_max,
+            step=1.0,
+            key="cond_temp",
+            on_change=on_change_cond,
+        )
+
+        st.number_input(
             "Evaporating Temperature (°C)",
-            min_value=evap_min, max_value=min(minliq_temp, evap_max),
-            value=st.session_state.evap_temp, step=1.0, key="evap_temp"
+            min_value=evap_min,
+            max_value=min(ss.get("minliq_temp", minliq_default), evap_max),
+            step=1.0,
+            key="evap_temp",
+            on_change=on_change_evap,
         )
 
-        # --- Figure out which value the user just changed ---
-        changed = None
-        if st.session_state.cond_temp != st.session_state.prev_cond_temp:
-            changed = "cond"
-        elif st.session_state.minliq_temp != st.session_state.prev_minliq_temp:
-            changed = "minliq"
-        elif st.session_state.evap_temp != st.session_state.prev_evap_temp:
-            changed = "evap"
+        # --- Display ---
+        st.write(f"Evaporating Temp: {ss.evap_temp} °C")
+        st.write(f"Min Liquid Temp: {ss.minliq_temp} °C")
+        st.write(f"Condensing Temp: {ss.cond_temp} °C")
 
-        # --- Downstream clamping (never pushes values up) ---
-        # Always enforce: evap ≤ minliq ≤ cond
-        if changed == "cond":
-            st.session_state.minliq_temp = min(st.session_state.minliq_temp, st.session_state.cond_temp)
-            st.session_state.evap_temp   = min(st.session_state.evap_temp,   st.session_state.minliq_temp)
-
-        elif changed == "minliq":
-            # Keep minliq within cond (clamp down if it exceeded), then clamp evap to minliq
-            st.session_state.minliq_temp = min(st.session_state.minliq_temp, st.session_state.cond_temp)
-            st.session_state.evap_temp   = min(st.session_state.evap_temp,   st.session_state.minliq_temp)
-
-        elif changed == "evap":
-            # Just clamp evap to minliq if needed
-            st.session_state.evap_temp   = min(st.session_state.evap_temp,   st.session_state.minliq_temp)
-
-        # Update prevs for next run
-        st.session_state.prev_cond_temp   = st.session_state.cond_temp
-        st.session_state.prev_minliq_temp = st.session_state.minliq_temp
-        st.session_state.prev_evap_temp   = st.session_state.evap_temp
-
-        # Display
-        st.write(f"Evaporating Temp: {st.session_state.evap_temp} °C")
-        st.write(f"Min Liquid Temp: {st.session_state.minliq_temp} °C")
-        st.write(f"Condensing Temp: {st.session_state.cond_temp} °C")
-    
     with col2:
         superheat_K = st.number_input("Superheat (K)", min_value=0.0, max_value=60.0, value=5.0, step=1.0)
         max_penalty = st.number_input("Max Penalty (K)", min_value=0.0, max_value=6.0, value=1.0, step=0.1)
