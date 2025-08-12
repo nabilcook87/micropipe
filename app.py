@@ -171,18 +171,98 @@ elif tool_selection == "Oil Return Checker":
 
     with col1:
         evap_capacity_kw = st.number_input("Evaporator Capacity (kW)", min_value=0.03, max_value=20000.0, value=10.0, step=1.0)
-        if refrigerant == "R23": evaporating_temp = st.number_input("Evaporating Temperature (°C)", min_value=-100.0, max_value=-30.0, value=-80.0, step=1.0)
-        elif refrigerant == "R508B": evaporating_temp = st.number_input("Evaporating Temperature (°C)", min_value=-100.0, max_value=-30.0, value=-80.0, step=1.0)
-        elif refrigerant == "R744": evaporating_temp = st.number_input("Evaporating Temperature (°C)", min_value=-50.0, max_value=20.0, value=-10.0, step=1.0)
-        else: evaporating_temp = st.number_input("Evaporating Temperature (°C)", min_value=-50.0, max_value=30.0, value=-10.0, step=1.0)
-        if refrigerant == "R23": condensing_temp = st.number_input("Max Liquid Temperature (°C)", min_value=max(-100.0, evaporating_temp), max_value=10.0, value=-30.0, step=1.0)
-        elif refrigerant == "R508B": condensing_temp = st.number_input("Max Liquid Temperature (°C)", min_value=max(-100.0, evaporating_temp), max_value=10.0, value=-30.0, step=1.0)
-        elif refrigerant == "R744": condensing_temp = st.number_input("Max Liquid Temperature (°C)", min_value=max(-50.0, evaporating_temp), max_value=30.0, value=20.0, step=1.0)
-        else: condensing_temp = st.number_input("Max Liquid Temperature (°C)", min_value=max(-50.0, evaporating_temp), max_value=60.0, value=40.0, step=1.0)
-        if refrigerant == "R23": minliq_temp = st.number_input("Min Liquid Temperature (°C)", min_value=max(-100.0, evaporating_temp), max_value=min(10.0, condensing_temp), value=condensing_temp, step=1.0)
-        elif refrigerant == "R508B": minliq_temp = st.number_input("Min Liquid Temperature (°C)", min_value=max(-100.0, evaporating_temp), max_value=min(10.0, condensing_temp), value=condensing_temp, step=1.0)
-        elif refrigerant == "R744": minliq_temp = st.number_input("Min Liquid Temperature (°C)", min_value=max(-50.0, evaporating_temp), max_value=min(30.0, condensing_temp), value=condensing_temp, step=1.0)
-        else: minliq_temp = st.number_input("Min Liquid Temperature (°C)", min_value=max(-50.0, evaporating_temp), max_value=min(60.0, condensing_temp), value=condensing_temp, step=1.0)
+        # if refrigerant == "R23": evaporating_temp = st.number_input("Evaporating Temperature (°C)", min_value=-100.0, max_value=-30.0, value=-80.0, step=1.0)
+        # elif refrigerant == "R508B": evaporating_temp = st.number_input("Evaporating Temperature (°C)", min_value=-100.0, max_value=-30.0, value=-80.0, step=1.0)
+        # elif refrigerant == "R744": evaporating_temp = st.number_input("Evaporating Temperature (°C)", min_value=-50.0, max_value=20.0, value=-10.0, step=1.0)
+        # else: evaporating_temp = st.number_input("Evaporating Temperature (°C)", min_value=-50.0, max_value=30.0, value=-10.0, step=1.0)
+        # if refrigerant == "R23": condensing_temp = st.number_input("Max Liquid Temperature (°C)", min_value=max(-100.0, evaporating_temp), max_value=10.0, value=-30.0, step=1.0)
+        # elif refrigerant == "R508B": condensing_temp = st.number_input("Max Liquid Temperature (°C)", min_value=max(-100.0, evaporating_temp), max_value=10.0, value=-30.0, step=1.0)
+        # elif refrigerant == "R744": condensing_temp = st.number_input("Max Liquid Temperature (°C)", min_value=max(-50.0, evaporating_temp), max_value=30.0, value=20.0, step=1.0)
+        # else: condensing_temp = st.number_input("Max Liquid Temperature (°C)", min_value=max(-50.0, evaporating_temp), max_value=60.0, value=40.0, step=1.0)
+        # if refrigerant == "R23": minliq_temp = st.number_input("Min Liquid Temperature (°C)", min_value=max(-100.0, evaporating_temp), max_value=min(10.0, condensing_temp), value=condensing_temp, step=1.0)
+        # elif refrigerant == "R508B": minliq_temp = st.number_input("Min Liquid Temperature (°C)", min_value=max(-100.0, evaporating_temp), max_value=min(10.0, condensing_temp), value=condensing_temp, step=1.0)
+        # elif refrigerant == "R744": minliq_temp = st.number_input("Min Liquid Temperature (°C)", min_value=max(-50.0, evaporating_temp), max_value=min(30.0, condensing_temp), value=condensing_temp, step=1.0)
+        # else: minliq_temp = st.number_input("Min Liquid Temperature (°C)", min_value=max(-50.0, evaporating_temp), max_value=min(60.0, condensing_temp), value=condensing_temp, step=1.0)
+
+        import streamlit as st
+
+        # --- Base ranges per refrigerant ---
+        if refrigerant in ("R23", "R508B"):
+            evap_min, evap_max, evap_default = -100.0, -20.0, -80.0
+            cond_min, cond_max, cond_default = -100.0, 10.0, -30.0
+            minliq_min, minliq_max, minliq_default = -100.0, 10.0, -40.0
+        elif refrigerant == "R744":
+            evap_min, evap_max, evap_default = -50.0, 20.0, -10.0
+            cond_min, cond_max, cond_default = -50.0, 30.0, 15.0
+            minliq_min, minliq_max, minliq_default = -50.0, 30.0, 10.0
+        else:
+            evap_min, evap_max, evap_default = -50.0, 30.0, -10.0
+            cond_min, cond_max, cond_default = -50.0, 60.0, 40.0
+            minliq_min, minliq_max, minliq_default = -50.0, 60.0, 20.0
+
+        # --- Init state (current & previous to detect what changed) ---
+        for k, v in {
+            "cond_temp": cond_default,
+            "minliq_temp": minliq_default,
+            "evap_temp": evap_default,
+            "prev_cond_temp": cond_default,
+            "prev_minliq_temp": minliq_default,
+            "prev_evap_temp": evap_default,
+        }.items():
+            st.session_state.setdefault(k, v)
+
+        # --- Inputs with inclusive caps (≤) ---
+        condensing_temp = st.number_input(
+            "Max Liquid Temperature (°C)",
+            min_value=cond_min, max_value=cond_max,
+            value=st.session_state.cond_temp, step=1.0, key="cond_temp"
+        )
+
+        minliq_temp = st.number_input(
+            "Min Liquid Temperature (°C)",
+            min_value=minliq_min, max_value=min(condensing_temp, minliq_max),
+            value=st.session_state.minliq_temp, step=1.0, key="minliq_temp"
+        )
+
+        evaporating_temp = st.number_input(
+            "Evaporating Temperature (°C)",
+            min_value=evap_min, max_value=min(minliq_temp, evap_max),
+            value=st.session_state.evap_temp, step=1.0, key="evap_temp"
+        )
+
+        # --- Figure out which value the user just changed ---
+        changed = None
+        if st.session_state.cond_temp != st.session_state.prev_cond_temp:
+            changed = "cond"
+        elif st.session_state.minliq_temp != st.session_state.prev_minliq_temp:
+            changed = "minliq"
+        elif st.session_state.evap_temp != st.session_state.prev_evap_temp:
+            changed = "evap"
+
+        # --- Downstream clamping (never pushes values up) ---
+        # Always enforce: evap ≤ minliq ≤ cond
+        if changed == "cond":
+            st.session_state.minliq_temp = min(st.session_state.minliq_temp, st.session_state.cond_temp)
+            st.session_state.evap_temp   = min(st.session_state.evap_temp,   st.session_state.minliq_temp)
+
+        elif changed == "minliq":
+            # Keep minliq within cond (clamp down if it exceeded), then clamp evap to minliq
+            st.session_state.minliq_temp = min(st.session_state.minliq_temp, st.session_state.cond_temp)
+            st.session_state.evap_temp   = min(st.session_state.evap_temp,   st.session_state.minliq_temp)
+
+        elif changed == "evap":
+            # Just clamp evap to minliq if needed
+            st.session_state.evap_temp   = min(st.session_state.evap_temp,   st.session_state.minliq_temp)
+
+        # Update prevs for next run
+        st.session_state.prev_cond_temp   = st.session_state.cond_temp
+        st.session_state.prev_minliq_temp = st.session_state.minliq_temp
+        st.session_state.prev_evap_temp   = st.session_state.evap_temp
+
+        # Display
+        st.write(f"Evaporating Temp: {st.session_state.evap_temp} °C")
+        st.write(f"Min Liquid Temp: {st.session_state.minliq_temp} °C")
+        st.write(f"Condensing Temp: {st.session_state.cond_temp} °C")
     
     with col2:
         superheat_K = st.number_input("Superheat (K)", min_value=0.0, max_value=60.0, value=5.0, step=1.0)
