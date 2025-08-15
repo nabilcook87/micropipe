@@ -200,6 +200,13 @@ elif tool_selection == "Oil Return Checker":
 
         # --- Init state (widget-backed) ---
         ss = st.session_state
+
+        if "last_refrigerant" not in ss or ss.last_refrigerant != refrigerant:
+            ss.cond_temp   = cond_default
+            ss.minliq_temp = minliq_default
+            ss.evap_temp   = evap_default
+            ss.last_refrigerant = refrigerant
+        
         ss.setdefault("cond_temp",   cond_default)
         ss.setdefault("minliq_temp", minliq_default)
         ss.setdefault("evap_temp",   evap_default)
