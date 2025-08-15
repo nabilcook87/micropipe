@@ -320,9 +320,10 @@ elif tool_selection == "Oil Return Checker":
         st.write("velocity_m_s1:", velocity_m_s1)
         velocity_m_s2 = adjusted_mass_flow_kg_s / (area_m2 * density_super2)
         st.write("velocity_m_s2:", velocity_m_s2)
-        if refrigerant == "R744": velocity1_prop = (-0.0142814388381874 * max(superheat_K, 5)) + 1.07140719419094
+        if refrigerant == "R744": velocity1_prop = 0
         elif refrigerant == "R717": velocity1_prop = 1
         else: velocity1_prop = 0
+        # if refrigerant == "R744": velocity1_prop = (-0.0142814388381874 * max(superheat_K, 5)) + 1.07140719419094
         # else: velocity1_prop = (-0.00280805561137312 * max(superheat_K, 5)) + 1.01404027805687
         # st.write("velocity1_prop:", velocity1_prop)
         velocity_m_s = (velocity_m_s1 * velocity1_prop) + (velocity_m_s2 * (1 - velocity1_prop))
