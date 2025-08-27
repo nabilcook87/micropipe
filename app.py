@@ -25,7 +25,7 @@ st.sidebar.text("")
 st.sidebar.text("")
 st.sidebar.text("")
 st.sidebar.text("")
-st.sidebar.image("assets/logo.png", use_container_width=True)
+st.sidebar.image("assets/logo.png", width="stretch")
 
 def system_pressure_checker_ui():
     st.subheader("System Pressure Rating Tool")
