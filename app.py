@@ -337,7 +337,9 @@ elif tool_selection == "Oil Return Checker":
         elif refrigerant == "R448A": velocity1_prop = 1
         elif refrigerant == "R449A": velocity1_prop = 1
         elif refrigerant == "R717": velocity1_prop = 1
-        else: velocity1_prop = 0
+        else:
+            if superheat_K > 30: velocity1_prop = (0.0000406422632403154 * (superheat_K ** 2)) - (0.000541007136813307 * superheat_K) + 0.748882946418884
+            else: velocity1_prop = 0.769230769230769
         # if refrigerant == "R744": velocity1_prop = (-0.0142814388381874 * max(superheat_K, 5)) + 1.07140719419094
         # else: velocity1_prop = (-0.00280805561137312 * max(superheat_K, 5)) + 1.01404027805687
         # st.write("velocity1_prop:", velocity1_prop)
