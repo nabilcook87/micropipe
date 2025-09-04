@@ -261,15 +261,6 @@ elif tool_selection == "Oil Return Checker":
     T_evap = evaporating_temp
     T_cond = condensing_temp
 
-    minliq_temp
-    minliq_temp
-    minliq_temp
-    minliq_temp
-    minliq_temp
-    minliq_temp
-    minliq_temp
-    minliq_temp
-
     props = RefrigerantProperties()
     h_in = props.get_properties(refrigerant, T_cond)["enthalpy_liquid2"]
     # for velocity
@@ -289,7 +280,6 @@ elif tool_selection == "Oil Return Checker":
     # st.write("h_super:", h_super)
     h_foroil = (h_evap + h_super) / 2
     # st.write("h_foroil:", h_foroil)
-
     
     delta_h = h_evap - h_in
     # st.write("delta_h:", delta_h) for velocity
@@ -334,8 +324,10 @@ elif tool_selection == "Oil Return Checker":
         # st.write("density_foroil:", density_foroil)
         velocity_m_s1 = mass_flow_kg_s / (area_m2 * density)
         st.write("velocity_m_s1:", velocity_m_s1)
+        velocity_m_s1min = mass_flow_kg_smin / (area_m2 * density)
         velocity_m_s2 = mass_flow_kg_s / (area_m2 * density_super2)
         st.write("velocity_m_s2:", velocity_m_s2)
+        velocity_m_s2min = mass_flow_kg_smin / (area_m2 * density_super2)
         if refrigerant == "R744": velocity1_prop = 1
         elif refrigerant == "R404A":
             if superheat_K > 45: velocity1_prop = (0.0328330590542629 * superheat_K) - 1.47748765744183
@@ -361,6 +353,7 @@ elif tool_selection == "Oil Return Checker":
         # st.write("velocity1_prop:", velocity1_prop)
         velocity_m_s = (velocity_m_s1 * velocity1_prop) + (velocity_m_s2 * (1 - velocity1_prop))
         # st.write("velocity_m_s:", velocity_m_s)
+        velocity_m_smin = (velocity_m_s1min * velocity1_prop) + (velocity_m_s2min * (1 - velocity1_prop))
         oil_density_sat = (-0.00356060606060549 * (T_evap ** 2)) - (0.957878787878808 * T_evap) + 963.595454545455
         # st.write("oil_density_sat:", oil_density_sat)
         oil_density_super = (-0.00356060606060549 * ((T_evap + min(max(superheat_K, 5), 30)) ** 2)) - (0.957878787878808 * (T_evap + min(max(superheat_K, 5), 30))) + 963.595454545455
@@ -405,6 +398,7 @@ elif tool_selection == "Oil Return Checker":
         # st.write("MinMassFlow:", MinMassFlow)
         MOR_pre = (MinMassFlow / mass_flow_foroil) * 100
         # st.write("MOR_pre:", MOR_pre)
+        MOR_premin = (MinMassFlow / mass_flow_foroilmin) * 100
         
         MOR_correctliq = T_cond
         # st.write("MOR_correctliq:", MOR_correctliq)
@@ -423,6 +417,20 @@ elif tool_selection == "Oil Return Checker":
         else: MOR_correction = (0.00000461020482461793 * (MOR_correctliq ** 2)) + (0.000217910548009675 * MOR_correctliq) - 0.012074621594626
         # st.write("MOR_correction:", MOR_correction)
 
+        if refrigerant == "R744": MOR_correctionmin = (0.000225755013421421 * minliq_temp) - 0.00280879370374927
+        elif refrigerant == "R407A": MOR_correctionmin = (0.00000414431651323856 * (minliq_temp ** 2)) + (0.000381908525139781 * minliq_temp) - 0.0163450053041212
+        elif refrigerant == "R449A": MOR_correctionmin = (0.00000414431651323856 * (minliq_temp ** 2)) + (0.000381908525139781 * minliq_temp) - 0.0163450053041212
+        elif refrigerant == "R448A": MOR_correctionmin = (0.00000414431651323856 * (minliq_temp ** 2)) + (0.000381908525139781 * minliq_temp) - 0.0163450053041212
+        elif refrigerant == "R502": MOR_correctionmin = (0.00000414431651323856 * (minliq_temp ** 2)) + (0.000381908525139781 * minliq_temp) - 0.0163450053041212
+        elif refrigerant == "R507A": MOR_correctionmin = (0.000302619054048837 * minliq_temp) - 0.00930188913363997
+        elif refrigerant == "R22": MOR_correctionmin = (0.000108153843367715 * minliq_temp) - 0.00329248681202757
+        elif refrigerant == "R407C": MOR_correctionmin = (0.00000420322918839302 * (minliq_temp ** 2)) + (0.000269608915211859 * minliq_temp) - 0.0134546663857195
+        elif refrigerant == "R410A": MOR_correctionmin = 0
+        elif refrigerant == "R407F": MOR_correctionmin = (0.00000347332380289385 * (minliq_temp ** 2)) + (0.000239205332540693 * minliq_temp) - 0.0121545316131988
+        elif refrigerant == "R134a": MOR_correctionmin = (0.000195224660107459 * minliq_temp) - 0.00591757011487048
+        elif refrigerant == "R404A": MOR_correctionmin = (0.0000156507169104918 * (minliq_temp ** 2)) + (0.000689621839324826 * minliq_temp) - 0.0392
+        else: MOR_correctionmin = (0.00000461020482461793 * (minliq_temp ** 2)) + (0.000217910548009675 * minliq_temp) - 0.012074621594626
+
         if refrigerant == "R744": MOR_correction2 = (-0.0000176412848988908 * (T_evap ** 2)) - (0.00164308248808803 * T_evap) - 0.0184308798286039
         elif refrigerant == "R407A": MOR_correction2 = (-0.000864076433837511 * T_evap) - 0.0145018190416687
         elif refrigerant == "R449A": MOR_correction2 = (-0.000835375233693285 * T_evap) - 0.0138846063856621
@@ -438,12 +446,24 @@ elif tool_selection == "Oil Return Checker":
         else: MOR_correction2 = (-0.000711441807827186 * T_evap) - 0.0118194116436425
         # st.write("MOR_correction2:", MOR_correction2)
         
-        if T_evap < -40: MOR = ""
-        elif T_evap > 4: MOR = ""
-        else: MOR = (1 - MOR_correction) * (1 - MOR_correction2) * MOR_pre
+        if T_evap < -40:
+            MOR = ""
+            MORmin = ""
+            MORfinal = ""
+        elif T_evap > 4:
+            MOR = ""
+            MORmin = ""
+            MORfinal = ""
+        else:
+            MOR = (1 - MOR_correction) * (1 - MOR_correction2) * MOR_pre
+            MORmin = (1 - MOR_correctionmin) * (1 - MOR_correction2) * MOR_premin
+            MORfinal = max(MOR, MORmin)
         # st.write("MOR:", MOR)
+        velocity_m_sfinal = max(velocity_m_s, velocity_m_smin)
     else:
         velocity_m_s = None
+        velocity_m_smin = None
+        velocity_m_sfinal = None
 
     # Oil return check
     adjusted_duty_kw = evap_capacity_kw * (required_oil_duty_pct / 100.0)
@@ -453,26 +473,26 @@ elif tool_selection == "Oil Return Checker":
     
     st.subheader("Results")
 
-    if velocity_m_s:
+    if velocity_m_sfinal:
         col1, col2, col3, col4 = st.columns(4)
 
         with col1:
-            st.metric("Refrigerant Velocity", f"{velocity_m_s:.2f} m/s")
+            st.metric("Refrigerant Velocity", f"{velocity_m_sfinal:.2f} m/s")
 
         with col2:
             st.metric("Suction Density", f"{density:.2f} kg/m3")
 
         with col3:
-            if MOR == "":
+            if MORfinal == "":
                 st.metric("MOR (%)", "")
             else:
-                st.metric("MOR (%)", f"{MOR:.1f} %")
+                st.metric("MOR (%)", f"{MORfinal:.1f} %")
 
         with col4:
             st.metric("Re", f"{reynolds:.1f}")
 
-    if isinstance(MOR, (int, float)):
-        is_ok, message = (True, "✅ OK") if required_oil_duty_pct >= MOR else (False, "❌ Insufficient flow")
+    if isinstance(MORfinal, (int, float)):
+        is_ok, message = (True, "✅ OK") if required_oil_duty_pct >= MORfinal else (False, "❌ Insufficient flow")
     else:
         is_ok, message = (False, "")
 
