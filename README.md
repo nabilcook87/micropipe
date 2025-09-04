@@ -1,4 +1,4 @@
-# Micropipe - Industrial Refrigeration Pipe Sizing Tool
+# Micropipe - Refrigeration & HVAC Pipe Sizing Tool
 
 **Micropipe** is a professional-grade engineering tool for designing and verifying refrigeration pipe networks.  
 It calculates mass flow, selects pipe sizes, evaluates oil return, pressure drops, refrigerant mass, and more.
