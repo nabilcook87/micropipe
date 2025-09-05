@@ -410,7 +410,7 @@ elif tool_selection == "Oil Return Checker":
         
         MOR_correctliq = T_cond
         if refrigerant in ["R23", "R508B"]:
-            evapoil = T_evap + 46
+            evapoil = T_evap + 46.14
         else:
             evapoil = T_evap
         # st.write("MOR_correctliq:", MOR_correctliq)
