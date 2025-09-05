@@ -331,10 +331,10 @@ elif tool_selection == "Oil Return Checker":
         density_foroil = (density_super_foroil + density_sat) / 2
         # st.write("density_foroil:", density_foroil)
         velocity_m_s1 = mass_flow_kg_s / (area_m2 * density)
-        st.write("velocity_m_s1:", velocity_m_s1)
+        # st.write("velocity_m_s1:", velocity_m_s1)
         velocity_m_s1min = mass_flow_kg_smin / (area_m2 * density)
         velocity_m_s2 = mass_flow_kg_s / (area_m2 * density_super2)
-        st.write("velocity_m_s2:", velocity_m_s2)
+        # st.write("velocity_m_s2:", velocity_m_s2)
         velocity_m_s2min = mass_flow_kg_smin / (area_m2 * density_super2)
         if refrigerant == "R744": velocity1_prop = 1
         elif refrigerant == "R404A":
