@@ -145,9 +145,17 @@ elif tool_selection == "Oil Return Checker":
 
      # 1. Select Pipe Material
     with col2:
-        pipe_materials = sorted(pipe_data["Material"].dropna().unique())
-        selected_material = st.selectbox("Pipe Material", pipe_materials)
-
+        if refrigerant == "R717":
+            excluded_materials = ["Copper ACR", "Copper EN12735"]
+            pipe_materials = sorted(
+                m for m in pipe_data["Material"].dropna().unique()
+                if m not in excluded_materials
+            )
+            selected_material = st.selectbox("Pipe Material", pipe_materials)
+        else:
+            pipe_materials = sorted(pipe_data["Material"].dropna().unique())
+            selected_material = st.selectbox("Pipe Material", pipe_materials)
+    
     # 2. Filter pipe sizes for selected material
     material_df = pipe_data[pipe_data["Material"] == selected_material]
     pipe_sizes = sorted(material_df["Nominal Size (inch)"].dropna().astype(str).unique())
