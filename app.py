@@ -407,8 +407,11 @@ elif tool_selection == "Oil Return Checker":
         MOR_pre = (MinMassFlow / mass_flow_foroil) * 100
         # st.write("MOR_pre:", MOR_pre)
         MOR_premin = (MinMassFlow / mass_flow_foroilmin) * 100
-        
-        MOR_correctliq = T_cond
+
+        if refrigerant in ["R23", "R508B"]:
+            MOR_correctliq = T_cond + 
+        else:
+            MOR_correctliq = T_cond
         if refrigerant in ["R23", "R508B"]:
             evapoil = T_evap + 46.14
         else:
