@@ -454,18 +454,32 @@ elif tool_selection == "Oil Return Checker":
         else: MOR_correction2 = (-0.000711441807827186 * T_evap) - 0.0118194116436425
         # st.write("MOR_correction2:", MOR_correction2)
         
-        if T_evap < -40:
-            MOR = ""
-            MORmin = ""
-            MORfinal = ""
-        elif T_evap > 4:
-            MOR = ""
-            MORmin = ""
-            MORfinal = ""
-        else:
-            MOR = (1 - MOR_correction) * (1 - MOR_correction2) * MOR_pre
-            MORmin = (1 - MOR_correctionmin) * (1 - MOR_correction2) * MOR_premin
-            MORfinal = max(MOR, MORmin)
+        if refrigerant in ["R23", "R508B"]:
+            if T_evap < -86:
+                MOR = ""
+                MORmin = ""
+                MORfinal = ""
+            elif T_evap > -42:
+                MOR = ""
+                MORmin = ""
+                MORfinal = ""
+            else:
+                MOR = (1 - MOR_correction) * (1 - MOR_correction2) * MOR_pre
+                MORmin = (1 - MOR_correctionmin) * (1 - MOR_correction2) * MOR_premin
+                MORfinal = max(MOR, MORmin)
+        else:    
+            if T_evap < -40:
+                MOR = ""
+                MORmin = ""
+                MORfinal = ""
+            elif T_evap > 4:
+                MOR = ""
+                MORmin = ""
+                MORfinal = ""
+            else:
+                MOR = (1 - MOR_correction) * (1 - MOR_correction2) * MOR_pre
+                MORmin = (1 - MOR_correctionmin) * (1 - MOR_correction2) * MOR_premin
+                MORfinal = max(MOR, MORmin)
         # st.write("MOR:", MOR)
         velocity_m_sfinal = max(velocity_m_s, velocity_m_smin)
     else:
