@@ -409,7 +409,7 @@ elif tool_selection == "Oil Return Checker":
         MOR_premin = (MinMassFlow / mass_flow_foroilmin) * 100
 
         if refrigerant in ["R23", "R508B"]:
-            MOR_correctliq = T_cond + 
+            MOR_correctliq = T_cond + 46.39
         else:
             MOR_correctliq = T_cond
         if refrigerant in ["R23", "R508B"]:
