@@ -362,10 +362,14 @@ elif tool_selection == "Oil Return Checker":
         velocity_m_s = (velocity_m_s1 * velocity1_prop) + (velocity_m_s2 * (1 - velocity1_prop))
         # st.write("velocity_m_s:", velocity_m_s)
         velocity_m_smin = (velocity_m_s1min * velocity1_prop) + (velocity_m_s2min * (1 - velocity1_prop))
-        oil_density_sat = (-0.00356060606060549 * (T_evap ** 2)) - (0.957878787878808 * T_evap) + 963.595454545455
-        # st.write("oil_density_sat:", oil_density_sat)
-        oil_density_super = (-0.00356060606060549 * ((T_evap + min(max(superheat_K, 5), 30)) ** 2)) - (0.957878787878808 * (T_evap + min(max(superheat_K, 5), 30))) + 963.595454545455
-        # st.write("oil_density_super:", oil_density_super)
+        if refrigerant in ["R23", "R508B"]:
+            oil_density_sat = (-0.853841209044878 * T_evap) + 999.190772536527
+            oil_density_super = (-0.853841209044878 * (T_evap + min(max(superheat_K, 5), 30))) + 999.190772536527
+        else:
+            oil_density_sat = (-0.00356060606060549 * (T_evap ** 2)) - (0.957878787878808 * T_evap) + 963.595454545455
+            # st.write("oil_density_sat:", oil_density_sat)
+            oil_density_super = (-0.00356060606060549 * ((T_evap + min(max(superheat_K, 5), 30)) ** 2)) - (0.957878787878808 * (T_evap + min(max(superheat_K, 5), 30))) + 963.595454545455
+            # st.write("oil_density_super:", oil_density_super)
         oil_density = (oil_density_sat + oil_density_super) / 2
         # st.write("oil_density:", oil_density)
         
