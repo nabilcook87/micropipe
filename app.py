@@ -262,6 +262,7 @@ elif tool_selection == "Oil Return Checker":
 
     from utils.refrigerant_properties import RefrigerantProperties
     from utils.refrigerant_densities import RefrigerantDensities
+    from utils.refrigerant_viscosities import RefrigerantViscosities
     from utils.pipe_length_volume_calc import get_pipe_id_mm
     from utils.oil_return_checker import check_oil_return
 
@@ -502,9 +503,18 @@ elif tool_selection == "Oil Return Checker":
     # st.write("adjusted_duty_kw:", adjusted_duty_kw)
 
     density_recalc = mass_flow_kg_s / (velocity_m_s * area_m2)
+
+    viscosity_super = RefrigerantViscosities().get_viscosity(refrigerant, T_evap - max_penalty + 273.15, superheat_K)
+    viscosity_super2a = RefrigerantViscosities().get_viscosity(refrigerant, T_evap + 273.15, ((superheat_K + 5) / 2))
+    viscosity_super2b = RefrigerantViscosities().get_viscosity(refrigerant, T_evap - max_penalty + 273.15, ((superheat_K + 5) / 2))
+    viscosity_super2 = (viscosity_super2a + viscosity_super2b) / 2
+    viscosity_sat = RefrigerantViscosities().get_viscosity(refrigerant, T_evap + 273.15, 0)
+    viscosity_5K = RefrigerantViscosities().get_viscosity(refrigerant, T_evap + 273.15, 5) 
+    viscosity = (viscosity_super + viscosity_5K) / 2
+    viscosity_final = (viscosity * velocity1_prop) + (viscosity_super2 * (1 - velocity1_prop))
     
     # density for reynolds and col2 display needs density_super2 factoring in!
-    reynolds = (density_recalc * velocity_m_sfinal * ID_m) / 1
+    reynolds = (density_recalc * velocity_m_sfinal * ID_m) / viscosity_final
     
     st.subheader("Results")
 
