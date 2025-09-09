@@ -11,10 +11,10 @@ st.title("MicroPipe")
 # Sidebar for tools and settings
 st.sidebar.title("Tools & Utilities")
 tool_selection = st.sidebar.radio("Select Tool", [
+    "Oil Return Checker",
     "Pressure ↔ Temperature Converter",
     "Pressure Drop ↔ Temperature Penalty",
-    "System Pressure Checker",
-    "Oil Return Checker"
+    "System Pressure Checker"
 ])
 st.sidebar.text("")
 st.sidebar.text("")
