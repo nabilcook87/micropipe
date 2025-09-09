@@ -430,7 +430,7 @@ elif tool_selection == "Oil Return Checker":
         elif refrigerant == "R22": MOR_correction = (0.000108153843367715 * MOR_correctliq) - 0.00329248681202757
         elif refrigerant == "R407C": MOR_correction = (0.00000420322918839302 * (max(MOR_correctliq, -32.0716410083429) ** 2)) + (0.000269608915211859 * max(MOR_correctliq, -32.0716410083429)) - 0.0134546663857195
         elif refrigerant == "R410A": MOR_correction = 0
-        elif refrigerant == "R407F": MOR_correction = (0.00000347332380289385 * (MOR_correctliq ** 2)) + (0.000239205332540693 * MOR_correctliq) - 0.0121545316131988
+        elif refrigerant == "R407F": MOR_correction = (0.00000347332380289385 * (max(MOR_correctliq, -34.4346433150568) ** 2)) + (0.000239205332540693 * max(MOR_correctliq, -34.4346433150568)) - 0.0121545316131988
         elif refrigerant == "R134a": MOR_correction = (0.000195224660107459 * MOR_correctliq) - 0.00591757011487048
         elif refrigerant == "R404A": MOR_correction = (0.0000156507169104918 * (MOR_correctliq ** 2)) + (0.000689621839324826 * MOR_correctliq) - 0.0392
         else: MOR_correction = (0.00000461020482461793 * (MOR_correctliq ** 2)) + (0.000217910548009675 * MOR_correctliq) - 0.012074621594626
@@ -445,7 +445,7 @@ elif tool_selection == "Oil Return Checker":
         elif refrigerant == "R22": MOR_correctionmin = (0.000108153843367715 * minliq_temp) - 0.00329248681202757
         elif refrigerant == "R407C": MOR_correctionmin = (0.00000420322918839302 * (max(minliq_temp, -32.0716410083429) ** 2)) + (0.000269608915211859 * max(minliq_temp, -32.0716410083429)) - 0.0134546663857195
         elif refrigerant == "R410A": MOR_correctionmin = 0
-        elif refrigerant == "R407F": MOR_correctionmin = (0.00000347332380289385 * (minliq_temp ** 2)) + (0.000239205332540693 * minliq_temp) - 0.0121545316131988
+        elif refrigerant == "R407F": MOR_correctionmin = (0.00000347332380289385 * (max(minliq_temp, -34.4346433150568) ** 2)) + (0.000239205332540693 * max(minliq_temp, -34.4346433150568)) - 0.0121545316131988
         elif refrigerant == "R134a": MOR_correctionmin = (0.000195224660107459 * minliq_temp) - 0.00591757011487048
         elif refrigerant == "R404A": MOR_correctionmin = (0.0000156507169104918 * (minliq_temp ** 2)) + (0.000689621839324826 * minliq_temp) - 0.0392
         else: MOR_correctionmin = (0.00000461020482461793 * (minliq_temp ** 2)) + (0.000217910548009675 * minliq_temp) - 0.012074621594626
