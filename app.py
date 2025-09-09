@@ -11,7 +11,6 @@ st.title("MicroPipe")
 # Sidebar for tools and settings
 st.sidebar.title("Tools & Utilities")
 tool_selection = st.sidebar.radio("Select Tool", [
-    "Pipe Network Builder",
     "Pressure ↔ Temperature Converter",
     "Pressure Drop ↔ Temperature Penalty",
     "System Pressure Checker",
