@@ -501,8 +501,10 @@ elif tool_selection == "Oil Return Checker":
     adjusted_duty_kw = evap_capacity_kw * (required_oil_duty_pct / 100.0)
     # st.write("adjusted_duty_kw:", adjusted_duty_kw)
 
+    density_recalc = mass_flow_kg_s / (velocity_m_s * area_m2)
+    
     # density for reynolds and col2 display needs density_super2 factoring in!
-    reynolds = (density * velocity_m_sfinal * ID_m) / 1
+    reynolds = (density_recalc * velocity_m_sfinal * ID_m) / 1
     
     st.subheader("Results")
 
@@ -513,7 +515,7 @@ elif tool_selection == "Oil Return Checker":
             st.metric("Refrigerant Velocity", f"{velocity_m_sfinal:.2f} m/s")
 
         with col2:
-            st.metric("Suction Density", f"{density:.2f} kg/m3")
+            st.metric("Suction Density", f"{density_recalc:.2f} kg/m3")
 
         with col3:
             if MORfinal == "":
