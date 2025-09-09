@@ -515,7 +515,7 @@ elif tool_selection == "Oil Return Checker":
             st.metric("Refrigerant Velocity", f"{velocity_m_sfinal:.2f} m/s")
 
         with col2:
-            st.metric("Suction Density", f"{density:.2f} kg/m3")
+            st.metric("Suction Density", f"{density_recalc:.2f} kg/m3")
 
         with col3:
             if MORfinal == "":
