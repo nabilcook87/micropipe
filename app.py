@@ -501,6 +501,7 @@ elif tool_selection == "Oil Return Checker":
     adjusted_duty_kw = evap_capacity_kw * (required_oil_duty_pct / 100.0)
     # st.write("adjusted_duty_kw:", adjusted_duty_kw)
 
+    # density for reynolds and col2 display needs density_super2 factoring in!
     reynolds = (density * velocity_m_sfinal * ID_m) / 1
     
     st.subheader("Results")
