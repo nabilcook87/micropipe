@@ -157,7 +157,7 @@ elif tool_selection == "Oil Return Checker":
     
     # 2. Filter pipe sizes for selected material
     material_df = pipe_data[pipe_data["Material"] == selected_material]
-    pipe_sizes = sorted(material_df["Nominal Size (inch)"].dropna().astype(str).unique())
+    pipe_sizes = material_df["Nominal Size (inch)"].dropna().astype(str).unique()
     
     with col1:
         selected_size = st.selectbox("Nominal Pipe Size (inch)", pipe_sizes)
