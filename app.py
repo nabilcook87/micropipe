@@ -574,7 +574,7 @@ elif tool_selection == "Oil Return Checker":
             st.metric("Pressure Drop", f"{dp:.1f} kPa")
 
         with col5:
-            st.metric("Temp Penalty", f"{dt:.1f} K")
+            st.metric("Temp Penalty", f"{dt:.2f} K")
 
     if isinstance(MORfinal, (int, float)):
         is_ok, message = (True, "✅ OK") if required_oil_duty_pct >= MORfinal else (False, "❌ Insufficient flow")
