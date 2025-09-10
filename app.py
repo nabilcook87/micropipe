@@ -515,6 +515,19 @@ elif tool_selection == "Oil Return Checker":
     
     # density for reynolds and col2 display needs density_super2 factoring in!
     reynolds = (density_recalc * velocity_m_sfinal * ID_m) / (viscosity_final / 1000000)
+
+    SR_CuAlStainless = 0.000005
+    SR_Steel = 0.00015
+    
+    if reynolds < 2000.0:
+        f = 64.0 / reynolds
+    else:
+        flo, fhi = 1e-5, 0.1
+        def balance(ff):
+            s = math.sqrt(ff)
+            lhs = 1.0 / s
+            rhs = -2.0 * math.log10((eps / (3.7 * ID_m)) + 2.51 / (reynolds * s))
+            return lhs, rhs
     
     st.subheader("Results")
 
