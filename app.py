@@ -550,6 +550,9 @@ elif tool_selection == "Oil Return Checker":
     
     dp = f * (L / ID_m) * (0.5 * density_recalc * velocity_m_sfinal * velocity_m_sfinal) / 1000
     
+    converter = PressureTemperatureConverter()
+    dt = converter.pressure_drop_to_temp_penalty(refrigerant, T_evap, dp)
+    
     st.subheader("Results")
 
     if velocity_m_sfinal:
@@ -569,6 +572,9 @@ elif tool_selection == "Oil Return Checker":
 
         with col4:
             st.metric("Pressure Drop", f"{dp:.1f} kPa")
+
+        with col5:
+            st.metric("Temp Penalty", f"{dt:.1f} K")
 
     if isinstance(MORfinal, (int, float)):
         is_ok, message = (True, "✅ OK") if required_oil_duty_pct >= MORfinal else (False, "❌ Insufficient flow")
