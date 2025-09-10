@@ -516,8 +516,13 @@ elif tool_selection == "Oil Return Checker":
     # density for reynolds and col2 display needs density_super2 factoring in!
     reynolds = (density_recalc * velocity_m_sfinal * ID_m) / (viscosity_final / 1000000)
 
-    SR_CuAlStainless = 0.000005
-    SR_Steel = 0.00015
+    if selected_material in ["Steel SCH40", "Steel SCH80"]:
+        eps = 0.00015
+    else:
+        eps = 0.000005
+
+    tol = 1e-5
+    max_iter = 60
     
     if reynolds < 2000.0:
         f = 64.0 / reynolds
@@ -528,6 +533,22 @@ elif tool_selection == "Oil Return Checker":
             lhs = 1.0 / s
             rhs = -2.0 * math.log10((eps / (3.7 * ID_m)) + 2.51 / (reynolds * s))
             return lhs, rhs
+
+        f = 0.5 * (flo + fhi)
+        for _ in range(max_iter):
+            f = 0.5 * (flo + fhi)
+            lhs, rhs = balance(f)
+            if abs(1.0 - lhs/rhs) < tol:
+                break
+            # decide side using sign of (lhs - rhs)
+            if (lhs - rhs) > 0.0:
+                flo = f
+            else:
+                fhi = f
+
+    L = 10
+    
+    dp = f * (L / ID_m) * (0.5 * density_recalc * velocity_m_sfinal * velocity_m_sfinal)
     
     st.subheader("Results")
 
@@ -547,7 +568,7 @@ elif tool_selection == "Oil Return Checker":
                 st.metric("MOR (%)", f"{MORfinal:.1f} %")
 
         with col4:
-            st.metric("Re", f"{reynolds:.1f}")
+            st.metric("Pressure Drop", f"{dp:.1f}")
 
     if isinstance(MORfinal, (int, float)):
         is_ok, message = (True, "✅ OK") if required_oil_duty_pct >= MORfinal else (False, "❌ Insufficient flow")
