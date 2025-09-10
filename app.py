@@ -548,7 +548,7 @@ elif tool_selection == "Oil Return Checker":
 
     L = 10
     
-    dp = f * (L / ID_m) * (0.5 * density_recalc * velocity_m_sfinal * velocity_m_sfinal)
+    dp = f * (L / ID_m) * (0.5 * density_recalc * velocity_m_sfinal * velocity_m_sfinal) / 1000
     
     st.subheader("Results")
 
@@ -568,7 +568,7 @@ elif tool_selection == "Oil Return Checker":
                 st.metric("MOR (%)", f"{MORfinal:.1f} %")
 
         with col4:
-            st.metric("Pressure Drop", f"{dp:.1f}")
+            st.metric("Pressure Drop", f"{dp:.1f} kPa")
 
     if isinstance(MORfinal, (int, float)):
         is_ok, message = (True, "✅ OK") if required_oil_duty_pct >= MORfinal else (False, "❌ Insufficient flow")
