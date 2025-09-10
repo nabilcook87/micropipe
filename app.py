@@ -514,7 +514,7 @@ elif tool_selection == "Oil Return Checker":
     viscosity_final = (viscosity * velocity1_prop) + (viscosity_super2 * (1 - velocity1_prop))
     
     # density for reynolds and col2 display needs density_super2 factoring in!
-    reynolds = (density_recalc * velocity_m_sfinal * ID_m) / viscosity_final
+    reynolds = (density_recalc * velocity_m_sfinal * ID_m) / (viscosity_final / 1000000)
     
     st.subheader("Results")
 
