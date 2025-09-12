@@ -290,7 +290,7 @@ elif tool_selection == "Oil Return Checker":
     st.write("h_foroil:", h_foroil)
     
     delta_h = h_evap - h_in
-    st.write("delta_h:", delta_h) for velocity
+    st.write("delta_h:", delta_h)
     delta_hmin = h_evap - h_inmin
     
     delta_h_foroil = h_foroil - h_inlet
