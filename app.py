@@ -274,67 +274,67 @@ elif tool_selection == "Oil Return Checker":
     # for velocity
     h_inmin = props.get_properties(refrigerant, minliq_temp)["enthalpy_liquid2"]
     h_inlet = props.get_properties(refrigerant, T_cond)["enthalpy_liquid"]
-    # st.write("h_inlet:", h_inlet)
+    st.write("h_inlet:", h_inlet)
     h_inletmin = props.get_properties(refrigerant, minliq_temp)["enthalpy_liquid"]
     h_evap = props.get_properties(refrigerant, T_evap)["enthalpy_vapor"]
-    # st.write("h_evap:", h_evap)
+    st.write("h_evap:", h_evap)
     h_10K = props.get_properties(refrigerant, T_evap)["enthalpy_super"]
-    # st.write("h_10K:", h_10K)
+    st.write("h_10K:", h_10K)
     hdiff_10K = h_10K - h_evap
-    # st.write("hdiff_10K:", hdiff_10K)
+    st.write("hdiff_10K:", hdiff_10K)
     hdiff_custom = hdiff_10K * min(max(superheat_K, 5), 30) / 10
-    # st.write("hdiff_custom:", hdiff_custom)
+    st.write("hdiff_custom:", hdiff_custom)
     h_super = h_evap + hdiff_custom
-    # st.write("h_super:", h_super)
+    st.write("h_super:", h_super)
     h_foroil = (h_evap + h_super) / 2
-    # st.write("h_foroil:", h_foroil)
+    st.write("h_foroil:", h_foroil)
     
     delta_h = h_evap - h_in
-    # st.write("delta_h:", delta_h) for velocity
+    st.write("delta_h:", delta_h) for velocity
     delta_hmin = h_evap - h_inmin
     
     delta_h_foroil = h_foroil - h_inlet
-    # st.write("delta_h_foroil:", delta_h_foroil)
+    st.write("delta_h_foroil:", delta_h_foroil)
     delta_h_foroilmin = h_foroil - h_inletmin
 
     mass_flow_kg_s = evap_capacity_kw / delta_h if delta_h > 0 else 0.01
-    # st.write("mass_flow_kg_s:", mass_flow_kg_s)
+    st.write("mass_flow_kg_s:", mass_flow_kg_s)
     mass_flow_kg_smin = evap_capacity_kw / delta_hmin if delta_hmin > 0 else 0.01
 
     mass_flow_foroil = evap_capacity_kw / delta_h_foroil if delta_h_foroil > 0 else 0.01
-    # st.write("mass_flow_foroil:", mass_flow_foroil)
+    st.write("mass_flow_foroil:", mass_flow_foroil)
     mass_flow_foroilmin = evap_capacity_kw / delta_h_foroilmin if delta_h_foroilmin > 0 else 0.01
 
     # Calculate velocity for transparency
     if ID_mm is not None:
         ID_m = ID_mm / 1000.0
-        # st.write("ID_mm:", ID_mm)
-        # st.write("ID_m:", ID_m)
+        st.write("ID_mm:", ID_mm)
+        st.write("ID_m:", ID_m)
         area_m2 = 3.1416 * (ID_m / 2) ** 2
-        # st.write("area_m2:", area_m2)
+        st.write("area_m2:", area_m2)
         density_super = RefrigerantDensities().get_density(refrigerant, T_evap - max_penalty + 273.15, superheat_K)
-        # st.write("density_super:", density_super)
+        st.write("density_super:", density_super)
         density_super2a = RefrigerantDensities().get_density(refrigerant, T_evap + 273.15, ((superheat_K + 5) / 2))
-        # st.write("density_super2a:", density_super2a)
+        st.write("density_super2a:", density_super2a)
         density_super2b = RefrigerantDensities().get_density(refrigerant, T_evap - max_penalty + 273.15, ((superheat_K + 5) / 2))
-        # st.write("density_super2b:", density_super2b)
+        st.write("density_super2b:", density_super2b)
         density_super2 = (density_super2a + density_super2b) / 2
-        # st.write("density_super2:", density_super2)
+        st.write("density_super2:", density_super2)
         density_super_foroil = RefrigerantDensities().get_density(refrigerant, T_evap + 273.15, min(max(superheat_K, 5), 30))
-        # st.write("density_super_foroil:", density_super_foroil)
+        st.write("density_super_foroil:", density_super_foroil)
         density_sat = RefrigerantProperties().get_properties(refrigerant, T_evap)["density_vapor"]
-        # st.write("density_sat:", density_sat)
+        st.write("density_sat:", density_sat)
         density_5K = RefrigerantDensities().get_density(refrigerant, T_evap + 273.15, 5)
-        # st.write("density_5K:", density_5K)
+        st.write("density_5K:", density_5K)
         density = (density_super + density_5K) / 2
-        # st.write("density:", density)
+        st.write("density:", density)
         density_foroil = (density_super_foroil + density_sat) / 2
-        # st.write("density_foroil:", density_foroil)
+        st.write("density_foroil:", density_foroil)
         velocity_m_s1 = mass_flow_kg_s / (area_m2 * density)
-        # st.write("velocity_m_s1:", velocity_m_s1)
+        st.write("velocity_m_s1:", velocity_m_s1)
         velocity_m_s1min = mass_flow_kg_smin / (area_m2 * density)
         velocity_m_s2 = mass_flow_kg_s / (area_m2 * density_super2)
-        # st.write("velocity_m_s2:", velocity_m_s2)
+        st.write("velocity_m_s2:", velocity_m_s2)
         velocity_m_s2min = mass_flow_kg_smin / (area_m2 * density_super2)
         if refrigerant == "R744": velocity1_prop = 1
         elif refrigerant == "R404A":
@@ -358,20 +358,20 @@ elif tool_selection == "Oil Return Checker":
             else: velocity1_prop = 0.769230769230769
         # if refrigerant == "R744": velocity1_prop = (-0.0142814388381874 * max(superheat_K, 5)) + 1.07140719419094
         # else: velocity1_prop = (-0.00280805561137312 * max(superheat_K, 5)) + 1.01404027805687
-        # st.write("velocity1_prop:", velocity1_prop)
+        st.write("velocity1_prop:", velocity1_prop)
         velocity_m_s = (velocity_m_s1 * velocity1_prop) + (velocity_m_s2 * (1 - velocity1_prop))
-        # st.write("velocity_m_s:", velocity_m_s)
+        st.write("velocity_m_s:", velocity_m_s)
         velocity_m_smin = (velocity_m_s1min * velocity1_prop) + (velocity_m_s2min * (1 - velocity1_prop))
         if refrigerant in ["R23", "R508B"]:
             oil_density_sat = (-0.853841209044878 * T_evap) + 999.190772536527
             oil_density_super = (-0.853841209044878 * (T_evap + min(max(superheat_K, 5), 30))) + 999.190772536527
         else:
             oil_density_sat = (-0.00356060606060549 * (T_evap ** 2)) - (0.957878787878808 * T_evap) + 963.595454545455
-            # st.write("oil_density_sat:", oil_density_sat)
+            st.write("oil_density_sat:", oil_density_sat)
             oil_density_super = (-0.00356060606060549 * ((T_evap + min(max(superheat_K, 5), 30)) ** 2)) - (0.957878787878808 * (T_evap + min(max(superheat_K, 5), 30))) + 963.595454545455
-            # st.write("oil_density_super:", oil_density_super)
+            st.write("oil_density_super:", oil_density_super)
         oil_density = (oil_density_sat + oil_density_super) / 2
-        # st.write("oil_density:", oil_density)
+        st.write("oil_density:", oil_density)
         
         if refrigerant == "R404A": jg_half = 0.860772464072673
         elif refrigerant == "R134a": jg_half = 0.869986729796935
@@ -402,14 +402,14 @@ elif tool_selection == "Oil Return Checker":
         elif refrigerant == "R32": jg_half = 0.875213309852597
         elif refrigerant == "R23": jg_half = 0.865673418568001
         elif refrigerant == "R508B": jg_half = 0.864305626845382
-        # st.write("jg_half:", jg_half)
+        st.write("jg_half:", jg_half)
         
         MinMassFlux = (jg_half ** 2) * ((density_foroil * 9.81 * ID_m * (oil_density - density_foroil)) ** 0.5)
-        # st.write("MinMassFluxy:", MinMassFlux)
+        st.write("MinMassFluxy:", MinMassFlux)
         MinMassFlow = MinMassFlux * area_m2
-        # st.write("MinMassFlow:", MinMassFlow)
+        st.write("MinMassFlow:", MinMassFlow)
         MOR_pre = (MinMassFlow / mass_flow_foroil) * 100
-        # st.write("MOR_pre:", MOR_pre)
+        st.write("MOR_pre:", MOR_pre)
         MOR_premin = (MinMassFlow / mass_flow_foroilmin) * 100
 
         if refrigerant in ["R23", "R508B"]:
@@ -420,7 +420,7 @@ elif tool_selection == "Oil Return Checker":
             evapoil = T_evap + 46.14
         else:
             evapoil = T_evap
-        # st.write("MOR_correctliq:", MOR_correctliq)
+        st.write("MOR_correctliq:", MOR_correctliq)
         if refrigerant == "R744": MOR_correction = (0.000225755013421421 * MOR_correctliq) - 0.00280879370374927
         elif refrigerant == "R407A": MOR_correction = (0.00000414431651323856 * (MOR_correctliq ** 2)) + (0.000381908525139781 * MOR_correctliq) - 0.0163450053041212
         elif refrigerant == "R449A": MOR_correction = (0.00000414431651323856 * (MOR_correctliq ** 2)) + (0.000381908525139781 * MOR_correctliq) - 0.0163450053041212
@@ -434,7 +434,7 @@ elif tool_selection == "Oil Return Checker":
         elif refrigerant == "R134a": MOR_correction = (0.000195224660107459 * MOR_correctliq) - 0.00591757011487048
         elif refrigerant == "R404A": MOR_correction = (0.0000156507169104918 * (max(MOR_correctliq, -22.031637377024) ** 2)) + (0.000689621839324826 * max(MOR_correctliq, -22.031637377024)) - 0.0392
         else: MOR_correction = (0.00000461020482461793 * (max(MOR_correctliq, -23.6334996273983) ** 2)) + (0.000217910548009675 * max(MOR_correctliq, -23.6334996273983)) - 0.012074621594626
-        # st.write("MOR_correction:", MOR_correction)
+        st.write("MOR_correction:", MOR_correction)
 
         if refrigerant == "R744": MOR_correctionmin = (0.000225755013421421 * minliq_temp) - 0.00280879370374927
         elif refrigerant == "R407A": MOR_correctionmin = (0.00000414431651323856 * (minliq_temp ** 2)) + (0.000381908525139781 * minliq_temp) - 0.0163450053041212
@@ -463,7 +463,7 @@ elif tool_selection == "Oil Return Checker":
         elif refrigerant == "R134a": MOR_correction2 = (-0.00000823045532174214 * (evapoil ** 2)) - (0.00108063672211041 * evapoil) - 0.0217411206961643
         elif refrigerant == "R404A": MOR_correction2 = (0.00000342378568620316 * (evapoil ** 2)) - (0.000329572335134041 * evapoil) - 0.00706087606597149
         else: MOR_correction2 = (-0.000711441807827186 * evapoil) - 0.0118194116436425
-        # st.write("MOR_correction2:", MOR_correction2)
+        st.write("MOR_correction2:", MOR_correction2)
         
         if refrigerant in ["R23", "R508B"]:
             if T_evap < -86:
@@ -491,7 +491,7 @@ elif tool_selection == "Oil Return Checker":
                 MOR = (1 - MOR_correction) * (1 - MOR_correction2) * MOR_pre
                 MORmin = (1 - MOR_correctionmin) * (1 - MOR_correction2) * MOR_premin
                 MORfinal = max(MOR, MORmin)
-        # st.write("MOR:", MOR)
+        st.write("MOR:", MOR)
         velocity_m_sfinal = max(velocity_m_s, velocity_m_smin)
     else:
         velocity_m_s = None
@@ -500,7 +500,7 @@ elif tool_selection == "Oil Return Checker":
 
     # Oil return check
     adjusted_duty_kw = evap_capacity_kw * (required_oil_duty_pct / 100.0)
-    # st.write("adjusted_duty_kw:", adjusted_duty_kw)
+    st.write("adjusted_duty_kw:", adjusted_duty_kw)
 
     density_recalc = mass_flow_kg_s / (velocity_m_s * area_m2)
 
