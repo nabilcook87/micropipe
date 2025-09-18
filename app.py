@@ -752,7 +752,8 @@ elif tool_selection == "Manual Calculation":
         MAC = st.number_input("Machine Bends", min_value=0, max_value=50, value=0, step=1)
 
     with col4:
-
+        MAC = st.number_input("Machine Bends", min_value=0, max_value=50, value=0, step=1)
+    
     from utils.refrigerant_properties import RefrigerantProperties
     from utils.refrigerant_densities import RefrigerantDensities
     from utils.refrigerant_viscosities import RefrigerantViscosities
