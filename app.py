@@ -748,7 +748,7 @@ elif tool_selection == "Manual Calculation":
         L = st.number_input("Pipe Length (m)", min_value=0.1, max_value=300.0, value=10.0, step=1.0)
         LRB = st.number_input("Long Radius Bends", min_value=0, max_value=50, value=0, step=1)
         SRB = st.number_input("Short Radius Bends", min_value=0, max_value=50, value=0, step=1)
-        _45 = st.number_input("45 Bends", min_value=0, max_value=50, value=0, step=1)
+        _45 = st.number_input("45° Bends", min_value=0, max_value=50, value=0, step=1)
         MAC = st.number_input("Machine Bends", min_value=0, max_value=50, value=0, step=1)
 
     with col4:
