@@ -585,25 +585,16 @@ elif tool_selection == "Oil Return Checker":
     st.subheader("Results")
 
     if velocity_m_sfinal:
-        col1, col2, col3, col4, col5 = st.columns(5)
+        col1, col2 = st.columns(2)
 
         with col1:
             st.metric("Refrigerant Velocity", f"{velocity_m_sfinal:.2f} m/s")
 
         with col2:
-            st.metric("Suction Density", f"{density_recalc:.2f} kg/m3")
-
-        with col3:
             if MORfinal == "":
                 st.metric("MOR (%)", "")
             else:
                 st.metric("MOR (%)", f"{MORfinal:.1f} %")
-
-        with col4:
-            st.metric("Pressure Drop", f"{dp:.1f} kPa")
-
-        with col5:
-            st.metric("Temp Penalty", f"{dt:.2f} K")
 
     if isinstance(MORfinal, (int, float)):
         is_ok, message = (True, "✅ OK") if required_oil_duty_pct >= MORfinal else (False, "❌ Insufficient flow")
