@@ -614,7 +614,7 @@ elif tool_selection == "Oil Return Checker":
 elif tool_selection == "Manual Calculation":
     st.subheader("Manual Calculation")
 
-    col1, col2 = st.columns(2)
+    col1, col2, col3, col4 = st.columns(4)
 
     with col1:
         refrigerant = st.selectbox("Refrigerant", [
@@ -743,6 +743,15 @@ elif tool_selection == "Manual Calculation":
         superheat_K = st.number_input("Superheat (K)", min_value=0.0, max_value=60.0, value=5.0, step=1.0)
         max_penalty = st.number_input("Max Penalty (K)", min_value=0.0, max_value=6.0, value=1.0, step=0.1)
         required_oil_duty_pct = st.number_input("Required Oil Return Duty (%)", min_value=0.0, max_value=100.0, value=100.0, step=5.0)
+
+    with col3:
+        L = st.number_input("Pipe Length (m)", min_value=0.1, max_value=300.0, value=10.0, step=1.0)
+        LRB = st.number_input("Long Radius Bends", min_value=0, max_value=50, value=0, step=1)
+        SRB = st.number_input("Short Radius Bends", min_value=0, max_value=50, value=0, step=1)
+        _45 = st.number_input("45 Bends", min_value=0, max_value=50, value=0, step=1)
+        MAC = st.number_input("Machine Bends", min_value=0, max_value=50, value=0, step=1)
+
+    with col4:
 
     from utils.refrigerant_properties import RefrigerantProperties
     from utils.refrigerant_densities import RefrigerantDensities
@@ -1055,8 +1064,6 @@ elif tool_selection == "Manual Calculation":
                 flo = f
             else:
                 fhi = f
-
-    L = 10
     
     dp = f * (L / ID_m) * (0.5 * density_recalc * velocity_m_sfinal * velocity_m_sfinal) / 1000
     #st.write("dp:", dp)
