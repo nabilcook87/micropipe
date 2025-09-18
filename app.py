@@ -752,7 +752,11 @@ elif tool_selection == "Manual Calculation":
         MAC = st.number_input("Machine Bends", min_value=0, max_value=50, value=0, step=1)
 
     with col4:
-        MAC = st.number_input("Machine Bends", min_value=0, max_value=50, value=0, step=1)
+        ptrap = st.number_input("P Traps", min_value=0, max_value=10, value=0, step=1)
+        ubend = st.number_input("U Bends", min_value=0, max_value=10, value=0, step=1)
+        ball = st.number_input("Ball Valves", min_value=0, max_value=20, value=0, step=1)
+        globe = st.number_input("Globe Valves", min_value=0, max_value=20, value=0, step=1)
+        PLF = st.number_input("Pressure Loss Factors", min_value=0.0, max_value=20.0, value=0.0, step=0.1)
     
     from utils.refrigerant_properties import RefrigerantProperties
     from utils.refrigerant_densities import RefrigerantDensities
