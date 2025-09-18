@@ -419,6 +419,9 @@ elif tool_selection == "Oil Return Checker":
         #st.write("MinMassFluxy:", MinMassFlux)
         MinMassFlow = MinMassFlux * area_m2
         #st.write("MinMassFlow:", MinMassFlow)
+        MinCap1 = delta_h_foroil * MinMassFlow
+        MinCap2 = delta_h_foroilmin * MinMassFlow
+        MinCap = max(MinCap1, MinCap2)
         MOR_pre = (MinMassFlow / mass_flow_foroil) * 100
         #st.write("MOR_pre:", MOR_pre)
         MOR_premin = (MinMassFlow / mass_flow_foroilmin) * 100
@@ -588,13 +591,16 @@ elif tool_selection == "Oil Return Checker":
         col1, col2 = st.columns(2)
 
         with col1:
-            st.metric("Refrigerant Velocity", f"{velocity_m_sfinal:.2f} m/s")
+            if MORfinal == "":
+                st.metric("Minimum Capacity", "")
+            else:                
+                st.metric("Minimum Capacity", f"{MinCap:.4f} kW")
 
         with col2:
             if MORfinal == "":
-                st.metric("MOR (%)", "")
+                st.metric("Minimum Oil Return", "")
             else:
-                st.metric("MOR (%)", f"{MORfinal:.1f} %")
+                st.metric("Minimum Oil Return", f"{MORfinal:.1f} %")
 
     if isinstance(MORfinal, (int, float)):
         is_ok, message = (True, "✅ OK") if required_oil_duty_pct >= MORfinal else (False, "❌ Insufficient flow")
