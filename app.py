@@ -419,9 +419,6 @@ elif tool_selection == "Oil Return Checker":
         #st.write("MinMassFluxy:", MinMassFlux)
         MinMassFlow = MinMassFlux * area_m2
         #st.write("MinMassFlow:", MinMassFlow)
-        MinCap1 = delta_h_foroil * MinMassFlow
-        MinCap2 = delta_h_foroilmin * MinMassFlow
-        MinCap = max(MinCap1, MinCap2)
         MOR_pre = (MinMassFlow / mass_flow_foroil) * 100
         #st.write("MOR_pre:", MOR_pre)
         MOR_premin = (MinMassFlow / mass_flow_foroilmin) * 100
@@ -587,6 +584,8 @@ elif tool_selection == "Oil Return Checker":
     
     st.subheader("Results")
 
+    MinCap = MORfinal * evap_capacity_kw / 100
+    
     if velocity_m_sfinal:
         col1, col2 = st.columns(2)
 
