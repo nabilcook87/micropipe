@@ -1078,6 +1078,7 @@ elif tool_selection == "Manual Calculation":
     PER_100_LENGTH_M = 30.48           # "per-100-ft" basis in metres
     BEND_SEED_M = 1.8288               # 6 ft per bend -> 1.8288 m per bend
 
+    converter = PressureTemperatureConverter()
     deltaP_allow_kpa = converter.temp_penalty_to_pressure_drop(refrigerant, T_evap, max_penalty)
     
     grad = deltaP_allow_kpa / L
