@@ -1082,7 +1082,11 @@ elif tool_selection == "Manual Calculation":
     
     grad = deltaP_allow_kpa / L
 
+    dppm = f * (1 / ID_m) * (0.5 * density_recalc * velocity_m_sfinal * velocity_m_sfinal) / 1000
+
     
+
+    bd_si = math.sqrt(grad / G_REF_KPA_PER_M) * (base_duty_si_kg_s / BMF)
     
     dp = f * (L / ID_m) * (0.5 * density_recalc * velocity_m_sfinal * velocity_m_sfinal) / 1000
     #st.write("dp:", dp)
