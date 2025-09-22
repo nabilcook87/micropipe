@@ -1171,7 +1171,7 @@ elif tool_selection == "Manual Calculation":
     st.subheader("Results")
 
     if velocity_m_sfinal:
-        col1, col2, col3, col4, col5 = st.columns(5)
+        col1, col2, col3, col4, col5, col6 = st.columns(6)
 
         with col1:
             st.metric("Refrigerant Velocity", f"{velocity_m_sfinal:.2f} m/s")
@@ -1190,6 +1190,9 @@ elif tool_selection == "Manual Calculation":
 
         with col5:
             st.metric("Temp Penalty", f"{dt:.2f} K")
+
+        with col6:
+            st.metric("dppm", f"{dppm:.1f} kPa")
 
     if isinstance(MORfinal, (int, float)):
         is_ok, message = (True, "✅ OK") if required_oil_duty_pct >= MORfinal else (False, "❌ Insufficient flow")
