@@ -1073,6 +1073,14 @@ elif tool_selection == "Manual Calculation":
     nobends = 1.0 * SRB + 0.5 * LRB + 0.5 * MAC + 2.0 * ubend + 3.0 * ptrap + (PLF / 0.2) + 0.5 * _45
 
     BMF = max(mass_flow_kg_s, mass_flow_kg_smin) / evap_capacity_kw
+
+    G_REF_KPA_PER_M = 1.0 / 30.48      # reference gradient = 1 kPa per 30.48 m  (≈ 0.0328084 kPa/m)
+    PER_100_LENGTH_M = 30.48           # "per-100-ft" basis in metres
+    BEND_SEED_M = 1.8288               # 6 ft per bend -> 1.8288 m per bend
+
+    deltaP_allow_kpa = 
+    
+    grad = deltaP_allow_kpa / L
     
     dp = f * (L / ID_m) * (0.5 * density_recalc * velocity_m_sfinal * velocity_m_sfinal) / 1000
     #st.write("dp:", dp)
