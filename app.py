@@ -1160,7 +1160,9 @@ elif tool_selection == "Manual Calculation":
         ff = fff
     dppm = ff * (1.0 / ID_m) * (0.5 * density_recalc * veldppm * veldppm) / 1000.0  # kPa/m
 
-    # bd_si = math.sqrt(grad / G_REF_KPA_PER_M) * (base_duty_si_kg_s / BMF)
+    base_duty_si_kg_s = mdot
+
+    bd_si = math.sqrt(grad / G_REF_KPA_PER_M) * (base_duty_si_kg_s / BMF)
     
     dp = f * (L / ID_m) * (0.5 * density_recalc * velocity_m_sfinal * velocity_m_sfinal) / 1000
     #st.write("dp:", dp)
@@ -1193,7 +1195,7 @@ elif tool_selection == "Manual Calculation":
             st.metric("Temp Penalty", f"{dt:.2f} K")
 
         with col6:
-            st.metric("mdot", f"{mdot:.4f} kg/s")
+            st.metric("bd_si", f"{bd_si:.4f} kg/s")
 
     if isinstance(MORfinal, (int, float)):
         is_ok, message = (True, "✅ OK") if required_oil_duty_pct >= MORfinal else (False, "❌ Insufficient flow")
