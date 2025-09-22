@@ -1072,7 +1072,7 @@ elif tool_selection == "Manual Calculation":
     
     nobends = 1.0 * SRB + 0.5 * LRB + 0.5 * MAC + 2.0 * ubend + 3.0 * ptrap + (PLF / 0.2) + 0.5 * _45
 
-    BMF = max(mass_flow_kg_s, mass_flow_kg_smin) / 
+    BMF = max(mass_flow_kg_s, mass_flow_kg_smin) / evap_capacity_kw
     
     dp = f * (L / ID_m) * (0.5 * density_recalc * velocity_m_sfinal * velocity_m_sfinal) / 1000
     #st.write("dp:", dp)
