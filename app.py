@@ -1074,7 +1074,7 @@ elif tool_selection == "Manual Calculation":
 
     BMF = max(mass_flow_kg_s, mass_flow_kg_smin) / evap_capacity_kw
 
-    G_REF_KPA_PER_M = 1.0 / 30.48      # reference gradient = 1 kPa per 30.48 m  (≈ 0.0328084 kPa/m)
+    G_REF_KPA_PER_M = 6.894757293168361 / 30.48      # reference gradient = 1 kPa per 30.48 m  (≈ 0.0328084 kPa/m)
     PER_100_LENGTH_M = 30.48           # "per-100-ft" basis in metres
     BEND_SEED_M = 1.8288               # 6 ft per bend -> 1.8288 m per bend
 
@@ -1082,9 +1082,82 @@ elif tool_selection == "Manual Calculation":
     
     grad = deltaP_allow_kpa / L
 
-    dppm = f * (1 / ID_m) * (0.5 * density_recalc * velocity_m_sfinal * velocity_m_sfinal) / 1000
+    mdot_lo = 0.0
+    mdot_hi = max(1e-9, density_recalc * area_m2 * 60.0)  # 60 m/s upper-velocity cap
 
-    
+    # ensure upper bound hits target
+    for _ in range(12):
+        veldppm = mdot_hi / (density_recalc * area_m2)
+        Re = density_recalc * veldppm * ID_m / (viscosity_final / 1000000)
+        if Re < 2000.0:
+            ff = 64.0 / Re
+        else:
+            hi = 0.1
+            lo = 0.001
+            for __ in range(40):
+                fff = 0.5 * (hi + lo)
+                lhs2 = 1.0 / (fff ** 0.5)
+                rhs2 = (-2.0) * (math.log(eps / (ID_m * 3.7) + 2.51 / (Re * (fff ** 0.5))) / 2.302585)
+                if abs(1.0 - (lhs2 / rhs2)) < 1.0e-5:
+                    break
+                if lhs2 > rhs2:
+                    lo = fff
+                else:
+                    hi = fff
+            ff = fff
+        dppm = ff * (1.0 / ID_m) * (0.5 * density_recalc * veldppm * veldppm) / 1000.0  # kPa/m
+        if dppm >= G_REF_KPA_PER_M:
+            break
+        mdot_hi *= 2.0
+
+    # bisection
+    for _ in range(80):
+        mdot = 0.5 * (mdot_lo + mdot_hi)
+        veldppm = mdot / (density_recalc * area_m2)
+        Re = density_recalc * veldppm * ID_m / (viscosity_final / 1000000)
+        if Re < 2000.0:
+            ff = 64.0 / Re
+        else:
+            hi = 0.1
+            lo = 0.001
+            for __ in range(40):
+                fff = 0.5 * (hi + lo)
+                lhs2 = 1.0 / (fff ** 0.5)
+                rhs2 = (-2.0) * (math.log(eps / (ID_m * 3.7) + 2.51 / (Re * (fff ** 0.5))) / 2.302585)
+                if abs(1.0 - (lhs2 / rhs2)) < 1.0e-5:
+                    break
+                if lhs2 > rhs2:
+                    lo = fff
+                else:
+                    hi = fff
+            ff = fff
+        dppm = ff * (1.0 / ID_m) * (0.5 * density_recalc * veldppm * veldppm) / 1000.0  # kPa/m
+        if dppm >= G_REF_KPA_PER_M:
+            mdot_hi = mdot
+        else:
+            mdot_lo = mdot
+
+    # final mdot and dppm at the solution
+    mdot = 0.5 * (mdot_lo + mdot_hi)
+    veldppm = mdot / (density_recalc * area_m2)
+    Re = density_recalc * veldppm * ID_m / (viscosity_final / 1000000)
+    if Re < 2000.0:
+        ff = 64.0 / Re
+    else:
+        hi = 0.1
+        lo = 0.001
+        for _ in range(40):
+            fff = 0.5 * (hi + lo)
+            lhs2 = 1.0 / (fff ** 0.5)
+            rhs2 = (-2.0) * (math.log(eps / (ID_m * 3.7) + 2.51 / (Re * (fff ** 0.5))) / 2.302585)
+            if abs(1.0 - (lhs2 / rhs2)) < 1.0e-5:
+                break
+            if lhs2 > rhs2:
+                lo = fff
+            else:
+                hi = fff
+        ff = fff
+    dppm = ff * (1.0 / ID_m) * (0.5 * density_recalc * veldppm * veldppm) / 1000.0  # kPa/m
 
     bd_si = math.sqrt(grad / G_REF_KPA_PER_M) * (base_duty_si_kg_s / BMF)
     
