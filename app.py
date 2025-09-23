@@ -1164,13 +1164,50 @@ elif tool_selection == "Manual Calculation":
 
     bd_si = math.sqrt(grad / G_REF_KPA_PER_M) * (base_duty_si_kg_s / BMF)
 
-    denom = 1 + L + nobends * BEND_SEED_M
+    import bisect
+    
+    BALL_K_CU = [0.51] * 16  # Ball valve K (dimensionless), constant across sizes
 
-    seed_A_si = bd_si * PER_100_LENGTH_M / denom
+    GLOBE_K_CU = [           # Globe valve K (dimensionless), by size index
+    97.0, 54.0, 37.0, 28.0, 23.0, 19.0, 15.0, 13.4,
+    12.0, 10.4, 9.00, 8.53, 8.35, 8.20, 7.43, 7.10
+    ]
+
+    GLOBE_EQ_FT_CU = [       # Globe valve equivalent length (feet), by size index
+    63.00, 67.00, 70.00, 72.00, 75.00, 78.00, 87.00, 102.0,
+    115.0, 141.0, 159.0, 185.0, 216.0, 248.0, 292.0, 346.0
+    ]
+
+    FT_TO_M = 0.3048
+
+    # 1) Build the family ID ladder (gauge-agnostic) for the selected material
+    family_df = pipe_data[pipe_data["Material"] == selected_material]
+    pipe_diams_m = sorted(set(family_df["ID_mm"].dropna().astype(float).tolist()))
+    pipe_diams_m = [d/1000.0 for d in pipe_diams_m]  # mm -> m (ascending)
 
     PDia = (evap_capacity_kw / seed_A_si) ** 0.377 * ID_m
 
-    # L_valves_m
+    i0 = bisect.bisect_right(pipe_diams_m, PDia)
+
+    VLoop = max(1, min(i0, 16))
+
+    def valve_eq_lengths_copper(VLoop: int):
+        """
+        Returns (L_eq_globe_m, L_eq_ball_m) for the given size index VLoop (1..16).
+        Clamps VLoop into range. Units: metres.
+        """
+        i = max(1, min(VLoop, len(GLOBE_EQ_FT_CU))) - 1  # 0-based
+        L_eq_gv_m = GLOBE_EQ_FT_CU[i] * FT_TO_M
+        ratio = BALL_K_CU[i] / GLOBE_K_CU[i]
+        L_eq_bv_m = ratio * L_eq_gv_m
+        return L_eq_gv_m, L_eq_bv_m
+
+    st.write("L_eq_gv_m:", L_eq_gv_m)
+    st.write("L_eq_bv_m:", L_eq_bv_m)
+    
+    denom = 1 + L + nobends * BEND_SEED_M
+
+    seed_A_si = bd_si * PER_100_LENGTH_M / denom
     
     dp = f * (L / ID_m) * (0.5 * density_recalc * velocity_m_sfinal * velocity_m_sfinal) / 1000
     #st.write("dp:", dp)
