@@ -1201,7 +1201,7 @@ elif tool_selection == "Manual Calculation":
         ratio = BALL_K_CU[i] / GLOBE_K_CU[i]
         L_eq_bv_m_new = ratio * L_eq_gv_m_new
 
-        L_valves_m_new = (locals().get('GV', 0) * L_eq_gv_m_new) + (locals().get('BV', 0) * L_eq_bv_m_new)
+        L_valves_m_new = (locals().get('globe', 0) * L_eq_gv_m_new) + (locals().get('ball', 0) * L_eq_bv_m_new)
 
         if abs(L_valves_m_new - L_valves_m) < 1e-9 and abs(L_eq_gv_m_new - L_eq_gv_m) < 1e-9:
             L_eq_gv_m = L_eq_gv_m_new
