@@ -1084,11 +1084,24 @@ elif tool_selection == "Manual Calculation":
     
     grad = deltaP_allow_kpa / L
 
-    # Build the family ladder (IDs in m) and take the FIRST rung as the reference
+    # --- replace your ladder build with this (gauge-agnostic; one rung per nominal) ---
+    from fractions import Fraction
+    def _nps_key(s: str) -> float:
+        s = str(s).replace('"','').replace('-', ' ').strip()
+        tot = Fraction(0,1)
+        for part in s.split(): tot += Fraction(part)
+        return float(tot)
+
     family_df = pipe_data[pipe_data["Material"] == selected_material].copy()
-    ladder_ids_m = sorted(set(family_df["ID_mm"].dropna().astype(float).tolist()))
-    ladder_ids_m = [x/1000.0 for x in ladder_ids_m]
-    REF_ID_m = min(ladder_ids_m)                     # PipeDiameter(1) in metres
+    ladder_df = (family_df.dropna(subset=["Nominal Size (inch)","ID_mm"])
+                 .assign(NPS=lambda d: d["Nominal Size (inch)"].astype(str),
+                         ID_mm=lambda d: d["ID_mm"].astype(float))
+                 .groupby("NPS", as_index=False)["ID_mm"].max())
+    ladder_df["nps_key"] = ladder_df["NPS"].apply(_nps_key)
+    ladder_df = ladder_df.sort_values("nps_key")
+    ladder_ids_m = (ladder_df["ID_mm"].values / 1000.0).tolist()  # strictly ascending, one per nominal
+
+    REF_ID_m = ladder_ids_m[0]                     # PipeDiameter(1) in metres
     ref_area_m2 = math.pi * (REF_ID_m/2.0)**2
 
     mdot_lo = 0.0
@@ -1196,9 +1209,11 @@ elif tool_selection == "Manual Calculation":
 
         PDia = (evap_capacity_kw / seed_A_si) ** 0.377 * REF_ID_m
         i0 = bisect.bisect_right(ladder_ids_m, PDia)
-        VLoop = max(1, min(i0, len(ladder_ids_m)))
+        VLoop = max(1, min(i0, len(ladder_ids_m)))     # 1..len(ladder_ids_m)
 
-        i = VLoop - 1
+        # map VLoop to the 16-entry tables (clamp)
+        i = min(VLoop - 1, len(GLOBE_EQ_FT_CU) - 1)
+
         L_eq_gv_m_new = GLOBE_EQ_FT_CU[i] * FT_TO_M
         ratio = BALL_K_CU[i] / GLOBE_K_CU[i]
         L_eq_bv_m_new = ratio * L_eq_gv_m_new
