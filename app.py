@@ -1242,7 +1242,7 @@ elif tool_selection == "Manual Calculation":
     A9 = -2.87795046923316E-07
     ValveEqLength = A0 + (A1 * VLoop) + (A2 * VLoop ** 2) + (A3 * VLoop ** 3) + (A4 * VLoop ** 4) + (A5 * VLoop ** 5) + (A6 * VLoop ** 6) + (A7 * VLoop ** 7) + (A8 * VLoop ** 8) + (A9 * VLoop ** 9)
 
-    L_eq_bend_per_m = ValveEqLength * 1.5 * 0.3048
+    L_eq_bend_per_m = ValveEqLength * 1.5
 
     CEPL_m = L + nobends * L_eq_bend_per_m + L_valves_m
     
