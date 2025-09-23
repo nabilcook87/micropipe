@@ -1168,6 +1168,8 @@ elif tool_selection == "Manual Calculation":
 
     seed_A_si = bd_si * PER_100_LENGTH_M / denom
 
+    PDia = (evap_capacity_kw / seed_A_si) ** 0.377 * ID_m
+
     # L_valves_m
     
     dp = f * (L / ID_m) * (0.5 * density_recalc * velocity_m_sfinal * velocity_m_sfinal) / 1000
