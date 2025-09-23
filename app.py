@@ -1215,8 +1215,8 @@ elif tool_selection == "Manual Calculation":
         L_eq_bv_m = L_eq_bv_m_new
         L_valves_m = L_valves_m_new
 
-    st.write("L_eq_gv_m:", L_eq_gv_m)
-    st.write("L_eq_bv_m:", L_eq_bv_m)
+    # st.write("L_eq_gv_m:", L_eq_gv_m)
+    # st.write("L_eq_bv_m:", L_eq_bv_m)
     
     dp = f * (L / ID_m) * (0.5 * density_recalc * velocity_m_sfinal * velocity_m_sfinal) / 1000
     #st.write("dp:", dp)
@@ -1228,7 +1228,7 @@ elif tool_selection == "Manual Calculation":
     st.subheader("Results")
 
     if velocity_m_sfinal:
-        col1, col2, col3, col4, col5, col6 = st.columns(6)
+        col1, col2, col3, col4, col5 = st.columns(5)
 
         with col1:
             st.metric("Refrigerant Velocity", f"{velocity_m_sfinal:.2f} m/s")
@@ -1248,7 +1248,7 @@ elif tool_selection == "Manual Calculation":
         with col5:
             st.metric("Temp Penalty", f"{dt:.2f} K")
 
-        with col6:
+        # with col6:
             st.metric("seed_A_si", f"{seed_A_si:.4f}")
 
     if isinstance(MORfinal, (int, float)):
