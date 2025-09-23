@@ -1186,7 +1186,7 @@ elif tool_selection == "Manual Calculation":
     # fixed-point loop to resolve seed_A_si, VLoop, and valve lengths
     L_eq_gv_m = 0.0
     L_eq_bv_m = 0.0
-    L_valves_m = (locals().get('globe', 0) * L_eq_gv_m) + (locals().get('ball', 0) * L_eq_bv_m)
+    L_valves_m = globe * L_eq_gv_m + ball * L_eq_bv_m
 
     for _ in range(20):
         denom = L + nobends * BEND_SEED_M + L_valves_m
@@ -1201,7 +1201,7 @@ elif tool_selection == "Manual Calculation":
         ratio = BALL_K_CU[i] / GLOBE_K_CU[i]
         L_eq_bv_m_new = ratio * L_eq_gv_m_new
 
-        L_valves_m_new = (locals().get('globe', 0) * L_eq_gv_m_new) + (locals().get('ball', 0) * L_eq_bv_m_new)
+        L_valves_m_new = globe * L_eq_gv_m_new + ball * L_eq_bv_m_new
 
         if abs(L_valves_m_new - L_valves_m) < 1e-9 and abs(L_eq_gv_m_new - L_eq_gv_m) < 1e-9:
             L_eq_gv_m = L_eq_gv_m_new
