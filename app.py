@@ -1164,20 +1164,17 @@ elif tool_selection == "Manual Calculation":
 
     bd_si = math.sqrt(grad / G_REF_KPA_PER_M) * (base_duty_si_kg_s / BMF)
 
-    import bisect
-    
+    # ---------------- valves + implicit A/VLoop resolution ----------------
+
     BALL_K_CU = [0.51] * 16  # Ball valve K (dimensionless), constant across sizes
-
     GLOBE_K_CU = [           # Globe valve K (dimensionless), by size index
-    97.0, 54.0, 37.0, 28.0, 23.0, 19.0, 15.0, 13.4,
-    12.0, 10.4, 9.00, 8.53, 8.35, 8.20, 7.43, 7.10
+        97.0, 54.0, 37.0, 28.0, 23.0, 19.0, 15.0, 13.4,
+        12.0, 10.4, 9.00, 8.53, 8.35, 8.20, 7.43, 7.10
     ]
-
     GLOBE_EQ_FT_CU = [       # Globe valve equivalent length (feet), by size index
-    63.00, 67.00, 70.00, 72.00, 75.00, 78.00, 87.00, 102.0,
-    115.0, 141.0, 159.0, 185.0, 216.0, 248.0, 292.0, 346.0
+        63.00, 67.00, 70.00, 72.00, 75.00, 78.00, 87.00, 102.0,
+        115.0, 141.0, 159.0, 185.0, 216.0, 248.0, 292.0, 346.0
     ]
-
     FT_TO_M = 0.3048
 
     # 1) Build the family ID ladder (gauge-agnostic) for the selected material
@@ -1185,20 +1182,35 @@ elif tool_selection == "Manual Calculation":
     pipe_diams_m = sorted(set(family_df["ID_mm"].dropna().astype(float).tolist()))
     pipe_diams_m = [d/1000.0 for d in pipe_diams_m]  # mm -> m (ascending)
 
-    denom = 1 + L + nobends * BEND_SEED_M
+    # fixed-point loop to resolve seed_A_si, VLoop, and valve lengths
+    L_eq_gv_m = 0.0
+    L_eq_bv_m = 0.0
+    L_valves_m = (locals().get('GV', 0) * L_eq_gv_m) + (locals().get('BV', 0) * L_eq_bv_m)
 
-    seed_A_si = bd_si * PER_100_LENGTH_M / denom
-    
-    PDia = (evap_capacity_kw / seed_A_si) ** 0.377 * ID_m
+    for _ in range(20):
+        denom = L + nobends * BEND_SEED_M + L_valves_m
+        seed_A_si = bd_si * PER_100_LENGTH_M / denom
 
-    i0 = bisect.bisect_right(pipe_diams_m, PDia)
+        PDia = (evap_capacity_kw / seed_A_si) ** 0.377 * ID_m
+        i0 = bisect.bisect_right(pipe_diams_m, PDia)
+        VLoop = max(1, min(i0, 16))
 
-    VLoop = max(1, min(i0, 16))
+        i = max(1, min(VLoop, len(GLOBE_EQ_FT_CU))) - 1  # 0-based
+        L_eq_gv_m_new = GLOBE_EQ_FT_CU[i] * FT_TO_M
+        ratio = BALL_K_CU[i] / GLOBE_K_CU[i]
+        L_eq_bv_m_new = ratio * L_eq_gv_m_new
 
-    i = max(1, min(VLoop, len(GLOBE_EQ_FT_CU))) - 1  # 0-based
-    L_eq_gv_m = GLOBE_EQ_FT_CU[i] * FT_TO_M
-    ratio = BALL_K_CU[i] / GLOBE_K_CU[i]
-    L_eq_bv_m = ratio * L_eq_gv_m
+        L_valves_m_new = (locals().get('GV', 0) * L_eq_gv_m_new) + (locals().get('BV', 0) * L_eq_bv_m_new)
+
+        if abs(L_valves_m_new - L_valves_m) < 1e-9 and abs(L_eq_gv_m_new - L_eq_gv_m) < 1e-9:
+            L_eq_gv_m = L_eq_gv_m_new
+            L_eq_bv_m = L_eq_bv_m_new
+            L_valves_m = L_valves_m_new
+            break
+
+        L_eq_gv_m = L_eq_gv_m_new
+        L_eq_bv_m = L_eq_bv_m_new
+        L_valves_m = L_valves_m_new
 
     st.write("L_eq_gv_m:", L_eq_gv_m)
     st.write("L_eq_bv_m:", L_eq_bv_m)
