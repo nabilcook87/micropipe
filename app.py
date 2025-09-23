@@ -1215,8 +1215,8 @@ elif tool_selection == "Manual Calculation":
         L_eq_bv_m = L_eq_bv_m_new
         L_valves_m = L_valves_m_new
 
-    # st.write("L_eq_gv_m:", L_eq_gv_m)
-    # st.write("L_eq_bv_m:", L_eq_bv_m)
+    st.write("L_eq_gv_m:", L_eq_gv_m)
+    st.write("L_eq_bv_m:", L_eq_bv_m)
     
     dp = f * (L / ID_m) * (0.5 * density_recalc * velocity_m_sfinal * velocity_m_sfinal) / 1000
     #st.write("dp:", dp)
@@ -1248,8 +1248,8 @@ elif tool_selection == "Manual Calculation":
         with col5:
             st.metric("Temp Penalty", f"{dt:.2f} K")
 
-        # with col6:
-            # st.metric("seed_A_si", f"{seed_A_si:.4f}")
+        with col6:
+            st.metric("seed_A_si", f"{seed_A_si:.4f}")
 
     if isinstance(MORfinal, (int, float)):
         is_ok, message = (True, "✅ OK") if required_oil_duty_pct >= MORfinal else (False, "❌ Insufficient flow")
