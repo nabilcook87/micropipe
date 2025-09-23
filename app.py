@@ -1166,6 +1166,8 @@ elif tool_selection == "Manual Calculation":
 
     denom = 1 + L + nobends * BEND_SEED_M
 
+    seed_A_si = bd_si * PER_100_LENGTH_M / denom
+
     # L_valves_m
     
     dp = f * (L / ID_m) * (0.5 * density_recalc * velocity_m_sfinal * velocity_m_sfinal) / 1000
@@ -1199,7 +1201,7 @@ elif tool_selection == "Manual Calculation":
             st.metric("Temp Penalty", f"{dt:.2f} K")
 
         with col6:
-            st.metric("denom", f"{denom:.4f}")
+            st.metric("seed_A_si", f"{seed_A_si:.4f}")
 
     if isinstance(MORfinal, (int, float)):
         is_ok, message = (True, "✅ OK") if required_oil_duty_pct >= MORfinal else (False, "❌ Insufficient flow")
