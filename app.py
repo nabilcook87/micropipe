@@ -1228,7 +1228,7 @@ elif tool_selection == "Manual Calculation":
     st.subheader("Results")
 
     if velocity_m_sfinal:
-        col1, col2, col3, col4, col5 = st.columns(5)
+        col1, col2, col3, col4, col5, col6 = st.columns(6)
 
         with col1:
             st.metric("Refrigerant Velocity", f"{velocity_m_sfinal:.2f} m/s")
