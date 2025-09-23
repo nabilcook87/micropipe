@@ -1195,16 +1195,10 @@ elif tool_selection == "Manual Calculation":
 
     VLoop = max(1, min(i0, 16))
 
-    def valve_eq_lengths_copper(VLoop: int):
-        """
-        Returns (L_eq_globe_m, L_eq_ball_m) for the given size index VLoop (1..16).
-        Clamps VLoop into range. Units: metres.
-        """
-        i = max(1, min(VLoop, len(GLOBE_EQ_FT_CU))) - 1  # 0-based
-        L_eq_gv_m = GLOBE_EQ_FT_CU[i] * FT_TO_M
-        ratio = BALL_K_CU[i] / GLOBE_K_CU[i]
-        L_eq_bv_m = ratio * L_eq_gv_m
-        return L_eq_gv_m, L_eq_bv_m
+    i = max(1, min(VLoop, len(GLOBE_EQ_FT_CU))) - 1  # 0-based
+    L_eq_gv_m = GLOBE_EQ_FT_CU[i] * FT_TO_M
+    ratio = BALL_K_CU[i] / GLOBE_K_CU[i]
+    L_eq_bv_m = ratio * L_eq_gv_m
 
     st.write("L_eq_gv_m:", L_eq_gv_m)
     st.write("L_eq_bv_m:", L_eq_bv_m)
