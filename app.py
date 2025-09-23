@@ -1230,10 +1230,23 @@ elif tool_selection == "Manual Calculation":
         L_eq_bv_m = L_eq_bv_m_new
         L_valves_m = L_valves_m_new
 
-    st.write("L_eq_gv_m:", L_eq_gv_m)
-    st.write("L_eq_bv_m:", L_eq_bv_m)
+    A0 = 2.12347298788624
+    A1 = -4.85814310093182
+    A2 = 4.88740490607543
+    A3 = -2.35842837967475
+    A4 = 0.644644548372169
+    A5 = -0.105854702656766
+    A6 = 1.06266889616511E-02
+    A7 = -6.36865201429949E-04
+    A8 = 2.08828884116467E-05
+    A9 = -2.87795046923316E-07
+    ValveEqLength = A0 + (A1 * VLoop) + (A2 * VLoop ** 2) + (A3 * VLoop ** 3) + (A4 * VLoop ** 4) + (A5 * VLoop ** 5) + (A6 * VLoop ** 6) + (A7 * VLoop ** 7) + (A8 * VLoop ** 8) + (A9 * VLoop ** 9)
+
+    L_eq_bend_per_m = ValveEqLength * 1.5 * 0.3048
+
+    CEPL_m = L + nobends * L_eq_bend_per_m + L_valves_m
     
-    dp = f * (L / ID_m) * (0.5 * density_recalc * velocity_m_sfinal * velocity_m_sfinal) / 1000
+    dp = f * (CEPL_m / ID_m) * (0.5 * density_recalc * velocity_m_sfinal * velocity_m_sfinal) / 1000
     #st.write("dp:", dp)
     
     converter = PressureTemperatureConverter()
