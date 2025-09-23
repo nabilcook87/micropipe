@@ -1185,6 +1185,10 @@ elif tool_selection == "Manual Calculation":
     pipe_diams_m = sorted(set(family_df["ID_mm"].dropna().astype(float).tolist()))
     pipe_diams_m = [d/1000.0 for d in pipe_diams_m]  # mm -> m (ascending)
 
+    denom = 1 + L + nobends * BEND_SEED_M
+
+    seed_A_si = bd_si * PER_100_LENGTH_M / denom
+    
     PDia = (evap_capacity_kw / seed_A_si) ** 0.377 * ID_m
 
     i0 = bisect.bisect_right(pipe_diams_m, PDia)
@@ -1204,10 +1208,6 @@ elif tool_selection == "Manual Calculation":
 
     st.write("L_eq_gv_m:", L_eq_gv_m)
     st.write("L_eq_bv_m:", L_eq_bv_m)
-    
-    denom = 1 + L + nobends * BEND_SEED_M
-
-    seed_A_si = bd_si * PER_100_LENGTH_M / denom
     
     dp = f * (L / ID_m) * (0.5 * density_recalc * velocity_m_sfinal * velocity_m_sfinal) / 1000
     #st.write("dp:", dp)
