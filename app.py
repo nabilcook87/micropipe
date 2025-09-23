@@ -1186,7 +1186,7 @@ elif tool_selection == "Manual Calculation":
     # fixed-point loop to resolve seed_A_si, VLoop, and valve lengths
     L_eq_gv_m = 0.0
     L_eq_bv_m = 0.0
-    L_valves_m = (locals().get('GV', 0) * L_eq_gv_m) + (locals().get('BV', 0) * L_eq_bv_m)
+    L_valves_m = (locals().get('globe', 0) * L_eq_gv_m) + (locals().get('ball', 0) * L_eq_bv_m)
 
     for _ in range(20):
         denom = L + nobends * BEND_SEED_M + L_valves_m
