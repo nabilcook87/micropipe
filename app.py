@@ -1249,7 +1249,7 @@ elif tool_selection == "Manual Calculation":
             st.metric("Temp Penalty", f"{dt:.2f} K")
 
         # with col6:
-            st.metric("seed_A_si", f"{seed_A_si:.4f}")
+            # st.metric("seed_A_si", f"{seed_A_si:.4f}")
 
     if isinstance(MORfinal, (int, float)):
         is_ok, message = (True, "✅ OK") if required_oil_duty_pct >= MORfinal else (False, "❌ Insufficient flow")
