@@ -1018,6 +1018,8 @@ elif tool_selection == "Manual Calculation":
     dp_pipe_kPa = f * (L / ID_m) * q_kPa
     
     dp_plf_kPa = q_kPa * PLF
+
+    dp_items_kPa = 0
     
     dp_total_kPa = dp_pipe_kPa + dp_items_kPa + dp_plf_kPa
     
@@ -1028,7 +1030,7 @@ elif tool_selection == "Manual Calculation":
     st.subheader("Results")
 
     if velocity_m_sfinal:
-        col1, col2, col3, col4, col5, col6 = st.columns(6)
+        col1, col2, col3, col4, col5 = st.columns(5)
 
         with col1:
             st.metric("Refrigerant Velocity", f"{velocity_m_sfinal:.2f} m/s")
@@ -1047,9 +1049,6 @@ elif tool_selection == "Manual Calculation":
 
         with col5:
             st.metric("Temp Penalty", f"{dt:.2f} K")
-
-        with col6:
-            st.metric("seed_A_si", f"{seed_A_si:.4f}")
 
     if isinstance(MORfinal, (int, float)):
         is_ok, message = (True, "✅ OK") if required_oil_duty_pct >= MORfinal else (False, "❌ Insufficient flow")
