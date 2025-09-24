@@ -998,28 +998,32 @@ elif tool_selection == "Manual Calculation":
         for part in s.split(): tot += Fraction(part)
         return float(tot)
 
+    NPS_ORDER = [
+    '1/4', '3/8', '1/2', '5/8', '3/4', '7/8',
+    '1-1/8', '1-3/8', '1-5/8', '2-1/8', '2-5/8',
+    '3-1/8', '3-5/8', '4-1/8', '5-1/8', '6-1/8'
+    ]
+    
     family_df = pipe_data[pipe_data["Material"] == selected_material].copy()
-    ladder_df = (family_df.dropna(subset=["Nominal Size (inch)","ID_mm"])
+    # pick one row per NPS in the CSV order above
+    nom_map = (family_df.dropna(subset=["Nominal Size (inch)", "Nominal Size (mm)"])
+                        .assign(NPS_in=lambda d: d["Nominal Size (inch)"].astype(str),
+                                NPS_mm=lambda d: d["Nominal Size (mm)"].astype(float))
+                        .groupby("NPS_in", as_index=False)["NPS_mm"].min())
+
+    # strictly follow the 16-size order; drop missing if any
+    nom_ladder = [float(nom_map.loc[nom_map["NPS_in"] == n, "NPS_mm"].iloc[0])
+                  for n in NPS_ORDER if n in set(nom_map["NPS_in"])]
+    nom_ladder_mm  = nom_ladder[:16]
+    nom_ladder_nps = [n for n in NPS_ORDER if n in set(nom_map["NPS_in"])][:16]
+
+    # REF_ID_m: smallest ID (baseline for PDia law)
+    ladder_df = (family_df.dropna(subset=["Nominal Size (inch)", "ID_mm"])
                  .assign(NPS=lambda d: d["Nominal Size (inch)"].astype(str),
                          ID_mm=lambda d: d["ID_mm"].astype(float))
                  .groupby("NPS", as_index=False)["ID_mm"].max())
-    ladder_df["nps_key"] = ladder_df["NPS"].apply(_nps_key)
-    ladder_df = ladder_df.sort_values("nps_key")
 
-    REF_ID_m = float(ladder_df["ID_mm"].iloc[0]) / 1000.0   # PipeDiameter(1) in metres
-    ref_area_m2 = math.pi * (REF_ID_m/2.0)**2
-
-    # CHANGE: build grouped views by nominal OD (CSV 'Nominal Size (mm)') for VLoop, and by ID for gauges
-    grp = (family_df.dropna(subset=["Nominal Size (inch)", "Nominal Size (mm)", "ID_mm"])
-           .assign(NPS_in=lambda d: d["Nominal Size (inch)"].astype(str),
-                   NPS_mm=lambda d: d["Nominal Size (mm)"].astype(float),
-                   ID_mm=lambda d: d["ID_mm"].astype(float)))
-    nominals = (grp[["NPS_in","NPS_mm"]]
-                .drop_duplicates()
-                .sort_values("NPS_mm")
-                .reset_index(drop=True))
-    nom_ladder_mm  = nominals["NPS_mm"].tolist()   # OD ladder in mm (ascending)
-    nom_ladder_nps = nominals["NPS_in"].tolist()   # matching nominal (inch) strings
+    REF_ID_m = float(ladder_df["ID_mm"].min()) / 1000.0   # baseline ID for PDia
 
     mdot_lo = 0.0
     mdot_hi = max(1e-9, density_recalc * ref_area_m2 * 60.0)  # 60 m/s upper-velocity cap
@@ -1109,76 +1113,59 @@ elif tool_selection == "Manual Calculation":
 
     # ---------------- valves + implicit A/VLoop resolution ----------------
 
-    BALL_K_CU = 0.51  # Ball valve K (dimensionless), constant across sizes
-    GLOBE_K_CU = [           # Globe valve K (dimensionless), by size index
-        97.0, 54.0, 37.0, 28.0, 23.0, 19.0, 15.0, 13.4,
-        12.0, 10.4, 9.00, 8.53, 8.35, 8.20, 7.43, 7.10
-    ]
-    GLOBE_EQ_FT_CU = [       # Globe valve equivalent length (feet), by size index
-        63.00, 67.00, 70.00, 72.00, 75.00, 78.00, 87.00, 102.0,
-        115.0, 141.0, 159.0, 185.0, 216.0, 248.0, 292.0, 346.0
-    ]
-    FT_TO_M = 0.3048
+    # valve equivalent lengths this rung
+    GLOBE_EQ_FT_CU = [63.00,67.00,70.00,72.00,75.00,78.00,87.00,102.0,
+                      115.0,141.0,159.0,185.0,216.0,248.0,292.0,346.0]
+    globe_le = GLOBE_EQ_FT_CU[i] * 0.3048
+    ratio    = 0.51 / [97.0,54.0,37.0,28.0,23.0,19.0,15.0,13.4,12.0,10.4,9.0,8.53,8.35,8.20,7.43,7.10][i]
+    ball_le  = ratio * globe_le
 
-    # fixed-point loop to resolve seed_A_si, VLoop, and valve lengths
+    # in the valve fixed-point loop
     L_eq_gv_m = 0.0
     L_eq_bv_m = 0.0
     L_valves_m = globe * L_eq_gv_m + ball * L_eq_bv_m
-    
-    for _ in range(20):
-        denom = L + nobends * BEND_SEED_M + L_valves_m
-        seed_A_si = bd_si * PER_100_LENGTH_M / denom
 
-        PDia = (evap_capacity_kw / seed_A_si) ** 0.377 * ID_m
+    for _ in range(20):
+        # PDia from baseline ID (keep)
+        PDia = (evap_capacity_kw / seed_A_si) ** 0.377 * REF_ID_m   # <= baseline, not ID_m
         PDia_mm = PDia * 1000.0
+
+        # VLoop by OD ladder (first nominal OD > PDia)
         i0 = bisect.bisect_right(nom_ladder_mm, PDia_mm)
         VLoop = max(1, min(i0, 16))
+        i = VLoop - 1
 
-        # CHANGE: within that nominal, pick the FIRST gauge whose ID_mm > PDia (associated ID)
-        nom_idx = min(max(i0-1, 0), len(nom_ladder_nps)-1)          # guard bounds
-        sel_nom = nom_ladder_nps[nom_idx]
-        gauges_nom = grp[grp["NPS_in"] == sel_nom].sort_values("ID_mm")
-        cand = gauges_nom[gauges_nom["ID_mm"] > PDia_mm].head(1)
-        if cand.empty:
-            # fallback: largest gauge in this nominal
-            assoc_ID_mm = float(gauges_nom["ID_mm"].max())
-            assoc_ID_m = assoc_ID_mm / 1000.0
-        else:
-            assoc_ID_mm = float(cand.iloc[0]["ID_mm"])
-            assoc_ID_m = assoc_ID_mm / 1000.0
+        A0 = 2.12347298788624
+        A1 = -4.85814310093182
+        A2 = 4.88740490607543
+        A3 = -2.35842837967475
+        A4 = 0.644644548372169
+        A5 = -0.105854702656766
+        A6 = 1.06266889616511E-02
+        A7 = -6.36865201429949E-04
+        A8 = 2.08828884116467E-05
+        A9 = -2.87795046923316E-07
+        ValveEqLength = A0 + (A1 * VLoop) + (A2 * VLoop ** 2) + (A3 * VLoop ** 3) + (A4 * VLoop ** 4) + (A5 * VLoop ** 5) + (A6 * VLoop ** 6) + (A7 * VLoop ** 7) + (A8 * VLoop ** 8) + (A9 * VLoop ** 9)
 
-        # map VLoop to the 16-entry tables (clamp)
-        i = min(VLoop - 1, len(GLOBE_EQ_FT_CU) - 1)
-
-        L_eq_gv_m_new = GLOBE_EQ_FT_CU[i] * FT_TO_M
-        ratio = BALL_K_CU / GLOBE_K_CU[i]
-        L_eq_bv_m_new = ratio * L_eq_gv_m_new
-
-        L_valves_m_new = globe * L_eq_gv_m_new + ball * L_eq_bv_m_new
+        L_eq_bend_per_m = ValveEqLength * 1.5 * 0.3048
         
-        if abs(L_valves_m_new - L_valves_m) < 1e-9 and VLoop == (i + 1):
+        L_eq_gv_m_new = globe_le
+        L_eq_bv_m_new = ball_le
+
+        # update denom with THIS rung's bend length
+        denom = L + nobends * L_eq_bend_per_m + (globe * L_eq_gv_m_new + ball * L_eq_bv_m_new)
+        seed_A_si = bd_si * PER_100_LENGTH_M / denom
+
+        # convergence on both valves and rung
+        if (abs((globe * L_eq_gv_m_new + ball * L_eq_bv_m_new) - L_valves_m) < 1e-9):
             L_eq_gv_m = L_eq_gv_m_new
             L_eq_bv_m = L_eq_bv_m_new
-            L_valves_m = L_valves_m_new
+            L_valves_m = globe * L_eq_gv_m + ball * L_eq_bv_m
             break
 
         L_eq_gv_m = L_eq_gv_m_new
         L_eq_bv_m = L_eq_bv_m_new
-        L_valves_m = L_valves_m_new
-
-    A0 = 2.12347298788624
-    A1 = -4.85814310093182
-    A2 = 4.88740490607543
-    A3 = -2.35842837967475
-    A4 = 0.644644548372169
-    A5 = -0.105854702656766
-    A6 = 1.06266889616511E-02
-    A7 = -6.36865201429949E-04
-    A8 = 2.08828884116467E-05
-    A9 = -2.87795046923316E-07
-    ValveEqLength = A0 + (A1 * VLoop) + (A2 * VLoop ** 2) + (A3 * VLoop ** 3) + (A4 * VLoop ** 4) + (A5 * VLoop ** 5) + (A6 * VLoop ** 6) + (A7 * VLoop ** 7) + (A8 * VLoop ** 8) + (A9 * VLoop ** 9)
-
-    L_eq_bend_per_m = ValveEqLength * 1.5 * 0.3048
+        L_valves_m = globe * L_eq_gv_m + ball * L_eq_bv_m
 
     CEPL_m = L + nobends * L_eq_bend_per_m + L_valves_m
 
