@@ -1024,7 +1024,7 @@ elif tool_selection == "Manual Calculation":
     dp_total_kPa = dp_pipe_kPa + dp_items_kPa + dp_plf_kPa
     
     converter = PressureTemperatureConverter()
-    dt = converter.pressure_drop_to_temp_penalty(refrigerant, T_evap, dp)
+    dt = converter.pressure_drop_to_temp_penalty(refrigerant, T_evap, dp_total_kPa)
     #st.write("dt:", dt)
     
     st.subheader("Results")
