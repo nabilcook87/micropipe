@@ -1113,61 +1113,83 @@ elif tool_selection == "Manual Calculation":
     bd_si = math.sqrt(grad / G_REF_KPA_PER_M) * (base_duty_si_kg_s / BMF)
 
     # ---------------- valves + implicit A/VLoop resolution ----------------
+    # constants (do not index these until VLoop/i is known)
+    BALL_K_CU = 0.51
+    GLOBE_K_CU = [
+        97.0, 54.0, 37.0, 28.0, 23.0, 19.0, 15.0, 13.4,
+        12.0, 10.4, 9.00, 8.53, 8.35, 8.20, 7.43, 7.10
+    ]
+    GLOBE_EQ_FT_CU = [
+        63.00, 67.00, 70.00, 72.00, 75.00, 78.00, 87.00, 102.0,
+        115.0, 141.0, 159.0, 185.0, 216.0, 248.0, 292.0, 346.0
+    ]
+    FT_TO_M = 0.3048
 
-    # valve equivalent lengths this rung
-    GLOBE_EQ_FT_CU = [63.00,67.00,70.00,72.00,75.00,78.00,87.00,102.0,
-                      115.0,141.0,159.0,185.0,216.0,248.0,292.0,346.0]
-    globe_le = GLOBE_EQ_FT_CU[i] * 0.3048
-    ratio    = 0.51 / [97.0,54.0,37.0,28.0,23.0,19.0,15.0,13.4,12.0,10.4,9.0,8.53,8.35,8.20,7.43,7.10][i]
-    ball_le  = ratio * globe_le
-
-    # in the valve fixed-point loop
+    # seed values for the fixed-point iteration
     L_eq_gv_m = 0.0
     L_eq_bv_m = 0.0
-    L_valves_m = globe * L_eq_gv_m + ball * L_eq_bv_m
+    L_valves_m = 0.0
+    L_eq_bend_per_m = BEND_SEED_M  # start with your 6 ft/bend seed
+    seed_A_si = float("nan")       # so it's defined if the loop breaks oddly
 
-    for _ in range(20):
-        # PDia from baseline ID (keep)
-        PDia = (evap_capacity_kw / seed_A_si) ** 0.377 * REF_ID_m   # <= baseline, not ID_m
-        PDia_mm = PDia * 1000.0
+    # polynomial for ValveEqLength(VLoop)
+    A0 = 2.12347298788624
+    A1 = -4.85814310093182
+    A2 = 4.88740490607543
+    A3 = -2.35842837967475
+    A4 = 0.644644548372169
+    A5 = -0.105854702656766
+    A6 = 1.06266889616511E-02
+    A7 = -6.36865201429949E-04
+    A8 = 2.08828884116467E-05
+    A9 = -2.87795046923316E-07
 
-        # VLoop by OD ladder (first nominal OD > PDia)
-        i0 = bisect.bisect_right(nom_ladder_mm, PDia_mm)
-        VLoop = max(1, min(i0, 16))
-        i = VLoop - 1
-
-        A0 = 2.12347298788624
-        A1 = -4.85814310093182
-        A2 = 4.88740490607543
-        A3 = -2.35842837967475
-        A4 = 0.644644548372169
-        A5 = -0.105854702656766
-        A6 = 1.06266889616511E-02
-        A7 = -6.36865201429949E-04
-        A8 = 2.08828884116467E-05
-        A9 = -2.87795046923316E-07
-        ValveEqLength = A0 + (A1 * VLoop) + (A2 * VLoop ** 2) + (A3 * VLoop ** 3) + (A4 * VLoop ** 4) + (A5 * VLoop ** 5) + (A6 * VLoop ** 6) + (A7 * VLoop ** 7) + (A8 * VLoop ** 8) + (A9 * VLoop ** 9)
-
-        L_eq_bend_per_m = ValveEqLength * 1.5 * 0.3048
-        
-        L_eq_gv_m_new = globe_le
-        L_eq_bv_m_new = ball_le
-
-        # update denom with THIS rung's bend length
-        denom = L + nobends * L_eq_bend_per_m + (globe * L_eq_gv_m_new + ball * L_eq_bv_m_new)
+    for _ in range(30):
+        # 1) compute seed area/gradient with previous lengths
+        denom = L + nobends * L_eq_bend_per_m + L_valves_m
         seed_A_si = bd_si * PER_100_LENGTH_M / denom
 
-        # convergence on both valves and rung
-        if (abs((globe * L_eq_gv_m_new + ball * L_eq_bv_m_new) - L_valves_m) < 1e-9):
+        # 2) PDia from baseline ID (keep it on REF_ID_m)
+        PDia = (evap_capacity_kw / seed_A_si) ** 0.377 * REF_ID_m
+        PDia_mm = PDia * 1000.0
+
+        # 3) choose rung by OD ladder
+        if not nom_ladder_mm:
+            st.error("No nominal OD data found for the selected material.")
+            st.stop()
+        i0 = bisect.bisect_right(nom_ladder_mm, PDia_mm)
+        VLoop = max(1, min(i0, 16))
+        i = VLoop - 1  # 0-based index into the 16-entry tables
+
+        # 4) per-rung valve equivalent lengths
+        globe_le = GLOBE_EQ_FT_CU[i] * FT_TO_M
+        ratio    = BALL_K_CU / GLOBE_K_CU[i]
+        L_eq_gv_m_new = globe_le
+        L_eq_bv_m_new = ratio * globe_le
+        L_valves_m_new = globe * L_eq_gv_m_new + ball * L_eq_bv_m_new
+
+        # 5) per-rung bend equivalent length (your polynomial)
+        ValveEqLength = (A0 + A1*VLoop + A2*(VLoop**2) + A3*(VLoop**3) +
+                         A4*(VLoop**4) + A5*(VLoop**5) + A6*(VLoop**6) +
+                         A7*(VLoop**7) + A8*(VLoop**8) + A9*(VLoop**9))
+        L_eq_bend_per_m_new = ValveEqLength * 1.5 * FT_TO_M
+
+        # 6) check convergence on both valves and bend length
+        if (abs(L_valves_m_new - L_valves_m) < 1e-9 and
+            abs(L_eq_bend_per_m_new - L_eq_bend_per_m) < 1e-9):
             L_eq_gv_m = L_eq_gv_m_new
             L_eq_bv_m = L_eq_bv_m_new
-            L_valves_m = globe * L_eq_gv_m + ball * L_eq_bv_m
+            L_valves_m = L_valves_m_new
+            L_eq_bend_per_m = L_eq_bend_per_m_new
             break
 
-        L_eq_gv_m = L_eq_gv_m_new
-        L_eq_bv_m = L_eq_bv_m_new
-        L_valves_m = globe * L_eq_gv_m + ball * L_eq_bv_m
+        # 7) update and iterate
+        L_eq_gv_m       = L_eq_gv_m_new
+        L_eq_bv_m       = L_eq_bv_m_new
+        L_valves_m      = L_valves_m_new
+        L_eq_bend_per_m = L_eq_bend_per_m_new
 
+    # final combined equivalent length
     CEPL_m = L + nobends * L_eq_bend_per_m + L_valves_m
 
     # density for reynolds and col2 display needs density_super2 factoring in!
