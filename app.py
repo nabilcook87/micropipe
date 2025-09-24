@@ -1019,7 +1019,37 @@ elif tool_selection == "Manual Calculation":
     
     dp_plf_kPa = q_kPa * PLF
 
-    dp_items_kPa = 0
+    def get_k_factors_from_row(selected_pipe_row, strict=True):
+
+        required_cols = ["SRB", "LRB", "BALL", "GLOBE"]
+        missing = [c for c in required_cols if c not in selected_pipe_row.index]
+        if missing:
+            st.error(f"CSV missing required K columns: {missing}")
+            st.stop()
+
+        # Convert to floats and check NaNs
+        try:
+            K_SRB  = float(selected_pipe_row["SRB"])
+            K_LRB  = float(selected_pipe_row["LRB"])
+            K_BALL = float(selected_pipe_row["BALL"])
+            K_GLOBE= float(selected_pipe_row["GLOBE"])
+        except Exception as e:
+            st.error(f"Failed to parse K-factors as numbers: {e}")
+            st.stop()
+
+        if any(pd.isna([K_SRB, K_LRB, K_BALL, K_GLOBE])):
+            st.error("One or more K-factors are NaN in the CSV row.")
+            st.stop()
+    
+    B_SRB = SRB + 0.5 * _45 + 2.0 * ubend + 3.0 * ptrap
+    B_LRB = LRB + MAC
+
+    dp_items_kPa = q_kPa * (
+    K_SRB   * B_SRB +
+    K_LRB   * B_LRB +
+    K_BALL  * ball +
+    K_GLOBE * globe
+    )
     
     dp_total_kPa = dp_pipe_kPa + dp_items_kPa + dp_plf_kPa
     
