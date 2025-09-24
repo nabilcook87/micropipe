@@ -1129,7 +1129,7 @@ elif tool_selection == "Manual Calculation":
         denom = L + nobends * BEND_SEED_M + L_valves_m
         seed_A_si = bd_si * PER_100_LENGTH_M / denom
 
-        PDia = (evap_capacity_kw / seed_A_si) ** 0.377 * REF_ID_m
+        PDia = (evap_capacity_kw / seed_A_si) ** 0.377 * ID_m
         PDia_mm = PDia * 1000.0
         i0 = bisect.bisect_right(nom_ladder_mm, PDia_mm)
         VLoop = max(1, min(i0, 16))
