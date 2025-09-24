@@ -1213,8 +1213,6 @@ elif tool_selection == "Manual Calculation":
     L_eq_gv_m = 0.0
     L_eq_bv_m = 0.0
     L_valves_m = globe * L_eq_gv_m + ball * L_eq_bv_m
-
-    assoc_ID_m = ID_m
     
     for _ in range(20):
         denom = L + nobends * BEND_SEED_M + L_valves_m
@@ -1233,6 +1231,7 @@ elif tool_selection == "Manual Calculation":
         if cand.empty:
             # fallback: largest gauge in this nominal
             assoc_ID_mm = float(gauges_nom["ID_mm"].max())
+            assoc_ID_m = assoc_ID_mm / 1000.0
         else:
             assoc_ID_mm = float(cand.iloc[0]["ID_mm"])
             assoc_ID_m = assoc_ID_mm / 1000.0
