@@ -1024,6 +1024,7 @@ elif tool_selection == "Manual Calculation":
                  .groupby("NPS", as_index=False)["ID_mm"].max())
 
     REF_ID_m = float(ladder_df["ID_mm"].min()) / 1000.0   # baseline ID for PDia
+    ref_area_m2 = math.pi * (REF_ID_m/2.0)**2
 
     mdot_lo = 0.0
     mdot_hi = max(1e-9, density_recalc * ref_area_m2 * 60.0)  # 60 m/s upper-velocity cap
