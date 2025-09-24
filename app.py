@@ -522,66 +522,6 @@ elif tool_selection == "Oil Return Checker":
 
     density_recalc = mass_flow_kg_s / (velocity_m_s * area_m2)
     #st.write("density_recalc:", density_recalc)
-
-    viscosity_super = RefrigerantViscosities().get_viscosity(refrigerant, T_evap - max_penalty + 273.15, superheat_K)
-    #st.write("viscosity_super:", viscosity_super)
-    viscosity_super2a = RefrigerantViscosities().get_viscosity(refrigerant, T_evap + 273.15, ((superheat_K + 5) / 2))
-    #st.write("viscosity_super2a:", viscosity_super2a)
-    viscosity_super2b = RefrigerantViscosities().get_viscosity(refrigerant, T_evap - max_penalty + 273.15, ((superheat_K + 5) / 2))
-    #st.write("viscosity_super2b:", viscosity_super2b)
-    viscosity_super2 = (viscosity_super2a + viscosity_super2b) / 2
-    #st.write("viscosity_super2:", viscosity_super2)
-    viscosity_sat = RefrigerantViscosities().get_viscosity(refrigerant, T_evap + 273.15, 0)
-    #st.write("viscosity_sat:", viscosity_sat)
-    viscosity_5K = RefrigerantViscosities().get_viscosity(refrigerant, T_evap + 273.15, 5)
-    #st.write("viscosity_5K:", viscosity_5K)
-    viscosity = (viscosity_super + viscosity_5K) / 2
-    #st.write("viscosity:", viscosity)
-    viscosity_final = (viscosity * velocity1_prop) + (viscosity_super2 * (1 - velocity1_prop))
-    #st.write("viscosity_final:", viscosity_final)
-    
-    # density for reynolds and col2 display needs density_super2 factoring in!
-    reynolds = (density_recalc * velocity_m_sfinal * ID_m) / (viscosity_final / 1000000)
-    #st.write("reynolds:", reynolds)
-
-    if selected_material in ["Steel SCH40", "Steel SCH80"]:
-        eps = 0.00015
-    else:
-        eps = 0.000005
-
-    tol = 1e-5
-    max_iter = 60
-    
-    if reynolds < 2000.0:
-        f = 64.0 / reynolds
-    else:
-        flo, fhi = 1e-5, 0.1
-        def balance(ff):
-            s = math.sqrt(ff)
-            lhs = 1.0 / s
-            rhs = -2.0 * math.log10((eps / (3.7 * ID_m)) + 2.51 / (reynolds * s))
-            return lhs, rhs
-
-        f = 0.5 * (flo + fhi)
-        for _ in range(max_iter):
-            f = 0.5 * (flo + fhi)
-            lhs, rhs = balance(f)
-            if abs(1.0 - lhs/rhs) < tol:
-                break
-            # decide side using sign of (lhs - rhs)
-            if (lhs - rhs) > 0.0:
-                flo = f
-            else:
-                fhi = f
-
-    L = 10
-    
-    dp = f * (L / ID_m) * (0.5 * density_recalc * velocity_m_sfinal * velocity_m_sfinal) / 1000
-    #st.write("dp:", dp)
-    
-    converter = PressureTemperatureConverter()
-    dt = converter.pressure_drop_to_temp_penalty(refrigerant, T_evap, dp)
-    #st.write("dt:", dt)
     
     st.subheader("Results")
 
@@ -1037,40 +977,6 @@ elif tool_selection == "Manual Calculation":
     viscosity_final = (viscosity * velocity1_prop) + (viscosity_super2 * (1 - velocity1_prop))
     #st.write("viscosity_final:", viscosity_final)
     
-    # density for reynolds and col2 display needs density_super2 factoring in!
-    reynolds = (density_recalc * velocity_m_sfinal * ID_m) / (viscosity_final / 1000000)
-    #st.write("reynolds:", reynolds)
-
-    if selected_material in ["Steel SCH40", "Steel SCH80"]:
-        eps = 0.00015
-    else:
-        eps = 0.000005
-
-    tol = 1e-5
-    max_iter = 60
-    
-    if reynolds < 2000.0:
-        f = 64.0 / reynolds
-    else:
-        flo, fhi = 1e-5, 0.1
-        def balance(ff):
-            s = math.sqrt(ff)
-            lhs = 1.0 / s
-            rhs = -2.0 * math.log10((eps / (3.7 * ID_m)) + 2.51 / (reynolds * s))
-            return lhs, rhs
-
-        f = 0.5 * (flo + fhi)
-        for _ in range(max_iter):
-            f = 0.5 * (flo + fhi)
-            lhs, rhs = balance(f)
-            if abs(1.0 - lhs/rhs) < tol:
-                break
-            # decide side using sign of (lhs - rhs)
-            if (lhs - rhs) > 0.0:
-                flo = f
-            else:
-                fhi = f
-    
     nobends = 1.0 * SRB + 0.5 * LRB + 0.5 * MAC + 2.0 * ubend + 3.0 * ptrap + (PLF / 0.2) + 0.5 * _45
 
     BMF = max(mass_flow_kg_s, mass_flow_kg_smin) / evap_capacity_kw
@@ -1118,6 +1024,11 @@ elif tool_selection == "Manual Calculation":
     mdot_lo = 0.0
     mdot_hi = max(1e-9, density_recalc * ref_area_m2 * 60.0)  # 60 m/s upper-velocity cap
 
+    if selected_material in ["Steel SCH40", "Steel SCH80"]:
+        eps = 0.00015
+    else:
+        eps = 0.000005
+    
     # ensure upper bound hits target
     for _ in range(12):
         veldppm = mdot_hi / (density_recalc * ref_area_m2)
@@ -1270,6 +1181,35 @@ elif tool_selection == "Manual Calculation":
     L_eq_bend_per_m = ValveEqLength * 1.5 * 0.3048
 
     CEPL_m = L + nobends * L_eq_bend_per_m + L_valves_m
+    
+    # density for reynolds and col2 display needs density_super2 factoring in!
+    reynolds = (density_recalc * velocity_m_sfinal * assoc_ID_m) / (viscosity_final / 1000000)
+    #st.write("reynolds:", reynolds)
+
+    tol = 1e-5
+    max_iter = 60
+    
+    if reynolds < 2000.0:
+        f = 64.0 / reynolds
+    else:
+        flo, fhi = 1e-5, 0.1
+        def balance(ff):
+            s = math.sqrt(ff)
+            lhs = 1.0 / s
+            rhs = -2.0 * math.log10((eps / (3.7 * assoc_ID_m)) + 2.51 / (reynolds * s))
+            return lhs, rhs
+
+        f = 0.5 * (flo + fhi)
+        for _ in range(max_iter):
+            f = 0.5 * (flo + fhi)
+            lhs, rhs = balance(f)
+            if abs(1.0 - lhs/rhs) < tol:
+                break
+            # decide side using sign of (lhs - rhs)
+            if (lhs - rhs) > 0.0:
+                flo = f
+            else:
+                fhi = f
     
     dp = f * (CEPL_m / assoc_ID_m) * (0.5 * density_recalc * velocity_m_sfinal * velocity_m_sfinal) / 1000
     #st.write("dp:", dp)
