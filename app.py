@@ -1099,10 +1099,21 @@ elif tool_selection == "Manual Calculation":
                  .groupby("NPS", as_index=False)["ID_mm"].max())
     ladder_df["nps_key"] = ladder_df["NPS"].apply(_nps_key)
     ladder_df = ladder_df.sort_values("nps_key")
-    ladder_ids_m = (ladder_df["ID_mm"].values / 1000.0).tolist()  # strictly ascending, one per nominal
 
-    REF_ID_m = ladder_ids_m[0]                     # PipeDiameter(1) in metres
+    REF_ID_m = float(ladder_df["ID_mm"].iloc[0]) / 1000.0   # PipeDiameter(1) in metres
     ref_area_m2 = math.pi * (REF_ID_m/2.0)**2
+
+    # CHANGE: build grouped views by nominal OD (CSV 'Nominal Size (mm)') for VLoop, and by ID for gauges
+    grp = (family_df.dropna(subset=["Nominal Size (inch)", "Nominal Size (mm)", "ID_mm"])
+           .assign(NPS_in=lambda d: d["Nominal Size (inch)"].astype(str),
+                   NPS_mm=lambda d: d["Nominal Size (mm)"].astype(float),
+                   ID_mm=lambda d: d["ID_mm"].astype(float)))
+    nominals = (grp[["NPS_in","NPS_mm"]]
+                .drop_duplicates()
+                .sort_values("NPS_mm")
+                .reset_index(drop=True))
+    nom_ladder_mm  = nominals["NPS_mm"].tolist()   # OD ladder in mm (ascending)
+    nom_ladder_nps = nominals["NPS_in"].tolist()   # matching nominal (inch) strings
 
     mdot_lo = 0.0
     mdot_hi = max(1e-9, density_recalc * ref_area_m2 * 60.0)  # 60 m/s upper-velocity cap
@@ -1208,8 +1219,21 @@ elif tool_selection == "Manual Calculation":
         seed_A_si = bd_si * PER_100_LENGTH_M / denom
 
         PDia = (evap_capacity_kw / seed_A_si) ** 0.377 * REF_ID_m
-        i0 = bisect.bisect_right(ladder_ids_m, PDia)
-        VLoop = max(1, min(i0, len(ladder_ids_m)))     # 1..len(ladder_ids_m)
+        PDia_mm = PDia * 1000.0
+        i0 = bisect.bisect_right(nom_ladder_mm, PDia_mm)
+        VLoop = max(1, min(i0, 16))
+
+        # CHANGE: within that nominal, pick the FIRST gauge whose ID_mm > PDia (associated ID)
+        nom_idx = min(max(i0-1, 0), len(nom_ladder_nps)-1)          # guard bounds
+        sel_nom = nom_ladder_nps[nom_idx]
+        gauges_nom = grp[grp["NPS_in"] == sel_nom].sort_values("ID_mm")
+        cand = gauges_nom[gauges_nom["ID_mm"] > PDia_mm].head(1)
+        if cand.empty:
+            # fallback: largest gauge in this nominal
+            assoc_ID_mm = float(gauges_nom["ID_mm"].max())
+        else:
+            assoc_ID_mm = float(cand.iloc[0]["ID_mm"])
+            assoc_ID_m = assoc_ID_mm / 1000.0
 
         # map VLoop to the 16-entry tables (clamp)
         i = min(VLoop - 1, len(GLOBE_EQ_FT_CU) - 1)
