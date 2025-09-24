@@ -1109,7 +1109,7 @@ elif tool_selection == "Manual Calculation":
 
     # ---------------- valves + implicit A/VLoop resolution ----------------
 
-    BALL_K_CU = [0.51] * 16  # Ball valve K (dimensionless), constant across sizes
+    BALL_K_CU = 0.51  # Ball valve K (dimensionless), constant across sizes
     GLOBE_K_CU = [           # Globe valve K (dimensionless), by size index
         97.0, 54.0, 37.0, 28.0, 23.0, 19.0, 15.0, 13.4,
         12.0, 10.4, 9.00, 8.53, 8.35, 8.20, 7.43, 7.10
@@ -1151,7 +1151,7 @@ elif tool_selection == "Manual Calculation":
         i = min(VLoop - 1, len(GLOBE_EQ_FT_CU) - 1)
 
         L_eq_gv_m_new = GLOBE_EQ_FT_CU[i] * FT_TO_M
-        ratio = BALL_K_CU[i] / GLOBE_K_CU[i]
+        ratio = BALL_K_CU / GLOBE_K_CU[i]
         L_eq_bv_m_new = ratio * L_eq_gv_m_new
 
         L_valves_m_new = globe * L_eq_gv_m_new + ball * L_eq_bv_m_new
@@ -1182,11 +1182,8 @@ elif tool_selection == "Manual Calculation":
 
     CEPL_m = L + nobends * L_eq_bend_per_m + L_valves_m
 
-    area_dp = math.pi * (assoc_ID_m / 2.0)**2
-    vel_dp  = max(mass_flow_kg_s, mass_flow_kg_smin) / (area_dp * density_recalc)
-    
     # density for reynolds and col2 display needs density_super2 factoring in!
-    reynolds = (density_recalc * vel_dp * assoc_ID_m) / (viscosity_final / 1000000)
+    reynolds = (density_recalc * velocity_m_sfinal * ID_m) / (viscosity_final / 1000000)
     #st.write("reynolds:", reynolds)
 
     tol = 1e-5
@@ -1199,7 +1196,7 @@ elif tool_selection == "Manual Calculation":
         def balance(gg):
             s = math.sqrt(gg)
             lhs = 1.0 / s
-            rhs = -2.0 * math.log10((eps / (3.7 * assoc_ID_m)) + 2.51 / (reynolds * s))
+            rhs = -2.0 * math.log10((eps / (3.7 * ID_m)) + 2.51 / (reynolds * s))
             return lhs, rhs
 
         f = 0.5 * (flo + fhi)
@@ -1214,7 +1211,7 @@ elif tool_selection == "Manual Calculation":
             else:
                 fhi = f
     
-    dp = f * (CEPL_m / assoc_ID_m) * (0.5 * density_recalc * vel_dp * vel_dp) / 1000
+    dp = f * (CEPL_m / ID_m) * (0.5 * density_recalc * velocity_m_sfinal * velocity_m_sfinal) / 1000
     #st.write("dp:", dp)
     
     converter = PressureTemperatureConverter()
