@@ -1181,9 +1181,12 @@ elif tool_selection == "Manual Calculation":
     L_eq_bend_per_m = ValveEqLength * 1.5 * 0.3048
 
     CEPL_m = L + nobends * L_eq_bend_per_m + L_valves_m
+
+    area_dp = math.pi * (assoc_ID_m / 2.0)**2
+    vel_dp  = max(mass_flow_kg_s, mass_flow_kg_smin) / (area_dp * density_recalc)
     
     # density for reynolds and col2 display needs density_super2 factoring in!
-    reynolds = (density_recalc * velocity_m_sfinal * assoc_ID_m) / (viscosity_final / 1000000)
+    reynolds = (density_recalc * vel_dp * assoc_ID_m) / (viscosity_final / 1000000)
     #st.write("reynolds:", reynolds)
 
     tol = 1e-5
@@ -1211,7 +1214,7 @@ elif tool_selection == "Manual Calculation":
             else:
                 fhi = f
     
-    dp = f * (CEPL_m / assoc_ID_m) * (0.5 * density_recalc * velocity_m_sfinal * velocity_m_sfinal) / 1000
+    dp = f * (CEPL_m / assoc_ID_m) * (0.5 * density_recalc * vel_dp * vel_dp) / 1000
     #st.write("dp:", dp)
     
     converter = PressureTemperatureConverter()
