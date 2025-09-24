@@ -1214,6 +1214,8 @@ elif tool_selection == "Manual Calculation":
     L_eq_bv_m = 0.0
     L_valves_m = globe * L_eq_gv_m + ball * L_eq_bv_m
 
+    assoc_ID_m = ID_m
+    
     for _ in range(20):
         denom = L + nobends * BEND_SEED_M + L_valves_m
         seed_A_si = bd_si * PER_100_LENGTH_M / denom
