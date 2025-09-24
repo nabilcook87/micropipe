@@ -1193,8 +1193,8 @@ elif tool_selection == "Manual Calculation":
         f = 64.0 / reynolds
     else:
         flo, fhi = 1e-5, 0.1
-        def balance(ff):
-            s = math.sqrt(ff)
+        def balance(gg):
+            s = math.sqrt(gg)
             lhs = 1.0 / s
             rhs = -2.0 * math.log10((eps / (3.7 * assoc_ID_m)) + 2.51 / (reynolds * s))
             return lhs, rhs
