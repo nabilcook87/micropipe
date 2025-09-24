@@ -1045,7 +1045,7 @@ elif tool_selection == "Manual Calculation":
                 st.metric("MOR (%)", f"{MORfinal:.1f} %")
 
         with col4:
-            st.metric("Pressure Drop", f"{dp:.2f} kPa")
+            st.metric("Pressure Drop", f"{dp_total_kPa:.2f} kPa")
 
         with col5:
             st.metric("Temp Penalty", f"{dt:.2f} K")
