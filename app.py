@@ -1270,7 +1270,7 @@ elif tool_selection == "Manual Calculation":
 
     CEPL_m = L + nobends * L_eq_bend_per_m + L_valves_m
     
-    dp = f * (CEPL_m / ID_m) * (0.5 * density_recalc * velocity_m_sfinal * velocity_m_sfinal) / 1000
+    dp = f * (CEPL_m / assoc_ID_m) * (0.5 * density_recalc * velocity_m_sfinal * velocity_m_sfinal) / 1000
     #st.write("dp:", dp)
     
     converter = PressureTemperatureConverter()
