@@ -1150,7 +1150,7 @@ elif tool_selection == "Manual Calculation":
         seed_A_si = bd_si * PER_100_LENGTH_M / denom
 
         # 2) PDia from baseline ID (keep it on REF_ID_m)
-        PDia = (evap_capacity_kw / seed_A_si) ** 0.377 * REF_ID_m
+        PDia = (evap_capacity_kw / seed_A_si) ** 0.377 * ID_m
         PDia_mm = PDia * 1000.0
 
         # 3) choose rung by OD ladder
