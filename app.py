@@ -976,226 +976,16 @@ elif tool_selection == "Manual Calculation":
     #st.write("viscosity:", viscosity)
     viscosity_final = (viscosity * velocity1_prop) + (viscosity_super2 * (1 - velocity1_prop))
     #st.write("viscosity_final:", viscosity_final)
-    
-    nobends = 1.0 * SRB + 0.5 * LRB + 0.5 * MAC + 2.0 * ubend + 3.0 * ptrap + (PLF / 0.2) + 0.5 * _45
 
-    BMF = max(mass_flow_kg_s, mass_flow_kg_smin) / evap_capacity_kw
-
-    G_REF_KPA_PER_M = 6.894757293168361 / 30.48      # reference gradient
-    PER_100_LENGTH_M = 30.48           # "per-100-ft" basis in metres
-    BEND_SEED_M = 1.8288               # 6 ft per bend -> 1.8288 m per bend
-
-    converter = PressureTemperatureConverter()
-    deltaP_allow_kpa = converter.temp_penalty_to_pressure_drop(refrigerant, T_evap, max_penalty)
-    
-    grad = deltaP_allow_kpa / L
-
-    # --- replace your ladder build with this (gauge-agnostic; one rung per nominal) ---
-    from fractions import Fraction
-    def _nps_key(s: str) -> float:
-        s = str(s).replace('"','').replace('-', ' ').strip()
-        tot = Fraction(0,1)
-        for part in s.split(): tot += Fraction(part)
-        return float(tot)
-
-    NPS_ORDER = [
-    '1/4', '3/8', '1/2', '5/8', '3/4', '7/8',
-    '1-1/8', '1-3/8', '1-5/8', '2-1/8', '2-5/8',
-    '3-1/8', '3-5/8', '4-1/8', '5-1/8', '6-1/8'
-    ]
-    
-    family_df = pipe_data[pipe_data["Material"] == selected_material].copy()
-    # pick one row per NPS in the CSV order above
-    nom_map = (family_df.dropna(subset=["Nominal Size (inch)", "Nominal Size (mm)"])
-                        .assign(NPS_in=lambda d: d["Nominal Size (inch)"].astype(str),
-                                NPS_mm=lambda d: d["Nominal Size (mm)"].astype(float))
-                        .groupby("NPS_in", as_index=False)["NPS_mm"].min())
-
-    # strictly follow the 16-size order; drop missing if any
-    nom_ladder = [float(nom_map.loc[nom_map["NPS_in"] == n, "NPS_mm"].iloc[0])
-                  for n in NPS_ORDER if n in set(nom_map["NPS_in"])]
-    nom_ladder_mm  = nom_ladder[:16]
-    nom_ladder_nps = [n for n in NPS_ORDER if n in set(nom_map["NPS_in"])][:16]
-
-    # REF_ID_m: smallest ID (baseline for PDia law)
-    ladder_df = (family_df.dropna(subset=["Nominal Size (inch)", "ID_mm"])
-                 .assign(NPS=lambda d: d["Nominal Size (inch)"].astype(str),
-                         ID_mm=lambda d: d["ID_mm"].astype(float))
-                 .groupby("NPS", as_index=False)["ID_mm"].max())
-
-    REF_ID_m = float(ladder_df["ID_mm"].min()) / 1000.0   # baseline ID for PDia
-    ref_area_m2 = math.pi * (REF_ID_m/2.0)**2
-
-    mdot_lo = 0.0
-    mdot_hi = max(1e-9, density_recalc * ref_area_m2 * 60.0)  # 60 m/s upper-velocity cap
+    # density for reynolds and col2 display needs density_super2 factoring in!
+    reynolds = (density_recalc * velocity_m_sfinal * ID_m) / (viscosity_final / 1000000)
+    #st.write("reynolds:", reynolds)
 
     if selected_material in ["Steel SCH40", "Steel SCH80"]:
         eps = 0.00015
     else:
         eps = 0.000005
     
-    # ensure upper bound hits target
-    for _ in range(12):
-        veldppm = mdot_hi / (density_recalc * ref_area_m2)
-        Re = density_recalc * veldppm * REF_ID_m / (viscosity_final / 1000000)
-        if Re < 2000.0:
-            ff = 64.0 / Re
-        else:
-            hi = 0.1
-            lo = 0.001
-            for __ in range(40):
-                fff = 0.5 * (hi + lo)
-                lhs2 = 1.0 / (fff ** 0.5)
-                rhs2 = (-2.0) * (math.log(eps / (REF_ID_m * 3.7) + 2.51 / (Re * (fff ** 0.5))) / 2.302585)
-                if abs(1.0 - (lhs2 / rhs2)) < 1.0e-5:
-                    break
-                if lhs2 > rhs2:
-                    lo = fff
-                else:
-                    hi = fff
-            ff = fff
-        dppm = ff * (1.0 / REF_ID_m) * (0.5 * density_recalc * veldppm * veldppm) / 1000.0  # kPa/m
-        if dppm >= G_REF_KPA_PER_M:
-            break
-        mdot_hi *= 2.0
-
-    # bisection
-    for _ in range(80):
-        mdot = 0.5 * (mdot_lo + mdot_hi)
-        veldppm = mdot / (density_recalc * ref_area_m2)
-        Re = density_recalc * veldppm * REF_ID_m / (viscosity_final / 1000000)
-        if Re < 2000.0:
-            ff = 64.0 / Re
-        else:
-            hi = 0.1
-            lo = 0.001
-            for __ in range(40):
-                fff = 0.5 * (hi + lo)
-                lhs2 = 1.0 / (fff ** 0.5)
-                rhs2 = (-2.0) * (math.log(eps / (REF_ID_m * 3.7) + 2.51 / (Re * (fff ** 0.5))) / 2.302585)
-                if abs(1.0 - (lhs2 / rhs2)) < 1.0e-5:
-                    break
-                if lhs2 > rhs2:
-                    lo = fff
-                else:
-                    hi = fff
-            ff = fff
-        dppm = ff * (1.0 / REF_ID_m) * (0.5 * density_recalc * veldppm * veldppm) / 1000.0  # kPa/m
-        if dppm >= G_REF_KPA_PER_M:
-            mdot_hi = mdot
-        else:
-            mdot_lo = mdot
-
-    # final mdot and dppm at the solution
-    mdot = 0.5 * (mdot_lo + mdot_hi)
-    veldppm = mdot / (density_recalc * ref_area_m2)
-    Re = density_recalc * veldppm * REF_ID_m / (viscosity_final / 1000000)
-    if Re < 2000.0:
-        ff = 64.0 / Re
-    else:
-        hi = 0.1
-        lo = 0.001
-        for _ in range(40):
-            fff = 0.5 * (hi + lo)
-            lhs2 = 1.0 / (fff ** 0.5)
-            rhs2 = (-2.0) * (math.log(eps / (REF_ID_m * 3.7) + 2.51 / (Re * (fff ** 0.5))) / 2.302585)
-            if abs(1.0 - (lhs2 / rhs2)) < 1.0e-5:
-                break
-            if lhs2 > rhs2:
-                lo = fff
-            else:
-                hi = fff
-        ff = fff
-    dppm = ff * (1.0 / REF_ID_m) * (0.5 * density_recalc * veldppm * veldppm) / 1000.0  # kPa/m
-
-    base_duty_si_kg_s = mdot
-
-    bd_si = math.sqrt(grad / G_REF_KPA_PER_M) * (base_duty_si_kg_s / BMF)
-
-    # ---------------- valves + implicit A/VLoop resolution ----------------
-    # constants (do not index these until VLoop/i is known)
-    BALL_K_CU = 0.51
-    GLOBE_K_CU = [
-        97.0, 54.0, 37.0, 28.0, 23.0, 19.0, 15.0, 13.4,
-        12.0, 10.4, 9.00, 8.53, 8.35, 8.20, 7.43, 7.10
-    ]
-    GLOBE_EQ_FT_CU = [
-        63.00, 67.00, 70.00, 72.00, 75.00, 78.00, 87.00, 102.0,
-        115.0, 141.0, 159.0, 185.0, 216.0, 248.0, 292.0, 346.0
-    ]
-    FT_TO_M = 0.3048
-
-    # seed values for the fixed-point iteration
-    L_eq_gv_m = 0.0
-    L_eq_bv_m = 0.0
-    L_valves_m = 0.0
-    L_eq_bend_per_m = BEND_SEED_M  # start with your 6 ft/bend seed
-    seed_A_si = float("nan")       # so it's defined if the loop breaks oddly
-
-    # polynomial for ValveEqLength(VLoop)
-    A0 = 2.12347298788624
-    A1 = -4.85814310093182
-    A2 = 4.88740490607543
-    A3 = -2.35842837967475
-    A4 = 0.644644548372169
-    A5 = -0.105854702656766
-    A6 = 1.06266889616511E-02
-    A7 = -6.36865201429949E-04
-    A8 = 2.08828884116467E-05
-    A9 = -2.87795046923316E-07
-
-    for _ in range(30):
-        # 1) compute seed area/gradient with previous lengths
-        denom = L + nobends * L_eq_bend_per_m + L_valves_m
-        seed_A_si = bd_si * PER_100_LENGTH_M / denom
-
-        # 2) PDia from baseline ID (keep it on REF_ID_m)
-        PDia = (evap_capacity_kw / seed_A_si) ** 0.377 * REF_ID_m
-        PDia_mm = PDia * 1000.0
-
-        # 3) choose rung by OD ladder
-        if not nom_ladder_mm:
-            st.error("No nominal OD data found for the selected material.")
-            st.stop()
-        i0 = bisect.bisect_right(nom_ladder_mm, PDia_mm)
-        VLoop = max(1, min(i0, 16))
-        i = VLoop - 1  # 0-based index into the 16-entry tables
-
-        # 4) per-rung valve equivalent lengths
-        globe_le = GLOBE_EQ_FT_CU[i] * FT_TO_M
-        ratio    = BALL_K_CU / GLOBE_K_CU[i]
-        L_eq_gv_m_new = globe_le
-        L_eq_bv_m_new = ratio * globe_le
-        L_valves_m_new = globe * L_eq_gv_m_new + ball * L_eq_bv_m_new
-
-        # 5) per-rung bend equivalent length (your polynomial)
-        ValveEqLength = (A0 + A1*VLoop + A2*(VLoop**2) + A3*(VLoop**3) +
-                         A4*(VLoop**4) + A5*(VLoop**5) + A6*(VLoop**6) +
-                         A7*(VLoop**7) + A8*(VLoop**8) + A9*(VLoop**9))
-        L_eq_bend_per_m_new = ValveEqLength * 1.5 * FT_TO_M
-
-        # 6) check convergence on both valves and bend length
-        if (abs(L_valves_m_new - L_valves_m) < 1e-9 and
-            abs(L_eq_bend_per_m_new - L_eq_bend_per_m) < 1e-9):
-            L_eq_gv_m = L_eq_gv_m_new
-            L_eq_bv_m = L_eq_bv_m_new
-            L_valves_m = L_valves_m_new
-            L_eq_bend_per_m = L_eq_bend_per_m_new
-            break
-
-        # 7) update and iterate
-        L_eq_gv_m       = L_eq_gv_m_new
-        L_eq_bv_m       = L_eq_bv_m_new
-        L_valves_m      = L_valves_m_new
-        L_eq_bend_per_m = L_eq_bend_per_m_new
-
-    # final combined equivalent length
-    CEPL_m = L + nobends * L_eq_bend_per_m + L_valves_m
-
-    # density for reynolds and col2 display needs density_super2 factoring in!
-    reynolds = (density_recalc * velocity_m_sfinal * ID_m) / (viscosity_final / 1000000)
-    #st.write("reynolds:", reynolds)
-
     tol = 1e-5
     max_iter = 60
     
@@ -1221,8 +1011,15 @@ elif tool_selection == "Manual Calculation":
             else:
                 fhi = f
     
-    dp = f * (CEPL_m / ID_m) * (0.5 * density_recalc * velocity_m_sfinal * velocity_m_sfinal) / 1000
-    #st.write("dp:", dp)
+    # dynamic (velocity) pressure, kPa
+    q_kPa = 0.5 * density_recalc * (velocity_m_sfinal ** 2) / 1000.0
+
+    # 1) straight pipe only
+    dp_pipe_kPa = f * (L / ID_m) * q_kPa
+    
+    dp_plf_kPa = q_kPa * PLF
+    
+    dp_total_kPa = dp_pipe_kPa + dp_items_kPa + dp_plf_kPa
     
     converter = PressureTemperatureConverter()
     dt = converter.pressure_drop_to_temp_penalty(refrigerant, T_evap, dp)
