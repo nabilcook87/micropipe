@@ -144,50 +144,94 @@ elif tool_selection == "Oil Return Checker":
     # Load pipe data
     pipe_data = pd.read_csv("data/pipe_pressure_ratings_full.csv")
 
-     # 1. Select Pipe Material
+    # --- helpers ---
+    def _nps_inch_to_mm(nps_str: str) -> float:
+        # e.g. "1-1/8", '1"', "3/8"
+        s = str(nps_str).replace('"', '').strip()
+        if not s:
+            return float('nan')
+        parts = s.split('-')
+        tot_in = 0.0
+        for p in parts:
+            p = p.strip()
+            if not p:
+                continue
+            if '/' in p:
+                num, den = p.split('/')
+                tot_in += float(num) / float(den)
+            else:
+                tot_in += float(p)
+        return tot_in * 25.4  # mm
+
+    ss = st.session_state
+
+    # 1) Pipe material
     with col2:
         if refrigerant == "R717":
             excluded_materials = ["Copper ACR", "Copper EN12735"]
-            pipe_materials = sorted(
-                m for m in pipe_data["Material"].dropna().unique()
-                if m not in excluded_materials
-            )
-            selected_material = st.selectbox("Pipe Material", pipe_materials)
+            pipe_materials = sorted(m for m in pipe_data["Material"].dropna().unique()
+                                    if m not in excluded_materials)
         else:
             pipe_materials = sorted(pipe_data["Material"].dropna().unique())
-            selected_material = st.selectbox("Pipe Material", pipe_materials)
-    
-    # 2. Filter pipe sizes for selected material
-    material_df = pipe_data[pipe_data["Material"] == selected_material]
 
-    # de-dupe nominal sizes (preserves CSV order)
-    sizes_series = (
-        material_df["Nominal Size (inch)"]
-        .dropna()
-        .astype(str)
-        .str.strip()
+        selected_material = st.selectbox("Pipe Material", pipe_materials, key="material")
+
+    # detect material change
+    material_changed = ss.get("last_material") is not None and ss.last_material != selected_material
+    ss.last_material = selected_material
+
+    # 2) Sizes for selected material (de-duped)
+    material_df = pipe_data[pipe_data["Material"] == selected_material].copy()
+
+    sizes_df = (
+        material_df[["Nominal Size (inch)", "Nominal Size (mm)"]]
+        .dropna(subset=["Nominal Size (inch)"])
+        .assign(**{
+            "Nominal Size (inch)": lambda d: d["Nominal Size (inch)"].astype(str).str.strip(),
+        })
+        .drop_duplicates(subset=["Nominal Size (inch)"], keep="first")
     )
-    pipe_sizes = sizes_series.unique().tolist()  # or: sizes_series.drop_duplicates().tolist()
+
+    # make sure we have a numeric mm per nominal (fallback: parse the inch string)
+    sizes_df["mm_num"] = pd.to_numeric(sizes_df.get("Nominal Size (mm)"), errors="coerce")
+    sizes_df.loc[sizes_df["mm_num"].isna(), "mm_num"] = sizes_df.loc[sizes_df["mm_num"].isna(), "Nominal Size (inch)"].apply(_nps_inch_to_mm)
+
+    pipe_sizes = sizes_df["Nominal Size (inch)"].tolist()
+    mm_map = dict(zip(sizes_df["Nominal Size (inch)"], sizes_df["mm_num"]))
+
+    # choose default index
+    def _closest_index(target_mm: float) -> int:
+        mm_list = [mm_map[s] for s in pipe_sizes]
+        return min(range(len(mm_list)), key=lambda i: abs(mm_list[i] - target_mm)) if mm_list else 0
+
+    default_index = 0
+    if material_changed and "prev_pipe_mm" in ss:
+        default_index = _closest_index(ss.prev_pipe_mm)
+    elif selected_material == "Copper ACR" and ("1-1/8" in pipe_sizes or '1-1/8"' in pipe_sizes):
+        # first load or no previous selection → prefer 1-1/8" for Copper ACR
+        want = "1-1/8" if "1-1/8" in pipe_sizes else '1-1/8"'
+        default_index = pipe_sizes.index(want)
+    elif "selected_size" in ss and ss.selected_size in pipe_sizes:
+        # if Streamlit kept the selection, use it
+        default_index = pipe_sizes.index(ss.selected_size)
 
     with col1:
-        default_candidates = ["1-1/8", '1-1/8"']
-        default_pick = next((d for d in default_candidates if d in pipe_sizes), None)
+        selected_size = st.selectbox(
+            "Nominal Pipe Size (inch)",
+            pipe_sizes,
+            index=default_index,
+            key="selected_size",
+        )
 
-        if selected_material == "Copper ACR" and default_pick:
-            selected_size = st.selectbox(
-                "Nominal Pipe Size (inch)",
-                pipe_sizes,
-                index=pipe_sizes.index(default_pick),
-            )
-        else:
-            selected_size = st.selectbox("Nominal Pipe Size (inch)", pipe_sizes)
+    # remember the selected size in mm for next material change
+    ss.prev_pipe_mm = float(mm_map.get(selected_size, float("nan")))
 
-    # 3. Gauge (if applicable)
-    gauge_options = material_df[material_df["Nominal Size (inch)"].astype(str) == selected_size]
+    # 3) Gauge (if applicable)
+    gauge_options = material_df[material_df["Nominal Size (inch)"].astype(str).str.strip() == selected_size]
     if "Gauge" in gauge_options.columns and gauge_options["Gauge"].notna().any():
         gauges = sorted(gauge_options["Gauge"].dropna().unique())
-        with col2:    
-            selected_gauge = st.selectbox("Copper Gauge", gauges)
+        with col2:
+            selected_gauge = st.selectbox("Copper Gauge", gauges, key="gauge")
         selected_pipe_row = gauge_options[gauge_options["Gauge"] == selected_gauge].iloc[0]
     else:
         selected_pipe_row = gauge_options.iloc[0]
