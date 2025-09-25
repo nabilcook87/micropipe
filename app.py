@@ -582,7 +582,7 @@ elif tool_selection == "Manual Calculation":
     
     # 2. Filter pipe sizes for selected material
     material_df = pipe_data[pipe_data["Material"] == selected_material]
-    pipe_sizes = material_df["Nominal Size (inch)"].dropna().astype(str).tolist()
+    pipe_sizes = material_df["Nominal Size (inch)"].dropna().astype(str).unique()
 
     with col1:
         # default to 1-1/8 when material is Copper ACR
