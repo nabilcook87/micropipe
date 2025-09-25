@@ -159,10 +159,28 @@ elif tool_selection == "Oil Return Checker":
     
     # 2. Filter pipe sizes for selected material
     material_df = pipe_data[pipe_data["Material"] == selected_material]
-    pipe_sizes = material_df["Nominal Size (inch)"].dropna().astype(str).unique()
-    
+
+    # de-dupe nominal sizes (preserves CSV order)
+    sizes_series = (
+        material_df["Nominal Size (inch)"]
+        .dropna()
+        .astype(str)
+        .str.strip()
+    )
+    pipe_sizes = sizes_series.unique().tolist()  # or: sizes_series.drop_duplicates().tolist()
+
     with col1:
-        selected_size = st.selectbox("Nominal Pipe Size (inch)", pipe_sizes)
+        default_candidates = ["1-1/8", '1-1/8"']
+        default_pick = next((d for d in default_candidates if d in pipe_sizes), None)
+
+        if selected_material == "Copper ACR" and default_pick:
+            selected_size = st.selectbox(
+                "Nominal Pipe Size (inch)",
+                pipe_sizes,
+                index=pipe_sizes.index(default_pick),
+            )
+        else:
+            selected_size = st.selectbox("Nominal Pipe Size (inch)", pipe_sizes)
 
     # 3. Gauge (if applicable)
     gauge_options = material_df[material_df["Nominal Size (inch)"].astype(str) == selected_size]
