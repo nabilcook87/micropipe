@@ -586,7 +586,7 @@ elif tool_selection == "Manual Calculation":
 
     with col1:
         # default to 1-1/8 when material is Copper ACR
-        default_candidates = "1-1/8"
+        default_candidates = ["1-1/8"]
         default_pick = next((d for d in default_candidates if d in pipe_sizes), None)
 
         if selected_material == "Copper ACR" and default_pick:
