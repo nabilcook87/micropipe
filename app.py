@@ -1387,7 +1387,7 @@ elif tool_selection == "Manual Calculation":
                 on_change=on_change_minliq,
             )
 
-        with col1:
+        with col2:
             
             evaporating_temp = st.number_input(
                 "Evaporating Temperature (°C)",
