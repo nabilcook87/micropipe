@@ -53,6 +53,7 @@ class RefrigerantProperties:
         
         pressure_bar = self.interpolate_log(temp_array, pressure_array, temperature_C)
         density_liquid = self.interpolate(temp_array, density_liquid_array, temperature_C)
+        density_liquid2 = self.interpolate(bubble_array, density_liquid_array, temperature_C)
         density_vapor = self.interpolate_log(temp_array, density_vapor_array, temperature_C)
         enthalpy_liquid = self.interpolate(temp_array, enthalpy_liquid_array, temperature_C)
         enthalpy_liquid2 = self.interpolate(bubble_array, enthalpy_liquid_array, temperature_C)
@@ -66,6 +67,7 @@ class RefrigerantProperties:
         return {
             "pressure_bar": pressure_bar,
             "density_liquid": density_liquid,
+            "density_liquid2": density_liquid2,
             "density_vapor": density_vapor,
             "enthalpy_liquid": enthalpy_liquid,
             "enthalpy_liquid2": enthalpy_liquid2,
