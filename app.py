@@ -1374,14 +1374,14 @@ elif tool_selection == "Manual Calculation":
     
             # --- Inputs with inclusive caps (≤), same order as your code ---
             condensing_temp = st.number_input(
-                "Max Liquid Temperature (°C)",
+                "Condensing Temperature (°C)",
                 min_value=cond_min, max_value=cond_max,
                 value=ss.cond_temp, step=1.0, key="cond_temp",
                 on_change=on_change_cond,
             )
     
             minliq_temp = st.number_input(
-                "Min Liquid Temperature (°C)",
+                "Liquid Temperature (°C)",
                 min_value=minliq_min, max_value=min(condensing_temp, minliq_max),
                 value=ss.minliq_temp, step=1.0, key="minliq_temp",
                 on_change=on_change_minliq,
