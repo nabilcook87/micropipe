@@ -1459,7 +1459,7 @@ elif tool_selection == "Manual Calculation":
 
         viscosity = (viscosity_super + viscosity_5K) / 2
     
-        reynolds = (density_recalc * velocity_m_sfinal * ID_m) / (viscosity / 1000000)
+        reynolds = (density * velocity_m_sfinal * ID_m) / (viscosity / 1000000)
     
         if selected_material in ["Steel SCH40", "Steel SCH80"]:
             eps = 0.00015
