@@ -1458,10 +1458,8 @@ elif tool_selection == "Manual Calculation":
         viscosity_5K = RefrigerantViscosities().get_viscosity(refrigerant, T_evap + 273.15, 5)
 
         viscosity = (viscosity_super + viscosity_5K) / 2
-
-        viscosity_final = (viscosity * velocity1_prop) + (viscosity_super2 * (1 - velocity1_prop))
     
-        reynolds = (density_recalc * velocity_m_sfinal * ID_m) / (viscosity_final / 1000000)
+        reynolds = (density_recalc * velocity_m_sfinal * ID_m) / (viscosity / 1000000)
     
         if selected_material in ["Steel SCH40", "Steel SCH80"]:
             eps = 0.00015
