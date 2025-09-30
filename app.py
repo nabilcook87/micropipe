@@ -1326,8 +1326,7 @@ elif tool_selection == "Manual Calculation":
         pipe_size_inch = selected_pipe_row["Nominal Size (inch)"]
         ID_mm = selected_pipe_row["ID_mm"]
     
-        with col2:
-            evap_capacity_kw = st.number_input("Evaporator Capacity (kW)", min_value=0.03, max_value=20000.0, value=10.0, step=1.0)
+        with col1:
     
             # --- Base ranges per refrigerant ---
             if refrigerant in ("R23", "R508B"):
@@ -1396,6 +1395,7 @@ elif tool_selection == "Manual Calculation":
         with col2:
             superheat_K = st.number_input("Superheat (K)", min_value=0.0, max_value=60.0, value=5.0, step=1.0)
             max_penalty = st.number_input("Max Penalty (K)", min_value=0.0, max_value=6.0, value=1.0, step=0.1)
+            evap_capacity_kw = st.number_input("Evaporator Capacity (kW)", min_value=0.03, max_value=20000.0, value=10.0, step=1.0)
     
         with col3:
             L = st.number_input("Pipe Length (m)", min_value=0.1, max_value=300.0, value=10.0, step=1.0)
