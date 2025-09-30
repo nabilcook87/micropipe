@@ -617,8 +617,7 @@ elif tool_selection == "Oil Return Checker":
 elif tool_selection == "Manual Calculation":
     st.subheader("Manual Calculation")
 
-    mode = st.radio("Run mode", ["Fast", "Balanced", "Accurate"], index=1, horizontal=True)
-    st.write("Selected:", mode)
+    mode = st.radio("", ["Dry Suction", "Liquid", "Discharge", "Pumped Liquid", "Wet Suction"], index=1, horizontal=True)
     theme = st.selectbox("Theme", ["Light", "Dark", "System"])
     
     col1, col2, col3, col4 = st.columns(4)
