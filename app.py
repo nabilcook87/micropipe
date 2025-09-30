@@ -1328,18 +1328,6 @@ elif tool_selection == "Manual Calculation":
     
         with col1:
             evap_capacity_kw = st.number_input("Evaporator Capacity (kW)", min_value=0.03, max_value=20000.0, value=10.0, step=1.0)
-            # if refrigerant == "R23": evaporating_temp = st.number_input("Evaporating Temperature (°C)", min_value=-100.0, max_value=-30.0, value=-80.0, step=1.0)
-            # elif refrigerant == "R508B": evaporating_temp = st.number_input("Evaporating Temperature (°C)", min_value=-100.0, max_value=-30.0, value=-80.0, step=1.0)
-            # elif refrigerant == "R744": evaporating_temp = st.number_input("Evaporating Temperature (°C)", min_value=-50.0, max_value=20.0, value=-10.0, step=1.0)
-            # else: evaporating_temp = st.number_input("Evaporating Temperature (°C)", min_value=-50.0, max_value=30.0, value=-10.0, step=1.0)
-            # if refrigerant == "R23": condensing_temp = st.number_input("Max Liquid Temperature (°C)", min_value=max(-100.0, evaporating_temp), max_value=10.0, value=-30.0, step=1.0)
-            # elif refrigerant == "R508B": condensing_temp = st.number_input("Max Liquid Temperature (°C)", min_value=max(-100.0, evaporating_temp), max_value=10.0, value=-30.0, step=1.0)
-            # elif refrigerant == "R744": condensing_temp = st.number_input("Max Liquid Temperature (°C)", min_value=max(-50.0, evaporating_temp), max_value=30.0, value=20.0, step=1.0)
-            # else: condensing_temp = st.number_input("Max Liquid Temperature (°C)", min_value=max(-50.0, evaporating_temp), max_value=60.0, value=40.0, step=1.0)
-            # if refrigerant == "R23": minliq_temp = st.number_input("Min Liquid Temperature (°C)", min_value=max(-100.0, evaporating_temp), max_value=min(10.0, condensing_temp), value=condensing_temp, step=1.0)
-            # elif refrigerant == "R508B": minliq_temp = st.number_input("Min Liquid Temperature (°C)", min_value=max(-100.0, evaporating_temp), max_value=min(10.0, condensing_temp), value=condensing_temp, step=1.0)
-            # elif refrigerant == "R744": minliq_temp = st.number_input("Min Liquid Temperature (°C)", min_value=max(-50.0, evaporating_temp), max_value=min(30.0, condensing_temp), value=condensing_temp, step=1.0)
-            # else: minliq_temp = st.number_input("Min Liquid Temperature (°C)", min_value=max(-50.0, evaporating_temp), max_value=min(60.0, condensing_temp), value=condensing_temp, step=1.0)
     
             # --- Base ranges per refrigerant ---
             if refrigerant in ("R23", "R508B"):
@@ -1408,7 +1396,6 @@ elif tool_selection == "Manual Calculation":
         with col2:
             superheat_K = st.number_input("Superheat (K)", min_value=0.0, max_value=60.0, value=5.0, step=1.0)
             max_penalty = st.number_input("Max Penalty (K)", min_value=0.0, max_value=6.0, value=1.0, step=0.1)
-            required_oil_duty_pct = st.number_input("Required Oil Return Duty (%)", min_value=0.0, max_value=100.0, value=100.0, step=5.0)
     
         with col3:
             L = st.number_input("Pipe Length (m)", min_value=0.1, max_value=300.0, value=10.0, step=1.0)
@@ -1428,87 +1415,64 @@ elif tool_selection == "Manual Calculation":
         from utils.refrigerant_densities import RefrigerantDensities
         from utils.refrigerant_viscosities import RefrigerantViscosities
         from utils.pipe_length_volume_calc import get_pipe_id_mm
-        from utils.oil_return_checker import check_oil_return
     
         T_evap = evaporating_temp
         T_cond = condensing_temp
     
         props = RefrigerantProperties()
         h_in = props.get_properties(refrigerant, T_cond)["enthalpy_liquid2"]
-        #st.write("h_in:", h_in)
-        # for velocity
+
         h_inmin = props.get_properties(refrigerant, minliq_temp)["enthalpy_liquid2"]
-        #st.write("h_inmin:", h_inmin)
+
         h_inlet = props.get_properties(refrigerant, T_cond)["enthalpy_liquid"]
-        #st.write("h_inlet:", h_inlet)
+
         h_inletmin = props.get_properties(refrigerant, minliq_temp)["enthalpy_liquid"]
-        #st.write("h_inletmin:", h_inletmin)
+
         h_evap = props.get_properties(refrigerant, T_evap)["enthalpy_vapor"]
-        #st.write("h_evap:", h_evap)
+
         h_10K = props.get_properties(refrigerant, T_evap)["enthalpy_super"]
-        #st.write("h_10K:", h_10K)
+
         hdiff_10K = h_10K - h_evap
-        #st.write("hdiff_10K:", hdiff_10K)
+
         hdiff_custom = hdiff_10K * min(max(superheat_K, 5), 30) / 10
-        #st.write("hdiff_custom:", hdiff_custom)
+
         h_super = h_evap + hdiff_custom
-        #st.write("h_super:", h_super)
-        h_foroil = (h_evap + h_super) / 2
-        #st.write("h_foroil:", h_foroil)
         
         delta_h = h_evap - h_in
-        #st.write("delta_h:", delta_h)
+
         delta_hmin = h_evap - h_inmin
-        #st.write("delta_hmin:", delta_hmin)
-        
-        delta_h_foroil = h_foroil - h_inlet
-        #st.write("delta_h_foroil:", delta_h_foroil)
-        delta_h_foroilmin = h_foroil - h_inletmin
-        #st.write("delta_h_foroilmin:", delta_h_foroilmin)
-    
+
         mass_flow_kg_s = evap_capacity_kw / delta_h if delta_h > 0 else 0.01
-        #st.write("mass_flow_kg_s:", mass_flow_kg_s)
+
         mass_flow_kg_smin = evap_capacity_kw / delta_hmin if delta_hmin > 0 else 0.01
-        #st.write("mass_flow_kg_smin:", mass_flow_kg_smin)
     
-        mass_flow_foroil = evap_capacity_kw / delta_h_foroil if delta_h_foroil > 0 else 0.01
-        #st.write("mass_flow_foroil:", mass_flow_foroil)
-        mass_flow_foroilmin = evap_capacity_kw / delta_h_foroilmin if delta_h_foroilmin > 0 else 0.01
-        #st.write("mass_flow_foroilmin:", mass_flow_foroilmin)
-    
-        # Calculate velocity for transparency
         if ID_mm is not None:
             ID_m = ID_mm / 1000.0
-            #st.write("ID_mm:", ID_mm)
-            #st.write("ID_m:", ID_m)
+
             area_m2 = 3.1416 * (ID_m / 2) ** 2
-            #st.write("area_m2:", area_m2)
+
             density_super = RefrigerantDensities().get_density(refrigerant, T_evap - max_penalty + 273.15, superheat_K)
-            #st.write("density_super:", density_super)
+
             density_super2a = RefrigerantDensities().get_density(refrigerant, T_evap + 273.15, ((superheat_K + 5) / 2))
-            #st.write("density_super2a:", density_super2a)
+
             density_super2b = RefrigerantDensities().get_density(refrigerant, T_evap - max_penalty + 273.15, ((superheat_K + 5) / 2))
-            #st.write("density_super2b:", density_super2b)
+
             density_super2 = (density_super2a + density_super2b) / 2
-            #st.write("density_super2:", density_super2)
-            density_super_foroil = RefrigerantDensities().get_density(refrigerant, T_evap + 273.15, min(max(superheat_K, 5), 30))
-            #st.write("density_super_foroil:", density_super_foroil)
+
             density_sat = RefrigerantProperties().get_properties(refrigerant, T_evap)["density_vapor"]
-            #st.write("density_sat:", density_sat)
+
             density_5K = RefrigerantDensities().get_density(refrigerant, T_evap + 273.15, 5)
-            #st.write("density_5K:", density_5K)
+
             density = (density_super + density_5K) / 2
-            #st.write("density:", density)
-            density_foroil = (density_super_foroil + density_sat) / 2
-            #st.write("density_foroil:", density_foroil)
+
             velocity_m_s1 = mass_flow_kg_s / (area_m2 * density)
-            #st.write("velocity_m_s1:", velocity_m_s1)
+
             velocity_m_s1min = mass_flow_kg_smin / (area_m2 * density)
-            #st.write("velocity_m_s1min:", velocity_m_s1min)
+
             velocity_m_s2 = mass_flow_kg_s / (area_m2 * density_super2)
-            #st.write("velocity_m_s2:", velocity_m_s2)
+
             velocity_m_s2min = mass_flow_kg_smin / (area_m2 * density_super2)
-            #st.write("velocity_m_s2min:", velocity_m_s2min)
+
             if refrigerant == "R744": velocity1_prop = 1
             elif refrigerant == "R404A":
                 if superheat_K > 45: velocity1_prop = (0.0328330590542629 * superheat_K) - 1.47748765744183
@@ -1529,182 +1493,37 @@ elif tool_selection == "Manual Calculation":
             else:
                 if superheat_K > 30: velocity1_prop = (0.0000406422632403154 * (superheat_K ** 2)) - (0.000541007136813307 * superheat_K) + 0.748882946418884
                 else: velocity1_prop = 0.769230769230769
-            # if refrigerant == "R744": velocity1_prop = (-0.0142814388381874 * max(superheat_K, 5)) + 1.07140719419094
-            # else: velocity1_prop = (-0.00280805561137312 * max(superheat_K, 5)) + 1.01404027805687
-            #st.write("velocity1_prop:", velocity1_prop)
+
             velocity_m_s = (velocity_m_s1 * velocity1_prop) + (velocity_m_s2 * (1 - velocity1_prop))
-            #st.write("velocity_m_s:", velocity_m_s)
+            
             velocity_m_smin = (velocity_m_s1min * velocity1_prop) + (velocity_m_s2min * (1 - velocity1_prop))
-            #st.write("velocity_m_smin:", velocity_m_smin)
-            if refrigerant in ["R23", "R508B"]:
-                oil_density_sat = (-0.853841209044878 * T_evap) + 999.190772536527
-                oil_density_super = (-0.853841209044878 * (T_evap + min(max(superheat_K, 5), 30))) + 999.190772536527
-            else:
-                oil_density_sat = (-0.00356060606060549 * (T_evap ** 2)) - (0.957878787878808 * T_evap) + 963.595454545455
-                oil_density_super = (-0.00356060606060549 * ((T_evap + min(max(superheat_K, 5), 30)) ** 2)) - (0.957878787878808 * (T_evap + min(max(superheat_K, 5), 30))) + 963.595454545455
-            #st.write("oil_density_sat:", oil_density_sat)
-            #st.write("oil_density_super:", oil_density_super)
-            oil_density = (oil_density_sat + oil_density_super) / 2
-            #st.write("oil_density:", oil_density)
-            
-            if refrigerant == "R404A": jg_half = 0.860772464072673
-            elif refrigerant == "R134a": jg_half = 0.869986729796935
-            elif refrigerant == "R407F": jg_half = 0.869042493641944
-            elif refrigerant == "R744": jg_half = 0.877950613678719
-            elif refrigerant == "R407A": jg_half = 0.867374311574041
-            elif refrigerant == "R410A": jg_half = 0.8904423325365
-            elif refrigerant == "R407C": jg_half = 0.858592104849471
-            elif refrigerant == "R22": jg_half = 0.860563058394146
-            elif refrigerant == "R502": jg_half = 0.858236706656266
-            elif refrigerant == "R507A": jg_half = 0.887709710291009
-            elif refrigerant == "R449A": jg_half = 0.867980496631757
-            elif refrigerant == "R448A": jg_half = 0.86578818145833
-            elif refrigerant == "R717": jg_half = 0.854957410951708
-            elif refrigerant == "R290": jg_half = 0.844975139695726
-            elif refrigerant == "R1270": jg_half = 0.849089717732815
-            elif refrigerant == "R600a": jg_half = 0.84339338979887
-            elif refrigerant == "R1234ze": jg_half = 0.867821375349728
-            elif refrigerant == "R1234yf": jg_half = 0.860767472602571
-            elif refrigerant == "R12": jg_half = 0.8735441986466
-            elif refrigerant == "R11": jg_half = 0.864493203834913
-            elif refrigerant == "R454B": jg_half = 0.869102255850291
-            elif refrigerant == "R450A": jg_half = 0.865387140496035
-            elif refrigerant == "R513A": jg_half = 0.861251244627232
-            elif refrigerant == "R454A": jg_half = 0.868161104592492
-            elif refrigerant == "R455A": jg_half = 0.865687329727713
-            elif refrigerant == "R454C": jg_half = 0.866423016875524
-            elif refrigerant == "R32": jg_half = 0.875213309852597
-            elif refrigerant == "R23": jg_half = 0.865673418568001
-            elif refrigerant == "R508B": jg_half = 0.864305626845382
-            #st.write("jg_half:", jg_half)
-            
-            MinMassFlux = (jg_half ** 2) * ((density_foroil * 9.81 * ID_m * (oil_density - density_foroil)) ** 0.5)
-            #st.write("MinMassFluxy:", MinMassFlux)
-            MinMassFlow = MinMassFlux * area_m2
-            #st.write("MinMassFlow:", MinMassFlow)
-            MOR_pre = (MinMassFlow / mass_flow_foroil) * 100
-            #st.write("MOR_pre:", MOR_pre)
-            MOR_premin = (MinMassFlow / mass_flow_foroilmin) * 100
-            #st.write("MOR_premin:", MOR_premin)
-    
-            if refrigerant in ["R23", "R508B"]:
-                MOR_correctliq = T_cond + 47.03
-            else:
-                MOR_correctliq = T_cond
-            if refrigerant in ["R23", "R508B"]:
-                evapoil = T_evap + 46.14
-            else:
-                evapoil = T_evap
-            #st.write("MOR_correctliq:", MOR_correctliq)
-            #st.write("evapoil:", evapoil)
-            if refrigerant == "R744": MOR_correction = (0.000225755013421421 * MOR_correctliq) - 0.00280879370374927
-            elif refrigerant == "R407A": MOR_correction = (0.00000414431651323856 * (MOR_correctliq ** 2)) + (0.000381908525139781 * MOR_correctliq) - 0.0163450053041212
-            elif refrigerant == "R449A": MOR_correction = (0.00000414431651323856 * (MOR_correctliq ** 2)) + (0.000381908525139781 * MOR_correctliq) - 0.0163450053041212
-            elif refrigerant == "R448A": MOR_correction = (0.00000414431651323856 * (MOR_correctliq ** 2)) + (0.000381908525139781 * MOR_correctliq) - 0.0163450053041212
-            elif refrigerant == "R502": MOR_correction = (0.00000414431651323856 * (MOR_correctliq ** 2)) + (0.000381908525139781 * MOR_correctliq) - 0.0163450053041212
-            elif refrigerant == "R507A": MOR_correction = (0.000302619054048837 * MOR_correctliq) - 0.00930188913363997
-            elif refrigerant == "R22": MOR_correction = (0.000108153843367715 * MOR_correctliq) - 0.00329248681202757
-            elif refrigerant == "R407C": MOR_correction = (0.00000420322918839302 * (max(MOR_correctliq, -32.0716410083429) ** 2)) + (0.000269608915211859 * max(MOR_correctliq, -32.0716410083429)) - 0.0134546663857195
-            elif refrigerant == "R410A": MOR_correction = 0
-            elif refrigerant == "R407F": MOR_correction = (0.00000347332380289385 * (max(MOR_correctliq, -34.4346433150568) ** 2)) + (0.000239205332540693 * max(MOR_correctliq, -34.4346433150568)) - 0.0121545316131988
-            elif refrigerant == "R134a": MOR_correction = (0.000195224660107459 * MOR_correctliq) - 0.00591757011487048
-            elif refrigerant == "R404A": MOR_correction = (0.0000156507169104918 * (max(MOR_correctliq, -22.031637377024) ** 2)) + (0.000689621839324826 * max(MOR_correctliq, -22.031637377024)) - 0.0392
-            else: MOR_correction = (0.00000461020482461793 * (max(MOR_correctliq, -23.6334996273983) ** 2)) + (0.000217910548009675 * max(MOR_correctliq, -23.6334996273983)) - 0.012074621594626
-            #st.write("MOR_correction:", MOR_correction)
-    
-            if refrigerant == "R744": MOR_correctionmin = (0.000225755013421421 * minliq_temp) - 0.00280879370374927
-            elif refrigerant == "R407A": MOR_correctionmin = (0.00000414431651323856 * (minliq_temp ** 2)) + (0.000381908525139781 * minliq_temp) - 0.0163450053041212
-            elif refrigerant == "R449A": MOR_correctionmin = (0.00000414431651323856 * (minliq_temp ** 2)) + (0.000381908525139781 * minliq_temp) - 0.0163450053041212
-            elif refrigerant == "R448A": MOR_correctionmin = (0.00000414431651323856 * (minliq_temp ** 2)) + (0.000381908525139781 * minliq_temp) - 0.0163450053041212
-            elif refrigerant == "R502": MOR_correctionmin = (0.00000414431651323856 * (minliq_temp ** 2)) + (0.000381908525139781 * minliq_temp) - 0.0163450053041212
-            elif refrigerant == "R507A": MOR_correctionmin = (0.000302619054048837 * minliq_temp) - 0.00930188913363997
-            elif refrigerant == "R22": MOR_correctionmin = (0.000108153843367715 * minliq_temp) - 0.00329248681202757
-            elif refrigerant == "R407C": MOR_correctionmin = (0.00000420322918839302 * (max(minliq_temp, -32.0716410083429) ** 2)) + (0.000269608915211859 * max(minliq_temp, -32.0716410083429)) - 0.0134546663857195
-            elif refrigerant == "R410A": MOR_correctionmin = 0
-            elif refrigerant == "R407F": MOR_correctionmin = (0.00000347332380289385 * (max(minliq_temp, -34.4346433150568) ** 2)) + (0.000239205332540693 * max(minliq_temp, -34.4346433150568)) - 0.0121545316131988
-            elif refrigerant == "R134a": MOR_correctionmin = (0.000195224660107459 * minliq_temp) - 0.00591757011487048
-            elif refrigerant == "R404A": MOR_correctionmin = (0.0000156507169104918 * (max(minliq_temp, -22.031637377024) ** 2)) + (0.000689621839324826 * max(minliq_temp, -22.031637377024)) - 0.0392
-            else: MOR_correctionmin = (0.00000461020482461793 * (max(minliq_temp, -23.6334996273983) ** 2)) + (0.000217910548009675 * max(minliq_temp, -23.6334996273983)) - 0.012074621594626
-            #st.write("MOR_correctionmin:", MOR_correctionmin)
-    
-            if refrigerant == "R744": MOR_correction2 = (-0.0000176412848988908 * (evapoil ** 2)) - (0.00164308248808803 * evapoil) - 0.0184308798286039
-            elif refrigerant == "R407A": MOR_correction2 = (-0.000864076433837511 * evapoil) - 0.0145018190416687
-            elif refrigerant == "R449A": MOR_correction2 = (-0.000835375233693285 * evapoil) - 0.0138846063856621
-            elif refrigerant == "R448A": MOR_correction2 = (0.00000171366802431428 * (evapoil ** 2)) - (0.000865528727278154 * evapoil) - 0.0152961902042161
-            elif refrigerant == "R502": MOR_correction2 = (0.00000484734071020993 * (evapoil ** 2)) - (0.000624822304716683 * evapoil) - 0.0128725684240106
-            elif refrigerant == "R507A": MOR_correction2 = (-0.000701333343440148 * evapoil) - 0.0114900933623056
-            elif refrigerant == "R22": MOR_correction2 = (0.00000636798209134899 * (evapoil ** 2)) - (0.000157783204337396 * evapoil) - 0.00575251626397381
-            elif refrigerant == "R407C": MOR_correction2 = (-0.00000665735727676349 * (evapoil ** 2)) - (0.000894860288947537 * evapoil) - 0.0116054361757929
-            elif refrigerant == "R410A": MOR_correction2 = (-0.000672268853990701 * evapoil) - 0.0111802230098585
-            elif refrigerant == "R407F": MOR_correction2 = (0.00000263731418614519 * (evapoil ** 2)) - (0.000683997257738699 * evapoil) - 0.0126005968942147
-            elif refrigerant == "R134a": MOR_correction2 = (-0.00000823045532174214 * (evapoil ** 2)) - (0.00108063672211041 * evapoil) - 0.0217411206961643
-            elif refrigerant == "R404A": MOR_correction2 = (0.00000342378568620316 * (evapoil ** 2)) - (0.000329572335134041 * evapoil) - 0.00706087606597149
-            else: MOR_correction2 = (-0.000711441807827186 * evapoil) - 0.0118194116436425
-            #st.write("MOR_correction2:", MOR_correction2)
-            
-            if refrigerant in ["R23", "R508B"]:
-                if T_evap < -86:
-                    MOR = ""
-                    MORmin = ""
-                    MORfinal = ""
-                elif T_evap > -42:
-                    MOR = ""
-                    MORmin = ""
-                    MORfinal = ""
-                else:
-                    MOR = (1 - MOR_correction) * (1 - MOR_correction2) * MOR_pre
-                    MORmin = (1 - MOR_correctionmin) * (1 - MOR_correction2) * MOR_premin
-                    MORfinal = max(MOR, MORmin)
-            else:    
-                if T_evap < -40:
-                    MOR = ""
-                    MORmin = ""
-                    MORfinal = ""
-                elif T_evap > 4:
-                    MOR = ""
-                    MORmin = ""
-                    MORfinal = ""
-                else:
-                    MOR = (1 - MOR_correction) * (1 - MOR_correction2) * MOR_pre
-                    MORmin = (1 - MOR_correctionmin) * (1 - MOR_correction2) * MOR_premin
-                    MORfinal = max(MOR, MORmin)
-            #st.write("MOR:", MOR)
-            #st.write("MORmin:", MORmin)
-            #st.write("MORfinal:", MORfinal)
+
             velocity_m_sfinal = max(velocity_m_s, velocity_m_smin)
-            #st.write("velocity_m_sfinal:", velocity_m_sfinal)
+
         else:
             velocity_m_s = None
             velocity_m_smin = None
             velocity_m_sfinal = None
     
-        # Oil return check
-        adjusted_duty_kw = evap_capacity_kw * (required_oil_duty_pct / 100.0)
-        #st.write("adjusted_duty_kw:", adjusted_duty_kw)
-    
         density_recalc = mass_flow_kg_s / (velocity_m_s * area_m2)
-        #st.write("density_recalc:", density_recalc)
     
         viscosity_super = RefrigerantViscosities().get_viscosity(refrigerant, T_evap - max_penalty + 273.15, superheat_K)
-        #st.write("viscosity_super:", viscosity_super)
+
         viscosity_super2a = RefrigerantViscosities().get_viscosity(refrigerant, T_evap + 273.15, ((superheat_K + 5) / 2))
-        #st.write("viscosity_super2a:", viscosity_super2a)
+
         viscosity_super2b = RefrigerantViscosities().get_viscosity(refrigerant, T_evap - max_penalty + 273.15, ((superheat_K + 5) / 2))
-        #st.write("viscosity_super2b:", viscosity_super2b)
+
         viscosity_super2 = (viscosity_super2a + viscosity_super2b) / 2
-        #st.write("viscosity_super2:", viscosity_super2)
+
         viscosity_sat = RefrigerantViscosities().get_viscosity(refrigerant, T_evap + 273.15, 0)
-        #st.write("viscosity_sat:", viscosity_sat)
+
         viscosity_5K = RefrigerantViscosities().get_viscosity(refrigerant, T_evap + 273.15, 5)
-        #st.write("viscosity_5K:", viscosity_5K)
+
         viscosity = (viscosity_super + viscosity_5K) / 2
-        #st.write("viscosity:", viscosity)
+
         viscosity_final = (viscosity * velocity1_prop) + (viscosity_super2 * (1 - velocity1_prop))
-        #st.write("viscosity_final:", viscosity_final)
     
-        # density for reynolds and col2 display needs density_super2 factoring in!
         reynolds = (density_recalc * velocity_m_sfinal * ID_m) / (viscosity_final / 1000000)
-        #st.write("reynolds:", reynolds)
     
         if selected_material in ["Steel SCH40", "Steel SCH80"]:
             eps = 0.00015
@@ -1792,10 +1611,7 @@ elif tool_selection == "Manual Calculation":
                 st.metric("Suction Density", f"{density_recalc:.2f} kg/m3")
     
             with col3:
-                if MORfinal == "":
-                    st.metric("MOR (%)", "")
-                else:
-                    st.metric("MOR (%)", f"{MORfinal:.1f} %")
+                st.metric("MOR (%)", "")
     
             with col4:
                 st.metric("Pressure Drop", f"{dp_total_kPa:.2f} kPa")
