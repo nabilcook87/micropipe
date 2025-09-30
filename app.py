@@ -1459,7 +1459,7 @@ elif tool_selection == "Manual Calculation":
 
         viscosity = (viscosity_super + viscosity_5K) / 2
     
-        reynolds = (density * velocity_m_sfinal * ID_m) / (viscosity / 1000000)
+        reynolds = (density * velocity_m_s * ID_m) / (viscosity / 1000000)
     
         if selected_material in ["Steel SCH40", "Steel SCH80"]:
             eps = 0.00015
@@ -1492,7 +1492,7 @@ elif tool_selection == "Manual Calculation":
                     fhi = f
         
         # dynamic (velocity) pressure, kPa
-        q_kPa = 0.5 * density_recalc * (velocity_m_sfinal ** 2) / 1000.0
+        q_kPa = 0.5 * density * (velocity_m_s ** 2) / 1000.0
     
         # 1) straight pipe only
         dp_pipe_kPa = f * (L / ID_m) * q_kPa
@@ -1532,19 +1532,18 @@ elif tool_selection == "Manual Calculation":
         dp_total_kPa = dp_pipe_kPa + dp_items_kPa + dp_plf_kPa
         
         converter = PressureTemperatureConverter()
-        dt = converter.pressure_drop_to_temp_penalty(refrigerant, T_evap, dp_total_kPa)
-        #st.write("dt:", dt)
+        dt = converter.pressure_drop_to_temp_penalty(refrigerant, T_cond, dp_total_kPa)
         
         st.subheader("Results")
     
-        if velocity_m_sfinal:
+        if velocity_m_s:
             col1, col2, col3, col4, col5 = st.columns(5)
     
             with col1:
-                st.metric("Refrigerant Velocity", f"{velocity_m_sfinal:.2f} m/s")
+                st.metric("Refrigerant Velocity", f"{velocity_m_s:.2f} m/s")
     
             with col2:
-                st.metric("Suction Density", f"{density_recalc:.2f} kg/m3")
+                st.metric("Suction Density", f"{density:.2f} kg/m3")
     
             with col3:
                 st.metric("MOR (%)", "")
