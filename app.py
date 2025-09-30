@@ -617,7 +617,7 @@ elif tool_selection == "Oil Return Checker":
 elif tool_selection == "Manual Calculation":
     st.subheader("Manual Calculation")
 
-    mode = st.radio("", ["Dry Suction", "Liquid", "Discharge", "Pumped Liquid", "Wet Suction"], index=1, horizontal=True)
+    mode = st.radio("", ["Dry Suction", "Liquid", "Discharge", "Pumped Liquid", "Wet Suction"], index=1, horizontal=True, label_visibility="collapsed")
     
     col1, col2, col3, col4 = st.columns(4)
 
