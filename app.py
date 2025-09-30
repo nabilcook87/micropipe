@@ -1420,95 +1420,30 @@ elif tool_selection == "Manual Calculation":
         from utils.pipe_length_volume_calc import get_pipe_id_mm
     
         T_evap = evaporating_temp
+        T_liq = minliq_temp
         T_cond = condensing_temp
     
         props = RefrigerantProperties()
-        h_in = props.get_properties(refrigerant, T_cond)["enthalpy_liquid2"]
-
-        h_inmin = props.get_properties(refrigerant, minliq_temp)["enthalpy_liquid2"]
-
-        h_inlet = props.get_properties(refrigerant, T_cond)["enthalpy_liquid"]
-
-        h_inletmin = props.get_properties(refrigerant, minliq_temp)["enthalpy_liquid"]
+        
+        h_in = props.get_properties(refrigerant, T_liq)["enthalpy_liquid2"]
 
         h_evap = props.get_properties(refrigerant, T_evap)["enthalpy_vapor"]
-
-        h_10K = props.get_properties(refrigerant, T_evap)["enthalpy_super"]
-
-        hdiff_10K = h_10K - h_evap
-
-        hdiff_custom = hdiff_10K * min(max(superheat_K, 5), 30) / 10
-
-        h_super = h_evap + hdiff_custom
         
         delta_h = h_evap - h_in
 
-        delta_hmin = h_evap - h_inmin
-
         mass_flow_kg_s = evap_capacity_kw / delta_h if delta_h > 0 else 0.01
-
-        mass_flow_kg_smin = evap_capacity_kw / delta_hmin if delta_hmin > 0 else 0.01
     
         if ID_mm is not None:
             ID_m = ID_mm / 1000.0
 
             area_m2 = 3.1416 * (ID_m / 2) ** 2
 
-            density_super = RefrigerantDensities().get_density(refrigerant, T_evap - max_penalty + 273.15, superheat_K)
+            density = RefrigerantProperties().get_properties(refrigerant, T_liq)["density_liquid"]
 
-            density_super2a = RefrigerantDensities().get_density(refrigerant, T_evap + 273.15, ((superheat_K + 5) / 2))
-
-            density_super2b = RefrigerantDensities().get_density(refrigerant, T_evap - max_penalty + 273.15, ((superheat_K + 5) / 2))
-
-            density_super2 = (density_super2a + density_super2b) / 2
-
-            density_sat = RefrigerantProperties().get_properties(refrigerant, T_evap)["density_vapor"]
-
-            density_5K = RefrigerantDensities().get_density(refrigerant, T_evap + 273.15, 5)
-
-            density = (density_super + density_5K) / 2
-
-            velocity_m_s1 = mass_flow_kg_s / (area_m2 * density)
-
-            velocity_m_s1min = mass_flow_kg_smin / (area_m2 * density)
-
-            velocity_m_s2 = mass_flow_kg_s / (area_m2 * density_super2)
-
-            velocity_m_s2min = mass_flow_kg_smin / (area_m2 * density_super2)
-
-            if refrigerant == "R744": velocity1_prop = 1
-            elif refrigerant == "R404A":
-                if superheat_K > 45: velocity1_prop = (0.0328330590542629 * superheat_K) - 1.47748765744183
-                else: velocity1_prop = 0
-            elif refrigerant == "R134a":
-                if superheat_K > 30: velocity1_prop = (-0.000566085879684639 * (superheat_K ** 2)) + (0.075049554857083 * superheat_K) - 1.74200935399632
-                else: velocity1_prop = 0
-            elif refrigerant == "R407F": velocity1_prop = 1
-            elif refrigerant == "R407A": velocity1_prop = 1
-            elif refrigerant == "R410A": velocity1_prop = 1
-            elif refrigerant == "R407C": velocity1_prop = 0
-            elif refrigerant == "R22": velocity1_prop = 1
-            elif refrigerant == "R502": velocity1_prop = 1
-            elif refrigerant == "R507A": velocity1_prop = 1
-            elif refrigerant == "R448A": velocity1_prop = 1
-            elif refrigerant == "R449A": velocity1_prop = 1
-            elif refrigerant == "R717": velocity1_prop = 1
-            else:
-                if superheat_K > 30: velocity1_prop = (0.0000406422632403154 * (superheat_K ** 2)) - (0.000541007136813307 * superheat_K) + 0.748882946418884
-                else: velocity1_prop = 0.769230769230769
-
-            velocity_m_s = (velocity_m_s1 * velocity1_prop) + (velocity_m_s2 * (1 - velocity1_prop))
-            
-            velocity_m_smin = (velocity_m_s1min * velocity1_prop) + (velocity_m_s2min * (1 - velocity1_prop))
-
-            velocity_m_sfinal = max(velocity_m_s, velocity_m_smin)
+            velocity_m_s = mass_flow_kg_s / (area_m2 * density)
 
         else:
             velocity_m_s = None
-            velocity_m_smin = None
-            velocity_m_sfinal = None
-    
-        density_recalc = mass_flow_kg_s / (velocity_m_s * area_m2)
     
         viscosity_super = RefrigerantViscosities().get_viscosity(refrigerant, T_evap - max_penalty + 273.15, superheat_K)
 
