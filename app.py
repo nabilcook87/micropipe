@@ -1293,9 +1293,9 @@ elif tool_selection == "Manual Calculation":
         default_index = 0
         if material_changed and "prev_pipe_mm" in ss:
             default_index = _closest_index(ss.prev_pipe_mm)
-        elif selected_material == "Copper ACR" and ("1-1/8" in pipe_sizes or '1-1/8"' in pipe_sizes):
+        elif selected_material == "Copper ACR" and ("1/2" in pipe_sizes or '1/2"' in pipe_sizes):
             # first load or no previous selection → prefer 1-1/8" for Copper ACR
-            want = "1-1/8" if "1-1/8" in pipe_sizes else '1-1/8"'
+            want = "1/2" if "1/2" in pipe_sizes else '1/2"'
             default_index = pipe_sizes.index(want)
         elif "selected_size" in ss and ss.selected_size in pipe_sizes:
             # if Streamlit kept the selection, use it
