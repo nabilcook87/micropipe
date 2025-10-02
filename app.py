@@ -1520,6 +1520,9 @@ elif tool_selection == "Manual Calculation":
         dp_total_kPa = dp_pipe_kPa + dp_items_kPa + dp_plf_kPa
         
         converter = PressureTemperatureConverter()
+        condpres = converter.pressure_drop_to_temp_penalty(refrigerant, T_cond, dp_total_kPa)
+        
+        
         dt = converter.pressure_drop_to_temp_penalty(refrigerant, T_cond, dp_total_kPa)
 
         head = 9.80665 * risem * density * 1.1 / 1000
