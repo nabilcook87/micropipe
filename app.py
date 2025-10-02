@@ -1527,7 +1527,7 @@ elif tool_selection == "Manual Calculation":
 
         exsub = T_cond - T_liq
 
-        addsub = dt + thead - exsub
+        addsub = max(dt + thead - exsub, 0)
         
         st.subheader("Results")
     
