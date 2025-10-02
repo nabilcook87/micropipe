@@ -1521,6 +1521,9 @@ elif tool_selection == "Manual Calculation":
         
         converter = PressureTemperatureConverter()
         dt = converter.pressure_drop_to_temp_penalty(refrigerant, T_cond, dp_total_kPa)
+
+        head = 9.80665 * risem * density / 1000
+        thead = converter.pressure_drop_to_temp_penalty(refrigerant, T_cond, head)
         
         st.subheader("Results")
     
