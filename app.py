@@ -1528,11 +1528,18 @@ elif tool_selection == "Manual Calculation":
         dt = converter.pressure_drop_to_temp_penalty(refrigerant, avcirctemp, dp_total_kPa)
 
         head = 9.80665 * risem * density / 1000
-        thead = converter.pressure_drop_to_temp_penalty(refrigerant, T_cond, head)
+        
+        dp_withhead = dp_total_kPa + head
+
+        postall = condpres - (dp_withhead / 100)
+        avall = (condpres + postall) / 2
+        avalltemp = converter.pressure_to_temp(refrigerant, avall)
+        
+        tall = converter.pressure_drop_to_temp_penalty(refrigerant, avalltemp, dp_withhead)
 
         exsub = T_cond - T_liq
 
-        addsub = max(dt + thead - exsub, 0)
+        addsub = max(tall - exsub, 0)
         
         st.subheader("Results")
     
