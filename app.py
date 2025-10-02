@@ -1524,11 +1524,15 @@ elif tool_selection == "Manual Calculation":
 
         head = 9.80665 * risem * density / 1000
         thead = converter.pressure_drop_to_temp_penalty(refrigerant, T_cond, head)
+
+        exsub = T_cond - T_liq
+
+        addsub = dt + thead - exsub
         
         st.subheader("Results")
     
         if velocity_m_s:
-            col1, col2, col3, col4, col5 = st.columns(5)
+            col1, col2, col3, col4, col5, col6 = st.columns(6)
     
             with col1:
                 st.metric("Refrigerant Velocity", f"{velocity_m_s:.2f} m/s")
@@ -1544,3 +1548,6 @@ elif tool_selection == "Manual Calculation":
     
             with col5:
                 st.metric("Temp Penalty", f"{dt:.2f} K")
+
+            with col6:
+                st.metric("Additional Subcooling Required", f"{addsub:.2f} K")
