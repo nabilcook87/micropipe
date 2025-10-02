@@ -5,6 +5,7 @@ from utils.system_pressure_checker import check_pipe_rating, _pipe_rating_data, 
 import pandas as pd
 import math
 import bisect
+import numpy as np
 
 st.set_page_config(page_title="Micropipe - Refrigeration Pipe Sizing", layout="wide")
 st.title("MicroPipe")
