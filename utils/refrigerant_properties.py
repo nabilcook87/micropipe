@@ -50,7 +50,7 @@ class RefrigerantProperties:
         enthalpy_liquid_array = np.array(data["enthalpy_liquid"])
         enthalpy_vapor_array = np.array(data["enthalpy_vapor"])
         enthalpy_super_array = np.array(data["enthalpy_super"])
-        viscosity_liquid_array = np.array(data["
+        viscosity_liquid_array = np.array(data["viscosity_liquid"])
         
         pressure_bar = self.interpolate_log(temp_array, pressure_array, temperature_C)
         density_liquid = self.interpolate(temp_array, density_liquid_array, temperature_C)
@@ -60,6 +60,7 @@ class RefrigerantProperties:
         enthalpy_liquid2 = self.interpolate(bubble_array, enthalpy_liquid_array, temperature_C)
         enthalpy_vapor = self.interpolate(temp_array, enthalpy_vapor_array, temperature_C)
         enthalpy_super = self.interpolate(temp_array, enthalpy_super_array, temperature_C)
+        viscosity_liquid = self.interpolate(bubble_array, viscosity_liquid_array, temperature_C)
 
         # st.write("temp_array:", temp_array)
         # st.write("enthalpy_super_array:", enthalpy_super_array)
@@ -73,5 +74,6 @@ class RefrigerantProperties:
             "enthalpy_liquid": enthalpy_liquid,
             "enthalpy_liquid2": enthalpy_liquid2,
             "enthalpy_vapor": enthalpy_vapor,
-            "enthalpy_super": enthalpy_super
+            "enthalpy_super": enthalpy_super,
+            "viscosity_liquid": viscosity_liquid
         }
