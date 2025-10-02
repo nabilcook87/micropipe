@@ -1444,20 +1444,8 @@ elif tool_selection == "Manual Calculation":
 
         else:
             velocity_m_s = None
-    
-        viscosity_super = RefrigerantViscosities().get_viscosity(refrigerant, T_evap - max_penalty + 273.15, risem)
 
-        viscosity_super2a = RefrigerantViscosities().get_viscosity(refrigerant, T_evap + 273.15, ((risem + 5) / 2))
-
-        viscosity_super2b = RefrigerantViscosities().get_viscosity(refrigerant, T_evap - max_penalty + 273.15, ((risem + 5) / 2))
-
-        viscosity_super2 = (viscosity_super2a + viscosity_super2b) / 2
-
-        viscosity_sat = RefrigerantViscosities().get_viscosity(refrigerant, T_evap + 273.15, 0)
-
-        viscosity_5K = RefrigerantViscosities().get_viscosity(refrigerant, T_evap + 273.15, 5)
-
-        viscosity = (viscosity_super + viscosity_5K) / 2
+        viscosity = RefrigerantProperties().get_properties(refrigerant, T_liq)["viscosity_liquid"]
     
         reynolds = (density * velocity_m_s * ID_m) / (viscosity / 1000000)
     
