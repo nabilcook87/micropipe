@@ -1520,10 +1520,12 @@ elif tool_selection == "Manual Calculation":
         dp_total_kPa = dp_pipe_kPa + dp_items_kPa + dp_plf_kPa
         
         converter = PressureTemperatureConverter()
-        condpres = converter.pressure_drop_to_temp_penalty(refrigerant, T_cond, dp_total_kPa)
+        condpres = converter.temp_to_pressure(refrigerant, T_cond)
+        postcirc = condpres - (dp_total_kPa / 100)
+        avcirc = (condpres + postcirc) / 2
+        avcirctemp = converter.pressure_to_temp(refrigerant, avcirc)
         
-        
-        dt = converter.pressure_drop_to_temp_penalty(refrigerant, T_cond, dp_total_kPa)
+        dt = converter.pressure_drop_to_temp_penalty(refrigerant, avcirctemp, dp_total_kPa)
 
         head = 9.80665 * risem * density * 1.1 / 1000
         thead = converter.pressure_drop_to_temp_penalty(refrigerant, T_cond, head)
