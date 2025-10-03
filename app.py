@@ -1523,8 +1523,8 @@ elif tool_selection == "Manual Calculation":
         converter = PressureTemperatureConverter()
         condpres = converter.temp_to_pressure(refrigerant, T_cond)
         postcirc = condpres - (dp_total_kPa / 100)
-        lnavcirc = (np.log(condpres) + np.log(postcirc)) / 2
-        avcirc = np.exp(lnavcirc)
+        expavcirc = (np.exp(condpres) + np.exp(postcirc)) / 2
+        avcirc = np.log(expavcirc)
         avcirctemp = converter.pressure_to_temp(refrigerant, avcirc)
         
         dt = converter.pressure_drop_to_temp_penalty(refrigerant, avcirctemp, dp_total_kPa)
@@ -1534,8 +1534,8 @@ elif tool_selection == "Manual Calculation":
         dp_withhead = dp_total_kPa + head
 
         postall = condpres - (dp_withhead / 100)
-        lnavall = (np.log(condpres) + np.log(postall)) / 2
-        avall = np.exp(lnavall)
+        expavall = (np.exp(condpres) + np.exp(postall)) / 2
+        avall = np.log(expavall)
         avalltemp = converter.pressure_to_temp(refrigerant, avall)
         
         tall = converter.pressure_drop_to_temp_penalty(refrigerant, avalltemp, dp_withhead)
