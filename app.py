@@ -1533,10 +1533,8 @@ elif tool_selection == "Manual Calculation":
         dp_withhead = dp_total_kPa + head
 
         postall = condpres - (dp_withhead / 100)
-        avall = (condpres + postall) / 2
-        avalltemp = converter.pressure_to_temp(refrigerant, avall)
-        
-        tall = converter.pressure_drop_to_temp_penalty(refrigerant, avalltemp, dp_withhead)
+        postalltemp = converter.pressure_to_temp(refrigerant, postall)
+        tall = T_cond - postalltemp
 
         exsub = T_cond - T_liq
 
