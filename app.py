@@ -1523,10 +1523,9 @@ elif tool_selection == "Manual Calculation":
         converter = PressureTemperatureConverter()
         condpres = converter.temp_to_pressure(refrigerant, T_cond)
         postcirc = condpres - (dp_total_kPa / 100)
-        avcirc = (condpres + postcirc) / 2
-        avcirctemp = converter.pressure_to_temp(refrigerant, avcirc)
+        postcirctemp = converter.pressure_to_temp(refrigerant, postcirc)
         
-        dt = converter.pressure_drop_to_temp_penalty(refrigerant, avcirctemp, dp_total_kPa)
+        dt = T_cond - postcirctemp
 
         head = 9.80665 * risem * density / 1000
         
@@ -1534,6 +1533,7 @@ elif tool_selection == "Manual Calculation":
 
         postall = condpres - (dp_withhead / 100)
         postalltemp = converter.pressure_to_temp(refrigerant, postall)
+        
         tall = T_cond - postalltemp
 
         exsub = T_cond - T_liq
