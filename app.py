@@ -1180,11 +1180,11 @@ elif tool_selection == "Manual Calculation":
         
         dp_total_kPa = dp_pipe_kPa + dp_items_kPa + dp_plf_kPa
 
+        converter = PressureTemperatureConverter()
         evappres = converter.temp_to_pressure(refrigerant, T_evap)
 
         postcirc = evappres - (dp_total_kPa / 100)
         
-        converter = PressureTemperatureConverter()
         postcirctemp = converter.pressure_to_temp(refrigerant, postcirc)
 
         dt = T_evap - postcirctemp
