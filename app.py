@@ -1539,6 +1539,8 @@ elif tool_selection == "Manual Calculation":
         exsub = T_cond - T_liq
 
         addsub = max(tall - exsub, 0)
+
+        evappres = converter.temp_to_pressure(refrigerant, T_evap)
         
         st.subheader("Results")
     
@@ -1564,7 +1566,7 @@ elif tool_selection == "Manual Calculation":
                 st.metric("Additional Subcooling Required", f"{addsub:.2f} K")
 
             with col7:
-                st.metric("Evaporating Pressure", f"{addsub:.2f} bar(a)")
+                st.metric("Evaporating Pressure", f"{evappres:.2f} bar(a)")
 
             with col8:
                 st.metric("Condensing Pressure", f"{condpres:.2f} bar(a)")
