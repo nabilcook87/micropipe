@@ -1593,3 +1593,28 @@ elif tool_selection == "Manual Calculation":
 
             with col7:
                 st.metric("Condensing Pressure", f"{condpres:.2f}bar(a)")
+
+            # correcting default values between cond, max liq, and min liq between liquid calcs and dry suction calcs
+            
+            col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
+    
+            with col1:
+                st.metric("Mass Flow Rate", f"{mass_flow_kg_s:.5f}kg/s")
+    
+            with col2:
+                st.metric("Liquid Density", f"{density:.1f}kg/m³")
+    
+            with col3:
+                st.metric("Pressure Drop", f"{dp_total_kPa:.2f}kPa")
+    
+            with col4:
+                st.metric("Temp Penalty", f"{dt:.2f}K")
+
+            with col5:
+                st.metric("Additional Subcooling Required", f"{addsub:.2f}K")
+
+            with col6:
+                st.metric("Evaporating Pressure", f"{evappres:.2f}bar(a)")
+
+            with col7:
+                st.metric("Condensing Pressure", f"{condpres:.2f}bar(a)")
