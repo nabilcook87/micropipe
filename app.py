@@ -12,7 +12,7 @@ st.markdown("""
 <style>
 /* number */
 div[data-testid="stMetricValue"] > div {
-    font-size: 36px;            /* default is ~36px; pick what you like */
+    font-size: 30px;            /* default is ~36px; pick what you like */
     line-height: 1.2;
 }
 /* label (e.g., "Refrigerant Velocity") */
