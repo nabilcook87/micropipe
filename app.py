@@ -1552,7 +1552,7 @@ elif tool_selection == "Manual Calculation":
                 st.metric("Liquid Density", f"{density:.1f} kg/m3")
     
             with col3:
-                st.metric("MOR (%)", "", label_visibility="collapsed")
+                st.metric("MOR (%)", "")
     
             with col4:
                 st.metric("Pressure Drop", f"{dp_total_kPa:.2f} kPa")
