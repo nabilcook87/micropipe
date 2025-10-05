@@ -1567,6 +1567,8 @@ elif tool_selection == "Manual Calculation":
         addsub = max(tall - exsub, 0)
 
         evappres = converter.temp_to_pressure(refrigerant, T_evap)
+
+        volflow = mass_flow_kg_s / density
         
         st.subheader("Results")
     
@@ -1602,7 +1604,7 @@ elif tool_selection == "Manual Calculation":
                 st.metric("Mass Flow Rate", f"{mass_flow_kg_s:.5f}kg/s")
     
             with col2:
-                st.metric("Liquid Density", f"{density:.1f}kg/m³")
+                st.metric("Volumetric Flow Rate", f"{volflow:.5f}m³/s")
     
             with col3:
                 st.metric("Pressure Drop", f"{dp_total_kPa:.2f}kPa")
@@ -1617,4 +1619,4 @@ elif tool_selection == "Manual Calculation":
                 st.metric("Evaporating Pressure", f"{evappres:.2f}bar(a)")
 
             with col7:
-                st.metric("Condensing Pressure", f"{condpres:.2f}bar(a)")
+                st.metric("Compression Ratio", f"{condpres:.2f}")
