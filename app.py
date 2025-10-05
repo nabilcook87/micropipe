@@ -1564,7 +1564,7 @@ elif tool_selection == "Manual Calculation":
                 st.metric("Additional Subcooling Required", f"{addsub:.2f} K")
 
             with col7:
-                st.metric("Additional Subcooling Required", f"{addsub:.2f} K")
+                st.metric("Evaporating Pressure", f"{addsub:.2f} bar(a)")
 
             with col8:
                 st.metric("Condensing Pressure", f"{condpres:.2f} bar(a)")
