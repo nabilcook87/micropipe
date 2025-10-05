@@ -7,6 +7,26 @@ import math
 import bisect
 import numpy as np
 
+# Make metric numbers & labels smaller
+st.markdown("""
+<style>
+/* number */
+div[data-testid="stMetricValue"] > div {
+    font-size: 22px;            /* default is ~36px; pick what you like */
+    line-height: 1.2;
+}
+/* label (e.g., "Refrigerant Velocity") */
+div[data-testid="stMetricLabel"] > div {
+    font-size: 14px;
+}
+/* optional: delta arrow/number size */
+div[data-testid="stMetricDelta"] svg, 
+div[data-testid="stMetricDelta"] > div {
+    height: 14px; width: 14px; font-size: 14px;
+}
+</style>
+""", unsafe_allow_html=True)
+
 st.set_page_config(page_title="Micropipe - Refrigeration Pipe Sizing", layout="wide")
 st.title("MicroPipe")
 
