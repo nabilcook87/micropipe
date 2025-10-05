@@ -1543,7 +1543,7 @@ elif tool_selection == "Manual Calculation":
         st.subheader("Results")
     
         if velocity_m_s:
-            col1, col2, col3, col4, col5, col6 = st.columns(6)
+            col1, col2, col3, col4, col5, col6, col7, col8 = st.columns(8)
     
             with col1:
                 st.metric("Refrigerant Velocity", f"{velocity_m_s:.2f} m/s")
@@ -1562,3 +1562,9 @@ elif tool_selection == "Manual Calculation":
 
             with col6:
                 st.metric("Additional Subcooling Required", f"{addsub:.2f} K")
+
+            with col7:
+                st.metric("Additional Subcooling Required", f"{addsub:.2f} K")
+
+            with col8:
+                st.metric("Condensing Pressure", f"{condpres:.2f} bar(a)")
