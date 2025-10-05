@@ -1219,7 +1219,7 @@ elif tool_selection == "Manual Calculation":
                 st.metric("Refrigerant Velocity", f"{velocity_m_sfinal:.2f} m/s")
     
             with col2:
-                st.metric("Suction Density", f"{density_recalc:.2f} kg/m3")
+                st.metric("Suction Density", f"{density_recalc:.2f} kg/m³")
     
             with col3:
                 if MORfinal == "":
@@ -1577,7 +1577,7 @@ elif tool_selection == "Manual Calculation":
                 st.metric("Refrigerant Velocity", f"{velocity_m_s:.2f} m/s")
     
             with col2:
-                st.metric("Liquid Density", f"{density:.1f} kg/m3")
+                st.metric("Liquid Density", f"{density:.1f} kg/m³")
     
             with col3:
                 st.metric("Pressure Drop", f"{dp_total_kPa:.2f} kPa")
