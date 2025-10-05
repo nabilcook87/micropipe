@@ -1338,12 +1338,12 @@ elif tool_selection == "Manual Calculation":
                 minliq_min, minliq_max, minliq_default = -100.0, 10.0, -40.0
             elif refrigerant == "R744":
                 evap_min, evap_max, evap_default = -50.0, 20.0, -10.0
-                cond_min, cond_max, cond_default = -50.0, 30.0, 15.0
+                cond_min, cond_max, cond_default = -23.0, 30.0, 15.0
                 minliq_min, minliq_max, minliq_default = -50.0, 30.0, 10.0
             else:
                 evap_min, evap_max, evap_default = -50.0, 30.0, -10.0
-                cond_min, cond_max, cond_default = -50.0, 60.0, 40.0
-                minliq_min, minliq_max, minliq_default = -50.0, 60.0, 20.0
+                cond_min, cond_max, cond_default = -23.0, 60.0, 43.0
+                minliq_min, minliq_max, minliq_default = -50.0, 60.0, 40.0
     
             # --- Init state (widget-backed) ---
             ss = st.session_state
