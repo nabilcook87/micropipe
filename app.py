@@ -1537,14 +1537,17 @@ elif tool_selection == "Manual Calculation":
         B_SRB = SRB + 0.5 * _45 + 2.0 * ubend + 3.0 * ptrap
         B_LRB = LRB + MAC
     
-        dp_items_kPa = q_kPa * (
+        dp_fittings_kPa = q_kPa * (
         K_SRB   * B_SRB +
-        K_LRB   * B_LRB +
+        K_LRB   * B_LRB
+        )
+
+        dp_valves_kPa = q_kPa * (
         K_BALL  * ball +
         K_GLOBE * globe
         )
         
-        dp_total_kPa = dp_pipe_kPa + dp_items_kPa + dp_plf_kPa
+        dp_total_kPa = dp_pipe_kPa + dp_fittings_kPa + dp_valves_kPa + dp_plf_kPa
         
         converter = PressureTemperatureConverter()
         condpres = converter.temp_to_pressure(refrigerant, T_cond)
@@ -1610,10 +1613,10 @@ elif tool_selection == "Manual Calculation":
                 st.metric("Pipe PD", f"{dp_pipe_kPa:.2f}kPa")
     
             with col4:
-                st.metric("Fittings PD", f"{dt:.2f}kPa")
+                st.metric("Fittings PD", f"{dp_fittings_kPa:.2f}kPa")
 
             with col5:
-                st.metric("Valves PD", f"{addsub:.2f}kPa")
+                st.metric("Valves PD", f"{dp_valves_kPa:.2f}kPa")
 
             with col6:
                 st.metric("Velocity Pressure PD", f"{dp_plf_kPa:.2f}kPa")
