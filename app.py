@@ -1572,6 +1572,8 @@ elif tool_selection == "Manual Calculation":
         evappres = converter.temp_to_pressure(refrigerant, T_evap)
 
         volflow = mass_flow_kg_s / density
+
+        compratio = condpres / evappres
         
         st.subheader("Results")
     
@@ -1622,4 +1624,4 @@ elif tool_selection == "Manual Calculation":
                 st.metric("Velocity Pressure PD", f"{dp_plf_kPa:.2f}kPa")
 
             with col7:
-                st.metric("Compression Ratio", f"{condpres:.2f}")
+                st.metric("Compression Ratio", f"{compratio:.2f}")
