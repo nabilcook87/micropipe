@@ -1213,7 +1213,7 @@ elif tool_selection == "Manual Calculation":
         st.subheader("Results")
     
         if velocity_m_sfinal:
-            col1, col2, col3, col4, col5 = st.columns(5)
+            col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
     
             with col1:
                 st.metric("Refrigerant Velocity", f"{velocity_m_sfinal:.2f}m/s")
@@ -1231,6 +1231,12 @@ elif tool_selection == "Manual Calculation":
                 st.metric("Pressure Drop", f"{dp_total_kPa:.2f}kPa")
     
             with col5:
+                st.metric("Temp Penalty", f"{dt:.2f}K")
+
+            with col6:
+                st.metric("SST", f"{postcirctemp:.2f}°C")
+
+            with col7:
                 st.metric("Temp Penalty", f"{dt:.2f}K")
     
         if isinstance(MORfinal, (int, float)):
