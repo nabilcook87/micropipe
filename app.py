@@ -1607,16 +1607,16 @@ elif tool_selection == "Manual Calculation":
                 st.metric("Volumetric Flow Rate", f"{volflow:.5f}m³/s")
     
             with col3:
-                st.metric("Pressure Drop", f"{dp_total_kPa:.2f}kPa")
+                st.metric("Pipe PD", f"{dp_pipe_kPa:.2f}kPa")
     
             with col4:
-                st.metric("Temp Penalty", f"{dt:.2f}K")
+                st.metric("Fittings PD", f"{dt:.2f}kPa")
 
             with col5:
-                st.metric("Additional Subcooling Required", f"{addsub:.2f}K")
+                st.metric("Valves PD", f"{addsub:.2f}kPa")
 
             with col6:
-                st.metric("Evaporating Pressure", f"{evappres:.2f}bar(a)")
+                st.metric("Velocity Pressure PD", f"{dp_plf_kPa:.2f}kPa")
 
             with col7:
                 st.metric("Compression Ratio", f"{condpres:.2f}")
