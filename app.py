@@ -1237,7 +1237,7 @@ elif tool_selection == "Manual Calculation":
                 st.metric("SST", f"{postcirctemp:.2f}°C")
 
             with col7:
-                st.metric("Temp Penalty", f"{dt:.2f}K")
+                st.metric("Evaporating Pressure", f"{evappres:.2f}bar(a)")
     
         if isinstance(MORfinal, (int, float)):
             is_ok, message = (True, "✅ OK") if required_oil_duty_pct >= MORfinal else (False, "❌ Insufficient flow")
