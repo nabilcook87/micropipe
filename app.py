@@ -1242,28 +1242,25 @@ elif tool_selection == "Manual Calculation":
             col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
     
             with col1:
-                st.metric("Refrigerant Velocity", f"{velocity_m_sfinal:.2f}m/s")
+                st.metric("Mass Flow Rate", f"{velocity_m_sfinal:.2f}m/s")
     
             with col2:
-                st.metric("Suction Density", f"{density_recalc:.2f}kg/m³")
+                st.metric("Volumetric Flow Rate", f"{density_recalc:.2f}kg/m³")
     
             with col3:
-                if MORfinal == "":
-                    st.metric("MOR (%)", "")
-                else:
-                    st.metric("MOR (%)", f"{MORfinal:.1f}%")
+                st.metric("Minimum Capacity", f"{MORfinal:.1f}%")
     
             with col4:
-                st.metric("Pressure Drop", f"{dp_total_kPa:.2f}kPa")
+                st.metric("Pipe PD", f"{dp_total_kPa:.2f}kPa")
     
             with col5:
-                st.metric("Temp Penalty", f"{dt:.2f}K")
+                st.metric("Fittings PD", f"{dt:.2f}K")
 
             with col6:
-                st.metric("SST", f"{postcirctemp:.2f}°C")
+                st.metric("Valves PD", f"{postcirctemp:.2f}°C")
 
             with col7:
-                st.metric("Evaporating Pressure", f"{evappres:.2f}bar(a)")
+                st.metric("Velocity Pressure PD", f"{evappres:.2f}bar(a)")
     
         if isinstance(MORfinal, (int, float)):
             is_ok, message = (True, "✅ OK") if required_oil_duty_pct >= MORfinal else (False, "❌ Insufficient flow")
