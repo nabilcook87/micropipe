@@ -1255,7 +1255,7 @@ elif tool_selection == "Manual Calculation":
                 st.metric("Minimum Capacity", f"{MORfinal:.1f}kW")
     
             with col4:
-                st.metric("Pipe PD", f"{dp_total_kPa:.2f}kPa")
+                st.metric("Pipe PD", f"{dp_pipe_kPa:.2f}kPa")
     
             with col5:
                 st.metric("Fittings PD", f"{dt:.2f}kPa")
@@ -1264,7 +1264,7 @@ elif tool_selection == "Manual Calculation":
                 st.metric("Valves PD", f"{postcirctemp:.2f}kPa")
 
             with col7:
-                st.metric("Velocity Pressure PD", f"{evappres:.2f}kPa")
+                st.metric("Velocity Pressure PD", f"{dp_plf_kPa:.2f}kPa")
     
         if isinstance(MORfinal, (int, float)):
             is_ok, message = (True, "✅ OK") if required_oil_duty_pct >= MORfinal else (False, "❌ Insufficient flow")
