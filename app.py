@@ -1216,6 +1216,8 @@ elif tool_selection == "Manual Calculation":
         maxmass = max(mass_flow_kg_s, mass_flow_kg_smin)
 
         volflow = maxmass / density_recalc
+
+        MinCap = MORfinal * evap_capacity_kw / 100
         
         st.subheader("Results")
     
@@ -1255,7 +1257,10 @@ elif tool_selection == "Manual Calculation":
                 st.metric("Volumetric Flow Rate", f"{volflow:.5f}m³/s")
     
             with col3:
-                st.metric("Minimum Capacity", f"{MORfinal:.1f}kW")
+                if MORfinal == "":
+                    st.metric("Minimum Capacity", "")
+                else:
+                    st.metric("Minimum Capacity", f"{MinCap:.4f}kW")
     
             with col4:
                 st.metric("Pipe PD", f"{dp_pipe_kPa:.2f}kPa")
