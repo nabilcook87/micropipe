@@ -501,6 +501,10 @@ elif tool_selection == "Oil Return Checker":
         else:
             MOR_correctliq = T_cond
         if refrigerant in ["R23", "R508B"]:
+            MOR_correctliqmin = minliq_temp + 47.03
+        else:
+            MOR_correctliqmin = minliq_temp
+        if refrigerant in ["R23", "R508B"]:
             evapoil = T_evap + 46.14
         else:
             evapoil = T_evap
@@ -991,6 +995,10 @@ elif tool_selection == "Manual Calculation":
                 MOR_correctliq = T_cond + 47.03
             else:
                 MOR_correctliq = T_cond
+            if refrigerant in ["R23", "R508B"]:
+                MOR_correctliqmin = minliq_temp + 47.03
+            else:
+                MOR_correctliqmin = minliq_temp
             if refrigerant in ["R23", "R508B"]:
                 evapoil = T_evap + 46.14
             else:
