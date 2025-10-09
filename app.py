@@ -263,55 +263,43 @@ elif tool_selection == "Oil Return Checker":
 
     with col1:
         evap_capacity_kw = st.number_input("Evaporator Capacity (kW)", min_value=0.03, max_value=20000.0, value=10.0, step=1.0)
-        # if refrigerant == "R23": evaporating_temp = st.number_input("Evaporating Temperature (°C)", min_value=-100.0, max_value=-30.0, value=-80.0, step=1.0)
-        # elif refrigerant == "R508B": evaporating_temp = st.number_input("Evaporating Temperature (°C)", min_value=-100.0, max_value=-30.0, value=-80.0, step=1.0)
-        # elif refrigerant == "R744": evaporating_temp = st.number_input("Evaporating Temperature (°C)", min_value=-50.0, max_value=20.0, value=-10.0, step=1.0)
-        # else: evaporating_temp = st.number_input("Evaporating Temperature (°C)", min_value=-50.0, max_value=30.0, value=-10.0, step=1.0)
-        # if refrigerant == "R23": condensing_temp = st.number_input("Max Liquid Temperature (°C)", min_value=max(-100.0, evaporating_temp), max_value=10.0, value=-30.0, step=1.0)
-        # elif refrigerant == "R508B": condensing_temp = st.number_input("Max Liquid Temperature (°C)", min_value=max(-100.0, evaporating_temp), max_value=10.0, value=-30.0, step=1.0)
-        # elif refrigerant == "R744": condensing_temp = st.number_input("Max Liquid Temperature (°C)", min_value=max(-50.0, evaporating_temp), max_value=30.0, value=20.0, step=1.0)
-        # else: condensing_temp = st.number_input("Max Liquid Temperature (°C)", min_value=max(-50.0, evaporating_temp), max_value=60.0, value=40.0, step=1.0)
-        # if refrigerant == "R23": minliq_temp = st.number_input("Min Liquid Temperature (°C)", min_value=max(-100.0, evaporating_temp), max_value=min(10.0, condensing_temp), value=condensing_temp, step=1.0)
-        # elif refrigerant == "R508B": minliq_temp = st.number_input("Min Liquid Temperature (°C)", min_value=max(-100.0, evaporating_temp), max_value=min(10.0, condensing_temp), value=condensing_temp, step=1.0)
-        # elif refrigerant == "R744": minliq_temp = st.number_input("Min Liquid Temperature (°C)", min_value=max(-50.0, evaporating_temp), max_value=min(30.0, condensing_temp), value=condensing_temp, step=1.0)
-        # else: minliq_temp = st.number_input("Min Liquid Temperature (°C)", min_value=max(-50.0, evaporating_temp), max_value=min(60.0, condensing_temp), value=condensing_temp, step=1.0)
 
         # --- Base ranges per refrigerant ---
         if refrigerant in ("R23", "R508B"):
             evap_min, evap_max, evap_default = -100.0, -20.0, -80.0
-            cond_min, cond_max, cond_default = -100.0, 10.0, -30.0
+            maxliq_min, maxliq_max, maxliq_default = -100.0, 10.0, -30.0
             minliq_min, minliq_max, minliq_default = -100.0, 10.0, -40.0
         elif refrigerant == "R744":
             evap_min, evap_max, evap_default = -50.0, 20.0, -10.0
-            cond_min, cond_max, cond_default = -50.0, 30.0, 15.0
+            maxliq_min, maxliq_max, maxliq_default = -50.0, 30.0, 15.0
             minliq_min, minliq_max, minliq_default = -50.0, 30.0, 10.0
         else:
             evap_min, evap_max, evap_default = -50.0, 30.0, -10.0
-            cond_min, cond_max, cond_default = -50.0, 60.0, 40.0
+            maxliq_min, maxliq_max, maxliq_default = -50.0, 60.0, 40.0
             minliq_min, minliq_max, minliq_default = -50.0, 60.0, 20.0
 
         # --- Init state (widget-backed) ---
         ss = st.session_state
 
         if "last_refrigerant" not in ss or ss.last_refrigerant != refrigerant:
-            ss.cond_temp   = cond_default
+            ss.maxliq_temp   = maxliq_default
             ss.minliq_temp = minliq_default
             ss.evap_temp   = evap_default
             ss.last_refrigerant = refrigerant
         
-        ss.setdefault("cond_temp",   cond_default)
+        ss.setdefault("maxliq_temp",   maxliq_default)
         ss.setdefault("minliq_temp", minliq_default)
         ss.setdefault("evap_temp",   evap_default)
 
         # --- Callbacks implementing your downstream clamping logic ---
-        def on_change_cond():
+        def on_change_maxliq():
             # When cond changes: clamp minliq down to cond, then evap down to minliq
-            ss.minliq_temp = min(ss.minliq_temp, ss.cond_temp)
+            ss.minliq_temp = min(ss.minliq_temp, ss.maxliq_temp)
             ss.evap_temp   = min(ss.evap_temp,   ss.minliq_temp)
 
         def on_change_minliq():
             # When minliq changes: clamp minliq down to cond, then evap down to minliq
-            ss.minliq_temp = min(ss.minliq_temp, ss.cond_temp)
+            ss.minliq_temp = min(ss.minliq_temp, ss.maxliq_temp)
             ss.evap_temp   = min(ss.evap_temp,   ss.minliq_temp)
 
         def on_change_evap():
@@ -319,16 +307,16 @@ elif tool_selection == "Oil Return Checker":
             ss.evap_temp   = min(ss.evap_temp,   ss.minliq_temp)
 
         # --- Inputs with inclusive caps (≤), same order as your code ---
-        condensing_temp = st.number_input(
+        maxliq_temp = st.number_input(
             "Max Liquid Temperature (°C)",
-            min_value=cond_min, max_value=cond_max,
-            value=ss.cond_temp, step=1.0, key="cond_temp",
-            on_change=on_change_cond,
+            min_value=maxliq_min, max_value=maxliq_max,
+            value=ss.maxliq_temp, step=1.0, key="maxliq_temp",
+            on_change=on_change_maxliq,
         )
 
         minliq_temp = st.number_input(
             "Min Liquid Temperature (°C)",
-            min_value=minliq_min, max_value=min(condensing_temp, minliq_max),
+            min_value=minliq_min, max_value=min(maxliq_temp, minliq_max),
             value=ss.minliq_temp, step=1.0, key="minliq_temp",
             on_change=on_change_minliq,
         )
@@ -352,7 +340,7 @@ elif tool_selection == "Oil Return Checker":
     from utils.oil_return_checker import check_oil_return
 
     T_evap = evaporating_temp
-    T_cond = condensing_temp
+    T_cond = maxliq_temp
 
     props = RefrigerantProperties()
     h_in = props.get_properties(refrigerant, T_cond)["enthalpy_liquid2"]
@@ -752,55 +740,43 @@ elif tool_selection == "Manual Calculation":
     
         with col1:
             evap_capacity_kw = st.number_input("Evaporator Capacity (kW)", min_value=0.03, max_value=20000.0, value=10.0, step=1.0)
-            # if refrigerant == "R23": evaporating_temp = st.number_input("Evaporating Temperature (°C)", min_value=-100.0, max_value=-30.0, value=-80.0, step=1.0)
-            # elif refrigerant == "R508B": evaporating_temp = st.number_input("Evaporating Temperature (°C)", min_value=-100.0, max_value=-30.0, value=-80.0, step=1.0)
-            # elif refrigerant == "R744": evaporating_temp = st.number_input("Evaporating Temperature (°C)", min_value=-50.0, max_value=20.0, value=-10.0, step=1.0)
-            # else: evaporating_temp = st.number_input("Evaporating Temperature (°C)", min_value=-50.0, max_value=30.0, value=-10.0, step=1.0)
-            # if refrigerant == "R23": condensing_temp = st.number_input("Max Liquid Temperature (°C)", min_value=max(-100.0, evaporating_temp), max_value=10.0, value=-30.0, step=1.0)
-            # elif refrigerant == "R508B": condensing_temp = st.number_input("Max Liquid Temperature (°C)", min_value=max(-100.0, evaporating_temp), max_value=10.0, value=-30.0, step=1.0)
-            # elif refrigerant == "R744": condensing_temp = st.number_input("Max Liquid Temperature (°C)", min_value=max(-50.0, evaporating_temp), max_value=30.0, value=20.0, step=1.0)
-            # else: condensing_temp = st.number_input("Max Liquid Temperature (°C)", min_value=max(-50.0, evaporating_temp), max_value=60.0, value=40.0, step=1.0)
-            # if refrigerant == "R23": minliq_temp = st.number_input("Min Liquid Temperature (°C)", min_value=max(-100.0, evaporating_temp), max_value=min(10.0, condensing_temp), value=condensing_temp, step=1.0)
-            # elif refrigerant == "R508B": minliq_temp = st.number_input("Min Liquid Temperature (°C)", min_value=max(-100.0, evaporating_temp), max_value=min(10.0, condensing_temp), value=condensing_temp, step=1.0)
-            # elif refrigerant == "R744": minliq_temp = st.number_input("Min Liquid Temperature (°C)", min_value=max(-50.0, evaporating_temp), max_value=min(30.0, condensing_temp), value=condensing_temp, step=1.0)
-            # else: minliq_temp = st.number_input("Min Liquid Temperature (°C)", min_value=max(-50.0, evaporating_temp), max_value=min(60.0, condensing_temp), value=condensing_temp, step=1.0)
     
             # --- Base ranges per refrigerant ---
             if refrigerant in ("R23", "R508B"):
                 evap_min, evap_max, evap_default = -100.0, -20.0, -80.0
-                cond_min, cond_max, cond_default = -100.0, 10.0, -30.0
+                maxliq_min, maxliq_max, maxliq_default = -100.0, 10.0, -30.0
                 minliq_min, minliq_max, minliq_default = -100.0, 10.0, -40.0
             elif refrigerant == "R744":
                 evap_min, evap_max, evap_default = -50.0, 20.0, -10.0
-                cond_min, cond_max, cond_default = -50.0, 30.0, 15.0
+                maxliq_min, maxliq_max, maxliq_default = -50.0, 30.0, 15.0
                 minliq_min, minliq_max, minliq_default = -50.0, 30.0, 10.0
             else:
                 evap_min, evap_max, evap_default = -50.0, 30.0, -10.0
-                cond_min, cond_max, cond_default = -50.0, 60.0, 40.0
+                maxliq_min, maxliq_max, maxliq_default = -50.0, 60.0, 40.0
                 minliq_min, minliq_max, minliq_default = -50.0, 60.0, 20.0
     
             # --- Init state (widget-backed) ---
             ss = st.session_state
     
             if "last_refrigerant" not in ss or ss.last_refrigerant != refrigerant:
-                ss.cond_temp   = cond_default
+                ss.maxliq_temp   = maxliq_default
                 ss.minliq_temp = minliq_default
                 ss.evap_temp   = evap_default
                 ss.last_refrigerant = refrigerant
             
-            ss.setdefault("cond_temp",   cond_default)
+            ss.setdefault("maxliq_temp",   maxliq_default)
             ss.setdefault("minliq_temp", minliq_default)
             ss.setdefault("evap_temp",   evap_default)
     
             # --- Callbacks implementing your downstream clamping logic ---
-            def on_change_cond():
+            def on_change_maxliq():
                 # When cond changes: clamp minliq down to cond, then evap down to minliq
-                ss.minliq_temp = min(ss.minliq_temp, ss.cond_temp)
+                ss.minliq_temp = min(ss.minliq_temp, ss.maxliq_temp)
                 ss.evap_temp   = min(ss.evap_temp,   ss.minliq_temp)
     
             def on_change_minliq():
                 # When minliq changes: clamp minliq down to cond, then evap down to minliq
-                ss.minliq_temp = min(ss.minliq_temp, ss.cond_temp)
+                ss.minliq_temp = min(ss.minliq_temp, ss.maxliq_temp)
                 ss.evap_temp   = min(ss.evap_temp,   ss.minliq_temp)
     
             def on_change_evap():
@@ -808,16 +784,16 @@ elif tool_selection == "Manual Calculation":
                 ss.evap_temp   = min(ss.evap_temp,   ss.minliq_temp)
     
             # --- Inputs with inclusive caps (≤), same order as your code ---
-            condensing_temp = st.number_input(
+            maxliq_temp = st.number_input(
                 "Max Liquid Temperature (°C)",
-                min_value=cond_min, max_value=cond_max,
-                value=ss.cond_temp, step=1.0, key="cond_temp",
-                on_change=on_change_cond,
+                min_value=maxliq_min, max_value=maxliq_max,
+                value=ss.maxliq_temp, step=1.0, key="maxliq_temp",
+                on_change=on_change_maxliq,
             )
     
             minliq_temp = st.number_input(
                 "Min Liquid Temperature (°C)",
-                min_value=minliq_min, max_value=min(condensing_temp, minliq_max),
+                min_value=minliq_min, max_value=min(maxliq_temp, minliq_max),
                 value=ss.minliq_temp, step=1.0, key="minliq_temp",
                 on_change=on_change_minliq,
             )
@@ -855,7 +831,7 @@ elif tool_selection == "Manual Calculation":
         from utils.oil_return_checker import check_oil_return
     
         T_evap = evaporating_temp
-        T_cond = condensing_temp
+        T_cond = maxliq_temp
     
         props = RefrigerantProperties()
         h_in = props.get_properties(refrigerant, T_cond)["enthalpy_liquid2"]
