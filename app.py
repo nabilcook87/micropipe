@@ -1402,43 +1402,43 @@ elif tool_selection == "Manual Calculation":
             if refrigerant in ("R23", "R508B"):
                 evap_min, evap_max, evap_default = -100.0, -20.0, -80.0
                 cond_min, cond_max, cond_default = -100.0, 10.0, -30.0
-                minliq_min, minliq_max, minliq_default = -100.0, 10.0, -40.0
+                maxliq_min, maxliq_max, maxliq_default = -100.0, 10.0, -40.0
             elif refrigerant == "R744":
                 evap_min, evap_max, evap_default = -50.0, 20.0, -10.0
                 cond_min, cond_max, cond_default = -23.0, 30.0, 15.0
-                minliq_min, minliq_max, minliq_default = -50.0, 30.0, 10.0
+                maxliq_min, maxliq_max, maxliq_default = -50.0, 30.0, 10.0
             else:
                 evap_min, evap_max, evap_default = -50.0, 30.0, -10.0
                 cond_min, cond_max, cond_default = -23.0, 60.0, 43.0
-                minliq_min, minliq_max, minliq_default = -50.0, 60.0, 40.0
+                maxliq_min, maxliq_max, maxliq_default = -50.0, 60.0, 40.0
     
             # --- Init state (widget-backed) ---
             ss = st.session_state
     
             if "last_refrigerant" not in ss or ss.last_refrigerant != refrigerant:
                 ss.cond_temp   = cond_default
-                ss.minliq_temp = minliq_default
+                ss.maxliq_temp = maxliq_default
                 ss.evap_temp   = evap_default
                 ss.last_refrigerant = refrigerant
             
             ss.setdefault("cond_temp",   cond_default)
-            ss.setdefault("minliq_temp", minliq_default)
+            ss.setdefault("maxliq_temp", maxliq_default)
             ss.setdefault("evap_temp",   evap_default)
     
             # --- Callbacks implementing your downstream clamping logic ---
             def on_change_cond():
-                # When cond changes: clamp minliq down to cond, then evap down to minliq
-                ss.minliq_temp = min(ss.minliq_temp, ss.cond_temp)
-                ss.evap_temp   = min(ss.evap_temp,   ss.minliq_temp)
+                # When cond changes: clamp maxliq down to cond, then evap down to minliq
+                ss.maxliq_temp = min(ss.maxliq_temp, ss.cond_temp)
+                ss.evap_temp   = min(ss.evap_temp,   ss.maxliq_temp)
     
-            def on_change_minliq():
-                # When minliq changes: clamp minliq down to cond, then evap down to minliq
-                ss.minliq_temp = min(ss.minliq_temp, ss.cond_temp)
-                ss.evap_temp   = min(ss.evap_temp,   ss.minliq_temp)
+            def on_change_maxliq():
+                # When maxliq changes: clamp maxliq down to cond, then evap down to maxliq
+                ss.maxliq_temp = min(ss.maxliq_temp, ss.cond_temp)
+                ss.evap_temp   = min(ss.evap_temp,   ss.maxliq_temp)
     
             def on_change_evap():
-                # When evap changes: clamp evap down to minliq
-                ss.evap_temp   = min(ss.evap_temp,   ss.minliq_temp)
+                # When evap changes: clamp evap down to maxliq
+                ss.evap_temp   = min(ss.evap_temp,   ss.maxliq_temp)
     
             # --- Inputs with inclusive caps (≤), same order as your code ---
             condensing_temp = st.number_input(
@@ -1448,18 +1448,18 @@ elif tool_selection == "Manual Calculation":
                 on_change=on_change_cond,
             )
     
-            minliq_temp = st.number_input(
+            maxliq_temp = st.number_input(
                 "Liquid Temperature (°C)",
-                min_value=minliq_min, max_value=min(condensing_temp, minliq_max),
-                value=ss.minliq_temp, step=1.0, key="minliq_temp",
-                on_change=on_change_minliq,
+                min_value=maxliq_min, max_value=min(condensing_temp, maxliq_max),
+                value=ss.maxliq_temp, step=1.0, key="maxliq_temp",
+                on_change=on_change_maxliq,
             )
 
         with col2:
             
             evaporating_temp = st.number_input(
                 "Evaporating Temperature (°C)",
-                min_value=evap_min, max_value=min(minliq_temp, evap_max),
+                min_value=evap_min, max_value=min(maxliq_temp, evap_max),
                 value=ss.evap_temp, step=1.0, key="evap_temp",
                 on_change=on_change_evap,
             )
@@ -1488,7 +1488,7 @@ elif tool_selection == "Manual Calculation":
         from utils.pipe_length_volume_calc import get_pipe_id_mm
     
         T_evap = evaporating_temp
-        T_liq = minliq_temp
+        T_liq = maxliq_temp
         T_cond = condensing_temp
     
         props = RefrigerantProperties()
