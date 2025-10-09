@@ -1211,6 +1211,8 @@ elif tool_selection == "Manual Calculation":
         #st.write("dt:", dt)
 
         maxmass = max(mass_flow_kg_s, mass_flow_kg_smin)
+
+        volflow = maxmass / density_recalc
         
         st.subheader("Results")
     
@@ -1247,7 +1249,7 @@ elif tool_selection == "Manual Calculation":
                 st.metric("Mass Flow Rate", f"{maxmass:.5f}kg/s")
     
             with col2:
-                st.metric("Volumetric Flow Rate", f"{density_recalc:.5f}m³/s")
+                st.metric("Volumetric Flow Rate", f"{volflow:.5f}m³/s")
     
             with col3:
                 st.metric("Minimum Capacity", f"{MORfinal:.1f}kW")
