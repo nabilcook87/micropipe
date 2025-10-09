@@ -1427,7 +1427,7 @@ elif tool_selection == "Manual Calculation":
     
             # --- Callbacks implementing your downstream clamping logic ---
             def on_change_cond():
-                # When cond changes: clamp maxliq down to cond, then evap down to minliq
+                # When cond changes: clamp maxliq down to cond, then evap down to maxliq
                 ss.maxliq_temp = min(ss.maxliq_temp, ss.cond_temp)
                 ss.evap_temp   = min(ss.evap_temp,   ss.maxliq_temp)
     
