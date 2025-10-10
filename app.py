@@ -294,6 +294,9 @@ elif tool_selection == "Oil Return Checker":
         if "minliq_temp" in ss and "maxliq_temp" in ss:
             ss.minliq_temp = min(ss.maxliq_temp, ss.minliq_temp)
 
+        if "minliq_temp" in ss and "maxliq_temp" in ss and "evap_temp" in ss:
+            ss.evap_temp = min(ss.maxliq_temp, ss.minliq_temp, ss.evap_temp)
+
         # --- Callbacks implementing your downstream clamping logic ---
         def on_change_maxliq():
             # When cond changes: clamp minliq down to cond, then evap down to minliq
@@ -777,6 +780,9 @@ elif tool_selection == "Manual Calculation":
 
             if "minliq_temp" in ss and "maxliq_temp" in ss:
                 ss.minliq_temp = min(ss.maxliq_temp, ss.minliq_temp)
+
+            if "minliq_temp" in ss and "maxliq_temp" in ss and "evap_temp" in ss:
+                ss.evap_temp = min(ss.maxliq_temp, ss.minliq_temp, ss.evap_temp)
     
             # --- Callbacks implementing your downstream clamping logic ---
             def on_change_maxliq():
@@ -1415,9 +1421,12 @@ elif tool_selection == "Manual Calculation":
             ss.setdefault("maxliq_temp", maxliq_default)
             ss.setdefault("evap_temp",   evap_default)
 
-            if "maxliq_temp" in ss and "cond_temp" in ss:
-                ss.cond_temp = min(max(ss.cond_temp, ss.maxliq_temp), cond_max)
+            if "maxliq_temp" in ss and "cond_temp" in ss and "evap_temp" in ss:
+                ss.cond_temp = min(max(ss.cond_temp, ss.maxliq_temp, ss.evap_temp), cond_max)
     
+            if "cond_temp" in ss and "maxliq_temp" in ss and "evap_temp" in ss:
+                ss.evap_temp = min(ss.maxliq_temp, ss.cond_temp, ss.evap_temp)
+            
             # --- Callbacks implementing your downstream clamping logic ---
             def on_change_cond():
                 # When cond changes: clamp maxliq down to cond, then evap down to maxliq
