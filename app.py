@@ -604,9 +604,12 @@ elif tool_selection == "Oil Return Checker":
     density_recalc = mass_flow_kg_s / (velocity_m_s * area_m2)
     #st.write("density_recalc:", density_recalc)
     
+    if MORfinal == "":
+        MinCap = ""
+    else:
+        MinCap = MORfinal * evap_capacity_kw / 100
+    
     st.subheader("Results")
-
-    MinCap = MORfinal * evap_capacity_kw / 100
     
     if velocity_m_sfinal:
         col1, col2 = st.columns(2)
@@ -1213,7 +1216,10 @@ elif tool_selection == "Manual Calculation":
 
         volflow = maxmass / density_recalc
 
-        MinCap = MORfinal * evap_capacity_kw / 100
+        if MORfinal == "":
+            MinCap = ""
+        else:
+            MinCap = MORfinal * evap_capacity_kw / 100
         
         st.subheader("Results")
     
