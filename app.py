@@ -1408,6 +1408,9 @@ elif tool_selection == "Manual Calculation":
             ss.setdefault("cond_temp",   cond_default)
             ss.setdefault("maxliq_temp", maxliq_default)
             ss.setdefault("evap_temp",   evap_default)
+
+            if "maxliq_temp" in ss and "cond_temp" in ss:
+                ss.cond_temp = min(max(ss.cond_temp, ss.maxliq_temp), cond_max)
     
             # --- Callbacks implementing your downstream clamping logic ---
             def on_change_cond():
