@@ -8,8 +8,6 @@ import bisect
 import numpy as np
 import warnings
 
-warnings.filterwarnings("ignore", message="The widget with key")
-
 # Make metric numbers & labels smaller
 st.markdown("""
 <style>
@@ -156,6 +154,8 @@ elif tool_selection == "System Pressure Checker":
 elif tool_selection == "Oil Return Checker":
     st.subheader("Oil Return Checker")
 
+    warnings.filterwarnings("ignore", message="The widget with key")
+    
     col1, col2 = st.columns(2)
 
     with col1:
@@ -284,6 +284,8 @@ elif tool_selection == "Oil Return Checker":
         # --- Init state (widget-backed) ---
         ss = st.session_state
 
+        warnings.filterwarnings("ignore", message="The widget with key")
+        
         if "last_refrigerant" not in ss or ss.last_refrigerant != refrigerant:
             ss.maxliq_temp   = maxliq_default
             ss.minliq_temp = minliq_default
@@ -642,10 +644,14 @@ elif tool_selection == "Oil Return Checker":
 elif tool_selection == "Manual Calculation":
     st.subheader("Manual Calculation")
 
+    warnings.filterwarnings("ignore", message="The widget with key")
+    
     mode = st.radio("", ["Dry Suction", "Liquid", "Discharge", "Pumped Liquid", "Wet Suction"], index=1, horizontal=True, label_visibility="collapsed")
     
     if mode == "Dry Suction":
     
+        warnings.filterwarnings("ignore", message="The widget with key")
+        
         col1, col2, col3, col4 = st.columns(4)
     
         with col1:
@@ -773,6 +779,8 @@ elif tool_selection == "Manual Calculation":
     
             # --- Init state (widget-backed) ---
             ss = st.session_state
+
+            warnings.filterwarnings("ignore", message="The widget with key")
     
             if "last_refrigerant" not in ss or ss.last_refrigerant != refrigerant:
                 ss.maxliq_temp   = maxliq_default
@@ -1291,6 +1299,8 @@ elif tool_selection == "Manual Calculation":
 
     if mode == "Liquid":
 
+        warnings.filterwarnings("ignore", message="The widget with key")
+        
         col1, col2, col3, col4 = st.columns(4)
     
         with col1:
@@ -1419,6 +1429,8 @@ elif tool_selection == "Manual Calculation":
     
             # --- Init state (widget-backed) ---
             ss = st.session_state
+
+            warnings.filterwarnings("ignore", message="The widget with key")
     
             if "last_refrigerant" not in ss or ss.last_refrigerant != refrigerant:
                 ss.cond_temp   = cond_default
