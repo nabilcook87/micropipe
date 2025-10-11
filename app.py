@@ -6,6 +6,9 @@ import pandas as pd
 import math
 import bisect
 import numpy as np
+import warnings
+
+warnings.filterwarnings("ignore", message="The widget with key")
 
 # Make metric numbers & labels smaller
 st.markdown("""
