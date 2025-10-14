@@ -1452,11 +1452,9 @@ elif tool_selection == "Manual Calculation":
             condensing_temp = st.number_input(
                 "Condensing Temperature (°C)",
                 min_value=cond_min, max_value=cond_max,
-                step=1.0, key="cond_temp",
+                value=ss.cond_temp, step=1.0, key="cond_temp",
                 on_change=on_change_cond,
             )
-
-        # value=ss.cond_temp, 
     
             maxliq_temp = st.number_input(
                 "Liquid Temperature (°C)",
