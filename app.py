@@ -7,7 +7,7 @@ import math
 import bisect
 import numpy as np
 import warnings
-warnings.filterwarnings("ignore", message=".*The widget with key.*Session State API.*")
+warnings.filterwarnings("ignore")
 
 # Make metric numbers & labels smaller
 st.markdown("""
