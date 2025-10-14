@@ -1675,3 +1675,7 @@ elif tool_selection == "Manual Calculation":
 
             with col7:
                 st.metric("Compression Ratio", f"{compratio:.2f}")
+
+    if mode == "Discharge":
+
+        
