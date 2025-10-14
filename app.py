@@ -6,8 +6,12 @@ import pandas as pd
 import math
 import bisect
 import numpy as np
-import warnings
-warnings.filterwarnings("ignore")
+
+def number_input_bound(label, key, default, **kwargs):
+    if key not in st.session_state:
+        st.session_state[key] = default
+        st.rerun()
+    return st.number_input(label, key=key, **kwargs)
 
 # Make metric numbers & labels smaller
 st.markdown("""
@@ -1451,7 +1455,7 @@ elif tool_selection == "Manual Calculation":
                 ss.evap_temp   = min(ss.evap_temp,   ss.maxliq_temp)
     
             # --- Inputs with inclusive caps (≤), same order as your code ---
-            condensing_temp = st.number_input(
+            condensing_temp = number_input_bound(
                 "Condensing Temperature (°C)",
                 min_value=cond_min, max_value=cond_max,
                 value=ss.cond_temp, step=1.0, key="cond_temp",
