@@ -1461,22 +1461,18 @@ elif tool_selection == "Manual Calculation":
             maxliq_temp = st.number_input(
                 "Liquid Temperature (°C)",
                 min_value=maxliq_min, max_value=min(condensing_temp, maxliq_max),
-                step=1.0, key="maxliq_temp",
+                value=ss.maxliq_temp, step=1.0, key="maxliq_temp",
                 on_change=on_change_maxliq,
             )
 
-        # value=ss.maxliq_temp, 
-        
         with col2:
             
             evaporating_temp = st.number_input(
                 "Evaporating Temperature (°C)",
                 min_value=evap_min, max_value=min(maxliq_temp, evap_max),
-                step=1.0, key="evap_temp",
+                value=ss.evap_temp, step=1.0, key="evap_temp",
                 on_change=on_change_evap,
             )
-
-        # value=ss.evap_temp, 
         
         with col2:
             risem = st.number_input("Liquid Line Rise (m)", min_value=0.0, max_value=30.0, value=0.0, step=1.0)
