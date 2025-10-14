@@ -1457,7 +1457,7 @@ elif tool_selection == "Manual Calculation":
             # --- Inputs with inclusive caps (≤), same order as your code ---
             condensing_temp = number_input_bound(
                 "Condensing Temperature (°C)",
-                min_value=cond_min, max_value=cond_max,
+                min_value=cond_min, max_value=cond_max, default=cond_default,
                 value=ss.cond_temp, step=1.0, key="cond_temp",
                 on_change=on_change_cond,
             )
