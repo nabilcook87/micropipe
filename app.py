@@ -316,21 +316,21 @@ elif tool_selection == "Oil Return Checker":
         maxliq_temp = st.number_input(
             "Max Liquid Temperature (°C)",
             min_value=maxliq_min, max_value=maxliq_max,
-            value=ss.maxliq_temp, step=1.0, key="maxliq_temp",
+            step=1.0, key="maxliq_temp",
             on_change=on_change_maxliq,
         )
 
         minliq_temp = st.number_input(
             "Min Liquid Temperature (°C)",
             min_value=minliq_min, max_value=min(maxliq_temp, minliq_max),
-            value=ss.minliq_temp, step=1.0, key="minliq_temp",
+            step=1.0, key="minliq_temp",
             on_change=on_change_minliq,
         )
 
         evaporating_temp = st.number_input(
             "Evaporating Temperature (°C)",
             min_value=evap_min, max_value=min(minliq_temp, evap_max),
-            value=ss.evap_temp, step=1.0, key="evap_temp",
+            step=1.0, key="evap_temp",
             on_change=on_change_evap,
         )
 
@@ -806,21 +806,21 @@ elif tool_selection == "Manual Calculation":
             maxliq_temp = st.number_input(
                 "Max Liquid Temperature (°C)",
                 min_value=maxliq_min, max_value=maxliq_max,
-                value=ss.maxliq_temp, step=1.0, key="maxliq_temp",
+                step=1.0, key="maxliq_temp",
                 on_change=on_change_maxliq,
             )
     
             minliq_temp = st.number_input(
                 "Min Liquid Temperature (°C)",
                 min_value=minliq_min, max_value=min(maxliq_temp, minliq_max),
-                value=ss.minliq_temp, step=1.0, key="minliq_temp",
+                step=1.0, key="minliq_temp",
                 on_change=on_change_minliq,
             )
     
             evaporating_temp = st.number_input(
                 "Evaporating Temperature (°C)",
                 min_value=evap_min, max_value=min(minliq_temp, evap_max),
-                value=ss.evap_temp, step=1.0, key="evap_temp",
+                step=1.0, key="evap_temp",
                 on_change=on_change_evap,
             )
     
