@@ -1906,12 +1906,17 @@ elif tool_selection == "Manual Calculation":
             area_m2 = 3.1416 * (ID_m / 2) ** 2
 
             suc_ent = RefrigerantEntropies().get_entropy(refrigerant, T_evap + 273.15, superheat_K)
-            st.write("Suction Entropy:", suc_ent)
             
             isen_sup = RefrigerantEntropies().get_superheat_from_entropy(refrigerant, T_cond + 273.15, suc_ent)
 
             isen_enth = RefrigerantEnthalpies().get_enthalpy(refrigerant, T_cond + 273.15, isen_sup)
-            st.write("Isentropic Discharge Enthalpy:", isen_enth)
+
+            suc_enth = RefrigerantEnthalpies().get_enthalpy(refrigerant, T_evap + 273.15, superheat_K)
+
+            isen_change = isen_enth - suc_enth
+
+            enth_change = isen_change / (isen / 100)
+            #st.write("enth_change:", enth_change)
 
         else:
             velocity_m_s = None
