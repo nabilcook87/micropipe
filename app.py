@@ -1909,8 +1909,9 @@ elif tool_selection == "Manual Calculation":
             st.write("Suction Entropy:", suc_ent)
             
             isen_sup = RefrigerantEntropies().get_superheat_from_entropy(refrigerant, T_cond + 273.15, suc_ent)
-            isen_dis_t = T_cond + isen_sup
-            st.write("Isentropic Discharge Temp:", isen_dis_t)
+
+            isen_enth = RefrigerantEnthalpies().get_enthalpy(refrigerant, T_cond + 273.15, isen_sup)
+            st.write("Isentropic Discharge Enthalpy:", isen_enth)
 
         else:
             velocity_m_s = None
