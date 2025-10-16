@@ -1916,7 +1916,7 @@ elif tool_selection == "Manual Calculation":
             isen_change = isen_enth - suc_enth
 
             enth_change = isen_change / (isen / 100)
-            #st.write("enth_change:", enth_change)
+            st.write("enth_change:", enth_change)
 
         else:
             velocity_m_s = None
