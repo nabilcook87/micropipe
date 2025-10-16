@@ -1885,3 +1885,25 @@ elif tool_selection == "Manual Calculation":
             ball = st.number_input("Ball Valves", min_value=0, max_value=20, value=0, step=1)
             globe = st.number_input("Globe Valves", min_value=0, max_value=20, value=0, step=1)
             PLF = st.number_input("Pressure Loss Factors", min_value=0.0, max_value=20.0, value=0.0, step=0.1)
+
+        T_evap = evaporating_temp
+        T_liq = maxliq_temp
+        T_cond = condensing_temp
+    
+        props = RefrigerantProperties()
+        
+        h_in = props.get_properties(refrigerant, T_liq)["enthalpy_liquid2"]
+
+        h_evap = props.get_properties(refrigerant, T_evap)["enthalpy_vapor"]
+        
+        delta_h = h_evap - h_in
+
+        mass_flow_kg_s = evap_capacity_kw / delta_h if delta_h > 0 else 0.01
+    
+        if ID_mm is not None:
+            ID_m = ID_mm / 1000.0
+
+            area_m2 = 3.1416 * (ID_m / 2) ** 2
+
+        else:
+            velocity_m_s = None
