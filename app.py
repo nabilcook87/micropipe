@@ -1905,5 +1905,11 @@ elif tool_selection == "Manual Calculation":
 
             area_m2 = 3.1416 * (ID_m / 2) ** 2
 
+            suc_ent = RefrigerantEntropies().get_entropy(refrigerant, T_evap + 273.15, superheat_K)
+            st.write("Suction Entropy:", suc_ent)
+            
+
+            
+
         else:
             velocity_m_s = None
