@@ -1933,7 +1933,7 @@ elif tool_selection == "Manual Calculation":
             velocity_m_s = None
 
         reynolds = (dis_dens * velocity_m_s * ID_m) / (dis_visc / 1000000)
-        #st.write("reynolds:", reynolds)
+        st.write("reynolds:", reynolds)
         
         st.subheader("Results")
     
