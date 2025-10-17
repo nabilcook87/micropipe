@@ -1918,5 +1918,8 @@ elif tool_selection == "Manual Calculation":
             enth_change = isen_change / (isen / 100)
             st.write("enth_change:", enth_change)
 
+            dis_enth = suc_enth + enth_change
+            st.write("dis_enth:", dis_enth)
+            
         else:
             velocity_m_s = None
