@@ -1916,21 +1916,16 @@ elif tool_selection == "Manual Calculation":
             isen_change = isen_enth - suc_enth
 
             enth_change = isen_change / (isen / 100)
-            st.write("enth_change:", enth_change)
 
             dis_enth = suc_enth + enth_change
-            st.write("dis_enth:", dis_enth)
 
             dis_sup = RefrigerantEnthalpies().get_superheat_from_enthalpy(refrigerant, T_cond + 273.15, dis_enth)
 
             dis_t = T_cond + dis_sup
-            st.write("dis_t:", dis_t)
 
             dis_dens = RefrigerantDensities().get_density(refrigerant, T_cond + 273.15, dis_sup)
-            st.write("dis_dens:", dis_dens)
 
             dis_visc = RefrigerantViscosities().get_viscosity(refrigerant, T_cond + 273.15, dis_sup)
-            st.write("dis_visc:", dis_visc)
             
         else:
             velocity_m_s = None
