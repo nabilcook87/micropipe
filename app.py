@@ -2004,6 +2004,13 @@ elif tool_selection == "Manual Calculation":
         )
         
         dp_total_kPa = dp_pipe_kPa + dp_fittings_kPa + dp_valves_kPa + dp_plf_kPa
+
+        converter = PressureTemperatureConverter()
+        condpres = converter.temp_to_pressure(refrigerant, T_cond)
+        postcirc = condpres - (dp_total_kPa / 100)
+        postcirctemp = converter.pressure_to_temp(refrigerant, postcirc)
+        
+        dt = T_cond - postcirctemp
         
         st.subheader("Results")
     
