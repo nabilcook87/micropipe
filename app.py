@@ -2030,7 +2030,7 @@ elif tool_selection == "Manual Calculation":
                 st.metric("Temp Penalty", f"{dt:.2f}K")
 
             with col5:
-                st.metric("Additional Subcooling Required", f"{addsub:.2f}K")
+                st.metric("Discharge Temperature", f"{dis_t:.2f}°C")
 
             with col6:
                 st.metric("Evaporating Pressure", f"{evappres:.2f}bar(a)")
