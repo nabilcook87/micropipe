@@ -1925,6 +1925,12 @@ elif tool_selection == "Manual Calculation":
 
             dis_t = T_cond + dis_sup
             st.write("dis_t:", dis_t)
+
+            dis_dens = RefrigerantDensities().get_density(refrigerant, T_cond + 273.15, dis_sup)
+            st.write("dis_dens:", dis_dens)
+
+            dis_visc = RefrigerantViscosities().get_viscosity(refrigerant, T_cond + 273.15, dis_sup)
+            st.write("dis_visc:", dis_visc)
             
         else:
             velocity_m_s = None
