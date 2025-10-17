@@ -1935,9 +1935,9 @@ elif tool_selection == "Manual Calculation":
         reynolds = (dis_dens * velocity_m_s * ID_m) / (dis_visc / 1000000)
 
         if selected_material in ["Steel SCH40", "Steel SCH80"]:
-            eps = 0.00015
+            eps = 0.00004572 #0.00015
         else:
-            eps = 0.000005
+            eps = 0.000001524 #0.000005
         
         tol = 1e-5
         max_iter = 60
