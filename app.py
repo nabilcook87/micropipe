@@ -2011,6 +2011,12 @@ elif tool_selection == "Manual Calculation":
         postcirctemp = converter.pressure_to_temp(refrigerant, postcirc)
         
         dt = T_cond - postcirctemp
+
+        evappres = converter.temp_to_pressure(refrigerant, T_evap)
+
+        volflow = mass_flow_kg_s / dis_dens
+
+        compratio = condpres / evappres
         
         st.subheader("Results")
     
