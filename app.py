@@ -1933,7 +1933,77 @@ elif tool_selection == "Manual Calculation":
             velocity_m_s = None
 
         reynolds = (dis_dens * velocity_m_s * ID_m) / (dis_visc / 1000000)
-        st.write("reynolds:", reynolds)
+
+        if selected_material in ["Steel SCH40", "Steel SCH80"]:
+            eps = 0.00015
+        else:
+            eps = 0.000005
+        
+        tol = 1e-5
+        max_iter = 60
+        
+        if reynolds < 2000.0:
+            f = 64.0 / reynolds
+        else:
+            flo, fhi = 1e-5, 0.1
+            def balance(gg):
+                s = math.sqrt(gg)
+                lhs = 1.0 / s
+                rhs = -2.0 * math.log10((eps / (3.7 * ID_m)) + 2.51 / (reynolds * s))
+                return lhs, rhs
+    
+            f = 0.5 * (flo + fhi)
+            for _ in range(max_iter):
+                f = 0.5 * (flo + fhi)
+                lhs, rhs = balance(f)
+                if abs(1.0 - lhs/rhs) < tol:
+                    break
+                # decide side using sign of (lhs - rhs)
+                if (lhs - rhs) > 0.0:
+                    flo = f
+                else:
+                    fhi = f
+
+        q_kPa = 0.5 * dis_dens * (velocity_m_s ** 2) / 1000.0
+
+        dp_pipe_kPa = f * (L / ID_m) * q_kPa
+        
+        dp_plf_kPa = q_kPa * PLF
+    
+        required_cols = ["SRB", "LRB", "BALL", "GLOBE"]
+        missing = [c for c in required_cols if c not in selected_pipe_row.index]
+        if missing:
+            st.error(f"CSV missing required K columns: {missing}")
+            st.stop()
+    
+        # Convert to floats and check NaNs
+        try:
+            K_SRB  = float(selected_pipe_row["SRB"])
+            K_LRB  = float(selected_pipe_row["LRB"])
+            K_BALL = float(selected_pipe_row["BALL"])
+            K_GLOBE= float(selected_pipe_row["GLOBE"])
+        except Exception as e:
+            st.error(f"Failed to parse K-factors as numbers: {e}")
+            st.stop()
+    
+        if any(pd.isna([K_SRB, K_LRB, K_BALL, K_GLOBE])):
+            st.error("One or more K-factors are NaN in the CSV row.")
+            st.stop()
+        
+        B_SRB = SRB + 0.5 * _45 + 2.0 * ubend + 3.0 * ptrap
+        B_LRB = LRB + MAC
+    
+        dp_fittings_kPa = q_kPa * (
+        K_SRB   * B_SRB +
+        K_LRB   * B_LRB
+        )
+
+        dp_valves_kPa = q_kPa * (
+        K_BALL  * ball +
+        K_GLOBE * globe
+        )
+        
+        dp_total_kPa = dp_pipe_kPa + dp_fittings_kPa + dp_valves_kPa + dp_plf_kPa
         
         st.subheader("Results")
     
