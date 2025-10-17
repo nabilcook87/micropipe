@@ -1920,6 +1920,11 @@ elif tool_selection == "Manual Calculation":
 
             dis_enth = suc_enth + enth_change
             st.write("dis_enth:", dis_enth)
+
+            dis_sup = RefrigerantEnthalpies().get_superheat_from_enthalpy(refrigerant, T_cond + 273.15, dis_enth)
+
+            dis_t = T_cond + dis_sup
+            st.write("dis_t:", dis_t)
             
         else:
             velocity_m_s = None
