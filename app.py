@@ -1926,6 +1926,57 @@ elif tool_selection == "Manual Calculation":
             dis_dens = RefrigerantDensities().get_density(refrigerant, T_cond + 273.15, dis_sup)
 
             dis_visc = RefrigerantViscosities().get_viscosity(refrigerant, T_cond + 273.15, dis_sup)
+
+            velocity_m_s = mass_flow_kg_s / (area_m2 * dis_dens)
             
         else:
             velocity_m_s = None
+
+        st.subheader("Results")
+    
+        if velocity_m_s:
+            col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
+    
+            with col1:
+                st.metric("Refrigerant Velocity", f"{velocity_m_s:.2f}m/s")
+    
+            with col2:
+                st.metric("Discharge Density", f"{dis_dens:.1f}kg/m³")
+    
+            with col3:
+                st.metric("Pressure Drop", f"{dp_total_kPa:.2f}kPa")
+    
+            with col4:
+                st.metric("Temp Penalty", f"{dt:.2f}K")
+
+            with col5:
+                st.metric("Additional Subcooling Required", f"{addsub:.2f}K")
+
+            with col6:
+                st.metric("Evaporating Pressure", f"{evappres:.2f}bar(a)")
+
+            with col7:
+                st.metric("Condensing Pressure", f"{condpres:.2f}bar(a)")
+            
+            col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
+    
+            with col1:
+                st.metric("Mass Flow Rate", f"{mass_flow_kg_s:.5f}kg/s")
+    
+            with col2:
+                st.metric("Volumetric Flow Rate", f"{volflow:.5f}m³/s")
+    
+            with col3:
+                st.metric("Pipe PD", f"{dp_pipe_kPa:.2f}kPa")
+    
+            with col4:
+                st.metric("Fittings PD", f"{dp_fittings_kPa:.2f}kPa")
+
+            with col5:
+                st.metric("Valves PD", f"{dp_valves_kPa:.2f}kPa")
+
+            with col6:
+                st.metric("Velocity Pressure PD", f"{dp_plf_kPa:.2f}kPa")
+
+            with col7:
+                st.metric("Compression Ratio", f"{compratio:.2f}")
