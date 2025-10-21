@@ -640,7 +640,7 @@ elif tool_selection == "Oil Return Checker":
 elif tool_selection == "Manual Calculation":
     st.subheader("Manual Calculation")
     
-    mode = st.radio("", ["Dry Suction", "Liquid", "Discharge", "Pumped Liquid", "Wet Suction"], index=1, horizontal=True, label_visibility="collapsed")
+    mode = st.radio("", ["Dry Suction", "Liquid", "Discharge", "Drain", "Pumped Liquid", "Wet Suction"], index=1, horizontal=True, label_visibility="collapsed")
     
     if mode == "Dry Suction":
         
