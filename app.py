@@ -2242,6 +2242,7 @@ elif tool_selection == "Manual Calculation":
                 min_value=cond_min, max_value=cond_max,
                 value=ss.cond_temp, step=1.0, key="cond_temp",
                 on_change=on_change_cond,
+                disabled=True,
             )
     
             maxliq_temp = st.number_input(
@@ -2249,6 +2250,7 @@ elif tool_selection == "Manual Calculation":
                 min_value=maxliq_min, max_value=min(condensing_temp, maxliq_max),
                 value=ss.maxliq_temp, step=1.0, key="maxliq_temp",
                 on_change=on_change_maxliq,
+                disabled=True,
             )
 
             evaporating_temp = st.number_input(
@@ -2256,6 +2258,7 @@ elif tool_selection == "Manual Calculation":
                 min_value=evap_min, max_value=min(maxliq_temp, evap_max),
                 value=ss.evap_temp, step=1.0, key="evap_temp",
                 on_change=on_change_evap,
+                disabled=True,
             )
 
         T_evap = evaporating_temp
