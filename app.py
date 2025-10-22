@@ -2086,12 +2086,7 @@ elif tool_selection == "Manual Calculation":
         ]
     
         with col1:
-            stored_ref = None
-            if "Refrigerant" in ss:
-                stored_ref = ss["Refrigerant"]
-            elif "refrigerant" in ss:
-                stored_ref = ss["refrigerant"]
-    
+            stored_ref = ss.get("last_refrigerant", ss.get("Refrigerant"))
             if stored_ref in refrigerants:
                 refrigerant = stored_ref
                 st.selectbox(
@@ -2108,9 +2103,7 @@ elif tool_selection == "Manual Calculation":
     
         if refrigerant == "R717":
             excluded = {"Copper ACR", "Copper EN12735"}
-            pipe_materials = sorted(
-                m for m in pipe_data["Material"].dropna().unique() if m not in excluded
-            )
+            pipe_materials = sorted(m for m in pipe_data["Material"].dropna().unique() if m not in excluded)
         else:
             pipe_materials = sorted(pipe_data["Material"].dropna().unique())
     
@@ -2127,5 +2120,59 @@ elif tool_selection == "Manual Calculation":
                 )
             else:
                 selected_material = st.selectbox("Pipe Material", pipe_materials, key="drain_material")
+                if stored_material and stored_material not in pipe_materials:
+                    st.warning("Discharge’s material isn’t valid for this refrigerant (e.g., R717 can’t use Copper). Pick a valid material for Drain.")
+    
+        def _nps_inch_to_mm(nps_str: str) -> float:
+            s = str(nps_str).replace('"', '').strip()
+            if not s:
+                return float('nan')
+            parts = s.split('-')
+            tot_in = 0.0
+            for p in parts:
+                p = p.strip()
+                if not p:
+                    continue
+                if '/' in p:
+                    num, den = p.split('/')
+                    tot_in += float(num) / float(den)
+                else:
+                    tot_in += float(p)
+            return tot_in * 25.4  # mm
     
         material_df = pipe_data[pipe_data["Material"] == selected_material].copy()
+    
+        sizes_df = (
+            material_df[["Nominal Size (inch)", "Nominal Size (mm)"]]
+            .dropna(subset=["Nominal Size (inch)"])
+            .assign(**{
+                "Nominal Size (inch)": lambda d: d["Nominal Size (inch)"].astype(str).str.strip(),
+            })
+            .drop_duplicates(subset=["Nominal Size (inch)"], keep="first")
+        )
+    
+        sizes_df["mm_num"] = pd.to_numeric(sizes_df.get("Nominal Size (mm)"), errors="coerce")
+        sizes_df.loc[sizes_df["mm_num"].isna(), "mm_num"] = sizes_df.loc[
+            sizes_df["mm_num"].isna(), "Nominal Size (inch)"
+        ].apply(_nps_inch_to_mm)
+    
+        pipe_sizes = sizes_df["Nominal Size (inch)"].tolist()
+        mm_map = dict(zip(sizes_df["Nominal Size (inch)"], sizes_df["mm_num"]))
+    
+        def _closest_index(target_mm: float) -> int:
+            mm_list = [mm_map[s] for s in pipe_sizes]
+            return min(range(len(mm_list)), key=lambda i: abs(mm_list[i] - target_mm)) if mm_list else 0
+    
+        default_index = 0
+        if "prev_pipe_mm" in ss:
+            default_index = _closest_index(ss.prev_pipe_mm)
+    
+        with col1:
+            selected_size = st.selectbox(
+                "Nominal Pipe Size (inch)",
+                pipe_sizes,
+                index=default_index,
+                key="selected_size",
+            )
+    
+        ss.prev_pipe_mm = float(mm_map.get(selected_size, float("nan")))
