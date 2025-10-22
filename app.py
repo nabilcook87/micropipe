@@ -1692,8 +1692,8 @@ elif tool_selection == "Manual Calculation":
                 "R404A", "R134a", "R407F", "R744", "R410A",
                 "R407C", "R507A", "R448A", "R449A", "R22", "R32", "R454A", "R454C", "R455A", "R407A",
                 "R290", "R1270", "R600a", "R717", "R1234ze", "R1234yf", "R12", "R11", "R454B", "R450A", "R513A", "R23", "R508B", "R502"
-            ])
-    
+            ], key="refrigerant")
+        
         # Load pipe data
         pipe_data = pd.read_csv("data/pipe_pressure_ratings_full.csv")
     
