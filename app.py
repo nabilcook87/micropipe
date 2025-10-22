@@ -2161,7 +2161,7 @@ elif tool_selection == "Manual Calculation":
     
         with col1:
             selected_size = st.selectbox(
-                "Nominal Pipe Size (inch)",
+                "Main Pipe Size (inch)",
                 pipe_sizes,
                 index=default_index,
                 key="selected_size",
