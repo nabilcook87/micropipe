@@ -2076,12 +2076,9 @@ elif tool_selection == "Manual Calculation":
         from utils.refrigerant_entropies import RefrigerantEntropies
         from utils.refrigerant_enthalpies import RefrigerantEnthalpies
 
-        col1, col2, col3, col4 = st.columns(4)
         ss = st.session_state
+        col1, col2, col3, col4 = st.columns(4)
     
-        # -------------------------------
-        # Refrigerant (inherit from Discharge)
-        # -------------------------------
         refrigerants = [
             "R404A","R134a","R407F","R744","R410A","R407C","R507A","R448A","R449A",
             "R22","R32","R454A","R454C","R455A","R407A","R290","R1270","R600a",
@@ -2089,8 +2086,12 @@ elif tool_selection == "Manual Calculation":
         ]
     
         with col1:
-            # If Discharge ran before, use its refrigerant
-            stored_ref = ss.get("refrigerant", ss.get("Refrigerant"))
+            stored_ref = None
+            if "Refrigerant" in ss:
+                stored_ref = ss["Refrigerant"]
+            elif "refrigerant" in ss:
+                stored_ref = ss["refrigerant"]
+    
             if stored_ref in refrigerants:
                 refrigerant = stored_ref
                 st.selectbox(
@@ -2103,9 +2104,6 @@ elif tool_selection == "Manual Calculation":
             else:
                 refrigerant = st.selectbox("Refrigerant", refrigerants, key="drain_refrigerant")
     
-        # -------------------------------
-        # Pipe material (inherit from Discharge)
-        # -------------------------------
         pipe_data = pd.read_csv("data/pipe_pressure_ratings_full.csv")
     
         if refrigerant == "R717":
@@ -2117,22 +2115,17 @@ elif tool_selection == "Manual Calculation":
             pipe_materials = sorted(pipe_data["Material"].dropna().unique())
     
         with col2:
-            if "material" in ss and ss.material in pipe_materials:
-                selected_material = ss.material
+            stored_material = ss.get("material")
+            if stored_material in pipe_materials:
+                selected_material = stored_material
                 st.selectbox(
                     "Pipe Material",
                     pipe_materials,
                     index=pipe_materials.index(selected_material),
                     key="drain_material",
-                    disabled=True,  # lock to match Discharge
+                    disabled=True,
                 )
             else:
-                selected_material = st.selectbox(
-                    "Pipe Material",
-                    pipe_materials,
-                    key="drain_material"
-                )
+                selected_material = st.selectbox("Pipe Material", pipe_materials, key="drain_material")
     
-        # Now proceed with your original Drain code, starting from:
-        # material_df = pipe_data[pipe_data["Material"] == selected_material].copy()
         material_df = pipe_data[pipe_data["Material"] == selected_material].copy()
