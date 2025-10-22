@@ -2118,7 +2118,7 @@ elif tool_selection == "Manual Calculation":
             else:
                 pipe_materials = sorted(pipe_data["Material"].dropna().unique())
     
-            selected_material = st.selectbox("Pipe Material", pipe_materials, key="material")
+            selected_material = st.selectbox("Pipe Material", pipe_materials, key="material", disabled=True)
         
         # detect material change
         material_changed = ss.get("last_material") is not None and ss.last_material != selected_material
