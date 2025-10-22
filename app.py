@@ -2079,6 +2079,9 @@ elif tool_selection == "Manual Calculation":
         ss = st.session_state
         col1, col2, col3, col4 = st.columns(4)
     
+        # -------------------------------
+        # 1. Refrigerant (inherit if available)
+        # -------------------------------
         refrigerants = [
             "R404A","R134a","R407F","R744","R410A","R407C","R507A","R448A","R449A",
             "R22","R32","R454A","R454C","R455A","R407A","R290","R1270","R600a",
@@ -2087,13 +2090,20 @@ elif tool_selection == "Manual Calculation":
     
         with col1:
             if "refrigerant" in ss and ss.refrigerant in refrigerants:
-                st.selectbox("Refrigerant", refrigerants,
-                             index=refrigerants.index(ss.refrigerant),
-                             key="drain_refrigerant", disabled=True)
                 refrigerant = ss.refrigerant
+                st.selectbox(
+                    "Refrigerant",
+                    refrigerants,
+                    index=refrigerants.index(refrigerant),
+                    key="refrigerant",
+                    disabled=True,  # locked from Discharge
+                )
             else:
-                refrigerant = st.selectbox("Refrigerant", refrigerants, key="drain_refrigerant")
+                refrigerant = st.selectbox("Refrigerant", refrigerants, key="refrigerant")
     
+        # -------------------------------
+        # 2. Pipe material (inherit if available)
+        # -------------------------------
         pipe_data = pd.read_csv("data/pipe_pressure_ratings_full.csv")
     
         if refrigerant == "R717":
@@ -2106,13 +2116,20 @@ elif tool_selection == "Manual Calculation":
     
         with col2:
             if "material" in ss and ss.material in pipe_materials:
-                st.selectbox("Pipe Material", pipe_materials,
-                             index=pipe_materials.index(ss.material),
-                             key="drain_material", disabled=True)
                 selected_material = ss.material
+                st.selectbox(
+                    "Pipe Material",
+                    pipe_materials,
+                    index=pipe_materials.index(selected_material),
+                    key="material",
+                    disabled=True,
+                )
             else:
-                selected_material = st.selectbox("Pipe Material", pipe_materials, key="drain_material")
+                selected_material = st.selectbox("Pipe Material", pipe_materials, key="material")
     
+        # -------------------------------
+        # 3. Material DataFrame and Pipe Sizes
+        # -------------------------------
         if selected_material not in pipe_data["Material"].unique():
             st.error("Invalid or missing pipe material selection.")
             st.stop()
