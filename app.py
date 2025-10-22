@@ -2066,3 +2066,49 @@ elif tool_selection == "Manual Calculation":
 
             with col7:
                 st.metric("Compression Ratio", f"{compratio:.2f}")
+
+    if mode == "Drain":
+        from utils.refrigerant_properties import RefrigerantProperties
+        from utils.refrigerant_densities import RefrigerantDensities
+        from utils.refrigerant_viscosities import RefrigerantViscosities
+        from utils.pipe_length_volume_calc import get_pipe_id_mm
+        from utils.refrigerant_entropies import RefrigerantEntropies
+        from utils.refrigerant_enthalpies import RefrigerantEnthalpies
+    
+        ss = st.session_state
+        col1, col2, col3, col4 = st.columns(4)
+    
+        # 🔹 Use the selections from Discharge mode
+        refrigerant = ss.get("last_refrigerant")
+        selected_material = ss.get("last_material")
+    
+        if not refrigerant or not selected_material:
+            st.warning("⚠️ Please run the Discharge mode first to select refrigerant and pipe material.")
+            st.stop()
+    
+        # Just display them — no editing
+        with col1:
+            st.markdown(f"**Refrigerant:** {refrigerant}")
+        with col2:
+            st.markdown(f"**Pipe Material:** {selected_material}")
+    
+        # Load pipe data (you can keep the rest of your logic below)
+        pipe_data = pd.read_csv("data/pipe_pressure_ratings_full.csv")
+    
+        # --- helpers ---
+        def _nps_inch_to_mm(nps_str: str) -> float:
+            s = str(nps_str).replace('"', '').strip()
+            if not s:
+                return float('nan')
+            parts = s.split('-')
+            tot_in = 0.0
+            for p in parts:
+                p = p.strip()
+                if not p:
+                    continue
+                if '/' in p:
+                    num, den = p.split('/')
+                    tot_in += float(num) / float(den)
+                else:
+                    tot_in += float(p)
+            return tot_in * 25.4  # mm
