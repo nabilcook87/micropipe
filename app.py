@@ -2184,6 +2184,98 @@ elif tool_selection == "Manual Calculation":
         pipe_size_inch = selected_pipe_row["Nominal Size (inch)"]
         ID_mm = selected_pipe_row["ID_mm"]
 
+        # --- helpers (reuse or keep separate if you want clarity) ---
+        def _nps_inch_to_mm_2(nps_str: str) -> float:
+            s = str(nps_str).replace('"', '').strip()
+            if not s:
+                return float('nan')
+            parts = s.split('-')
+            tot_in = 0.0
+            for p in parts:
+                p = p.strip()
+                if not p:
+                    continue
+                if '/' in p:
+                    num, den = p.split('/')
+                    tot_in += float(num) / float(den)
+                else:
+                    tot_in += float(p)
+            return tot_in * 25.4  # mm
+
+        ss = st.session_state
+
+        # 1️⃣ Use same pipe material from main pipe
+        selected_material_2 = ss.get("last_material", None)
+        if not selected_material_2:
+            st.warning("⚠️ Please select a pipe material in the main input first.")
+            st.stop()
+
+        with col2:
+            st.markdown(f"**Secondary Pipe Material:** {selected_material_2}")
+
+        # 2️⃣ Filter data for that material only
+        material_df_2 = pipe_data[pipe_data["Material"] == selected_material_2].copy()
+
+        sizes_df_2 = (
+            material_df_2[["Nominal Size (inch)", "Nominal Size (mm)"]]
+            .dropna(subset=["Nominal Size (inch)"])
+            .assign(**{
+                "Nominal Size (inch)": lambda d: d["Nominal Size (inch)"].astype(str).str.strip(),
+            })
+            .drop_duplicates(subset=["Nominal Size (inch)"], keep="first")
+        )
+
+        # Convert inch → mm if needed
+        sizes_df_2["mm_num"] = pd.to_numeric(sizes_df_2.get("Nominal Size (mm)"), errors="coerce")
+        sizes_df_2.loc[sizes_df_2["mm_num"].isna(), "mm_num"] = sizes_df_2.loc[
+            sizes_df_2["mm_num"].isna(), "Nominal Size (inch)"
+        ].apply(_nps_inch_to_mm_2)
+
+        pipe_sizes_2 = sizes_df_2["Nominal Size (inch)"].tolist()
+        mm_map_2 = dict(zip(sizes_df_2["Nominal Size (inch)"], sizes_df_2["mm_num"]))
+
+        # 3️⃣ Choose default index
+        def _closest_index_2(target_mm: float) -> int:
+            mm_list = [mm_map_2[s] for s in pipe_sizes_2]
+            return min(range(len(mm_list)), key=lambda i: abs(mm_list[i] - target_mm)) if mm_list else 0
+
+        default_index_2 = 0
+        if "prev_pipe_mm_2" in ss:
+            default_index_2 = _closest_index_2(ss.prev_pipe_mm_2)
+        elif selected_material_2 == "Copper ACR" and ("5/8" in pipe_sizes_2 or '5/8"' in pipe_sizes_2):
+            want_2 = "5/8" if "5/8" in pipe_sizes_2 else '5/8"'
+            default_index_2 = pipe_sizes_2.index(want_2)
+        elif "selected_size_2" in ss and ss.selected_size_2 in pipe_sizes_2:
+            default_index_2 = pipe_sizes_2.index(ss.selected_size_2)
+
+        # 4️⃣ Size selector
+        with col1:
+            selected_size_2 = st.selectbox(
+                "Secondary Pipe Size (inch)",
+                pipe_sizes_2,
+                index=default_index_2,
+                key="selected_size_2",
+            )
+
+        ss.prev_pipe_mm_2 = float(mm_map_2.get(selected_size_2, float("nan")))
+
+        # 5️⃣ Gauge selector (if applicable)
+        gauge_options_2 = material_df_2[
+            material_df_2["Nominal Size (inch)"].astype(str).str.strip() == selected_size_2
+        ]
+
+        if "Gauge" in gauge_options_2.columns and gauge_options_2["Gauge"].notna().any():
+            gauges_2 = sorted(gauge_options_2["Gauge"].dropna().unique())
+            with col2:
+                selected_gauge_2 = st.selectbox("Secondary Copper Gauge", gauges_2, key="gauge_2")
+            selected_pipe_row_2 = gauge_options_2[gauge_options_2["Gauge"] == selected_gauge_2].iloc[0]
+        else:
+            selected_pipe_row_2 = gauge_options_2.iloc[0]
+
+        # 6️⃣ Output parameters for secondary pipe
+        pipe_size_inch_2 = selected_pipe_row_2["Nominal Size (inch)"]
+        ID_mm_2 = selected_pipe_row_2["ID_mm"]
+        
         with col1:
             
             evap_capacity_kw = st.number_input("Evaporator Capacity (kW)", min_value=0.03, max_value=20000.0, value=10.0, step=1.0)
