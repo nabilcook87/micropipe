@@ -2257,11 +2257,6 @@ elif tool_selection == "Manual Calculation":
                 value=ss.evap_temp, step=1.0, key="evap_temp",
                 on_change=on_change_evap,
             )
-        
-        with col2:
-            isen = st.number_input("Isentropic Efficiency (%)", min_value=50.0, max_value=90.0, value=75.0, step=5.0)
-            superheat_K = st.number_input("Superheat (K)", min_value=0.0, max_value=60.0, value=5.0, step=1.0)
-            max_penalty = st.number_input("Max Penalty (K)", min_value=0.0, max_value=6.0, value=1.0, step=0.1)
 
         T_evap = evaporating_temp
         T_liq = maxliq_temp
