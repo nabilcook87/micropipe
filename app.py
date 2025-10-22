@@ -2068,17 +2068,33 @@ elif tool_selection == "Manual Calculation":
                 st.metric("Compression Ratio", f"{compratio:.2f}")
 
     if mode == "Drain":
-
+    
         from utils.refrigerant_properties import RefrigerantProperties
         from utils.refrigerant_densities import RefrigerantDensities
         from utils.refrigerant_viscosities import RefrigerantViscosities
         from utils.pipe_length_volume_calc import get_pipe_id_mm
         from utils.refrigerant_entropies import RefrigerantEntropies
         from utils.refrigerant_enthalpies import RefrigerantEnthalpies
-
+    
         ss = st.session_state
         col1, col2, col3, col4 = st.columns(4)
     
+        # -------------------------------
+        # 1️⃣  Always keep these safe copies
+        # -------------------------------
+        # Pick up the latest known refrigerant/material from anywhere
+        prev_refrigerant = ss.get("last_refrigerant", ss.get("Refrigerant"))
+        prev_material    = ss.get("material", ss.get("last_material"))
+    
+        # If we’re entering Drain for the first time, remember those
+        if "stored_refrigerant" not in ss and prev_refrigerant:
+            ss.stored_refrigerant = prev_refrigerant
+        if "stored_material" not in ss and prev_material:
+            ss.stored_material = prev_material
+    
+        # -------------------------------
+        # 2️⃣  Refrigerant
+        # -------------------------------
         refrigerants = [
             "R404A","R134a","R407F","R744","R410A","R407C","R507A","R448A","R449A",
             "R22","R32","R454A","R454C","R455A","R407A","R290","R1270","R600a",
@@ -2086,9 +2102,8 @@ elif tool_selection == "Manual Calculation":
         ]
     
         with col1:
-            stored_ref = ss.get("last_refrigerant", ss.get("Refrigerant"))
-            if stored_ref in refrigerants:
-                refrigerant = stored_ref
+            if ss.get("stored_refrigerant") in refrigerants:
+                refrigerant = ss.stored_refrigerant
                 st.selectbox(
                     "Refrigerant",
                     refrigerants,
@@ -2098,7 +2113,11 @@ elif tool_selection == "Manual Calculation":
                 )
             else:
                 refrigerant = st.selectbox("Refrigerant", refrigerants, key="drain_refrigerant")
+                ss.stored_refrigerant = refrigerant
     
+        # -------------------------------
+        # 3️⃣  Pipe material
+        # -------------------------------
         pipe_data = pd.read_csv("data/pipe_pressure_ratings_full.csv")
     
         if refrigerant == "R717":
@@ -2108,9 +2127,8 @@ elif tool_selection == "Manual Calculation":
             pipe_materials = sorted(pipe_data["Material"].dropna().unique())
     
         with col2:
-            stored_material = ss.get("material")
-            if stored_material in pipe_materials:
-                selected_material = stored_material
+            if ss.get("stored_material") in pipe_materials:
+                selected_material = ss.stored_material
                 st.selectbox(
                     "Pipe Material",
                     pipe_materials,
@@ -2120,37 +2138,33 @@ elif tool_selection == "Manual Calculation":
                 )
             else:
                 selected_material = st.selectbox("Pipe Material", pipe_materials, key="drain_material")
-                if stored_material and stored_material not in pipe_materials:
-                    st.warning("Discharge’s material isn’t valid for this refrigerant (e.g., R717 can’t use Copper). Pick a valid material for Drain.")
+                ss.stored_material = selected_material
+    
+        # -------------------------------
+        # 4️⃣  Now render sizes etc.
+        # -------------------------------
+        material_df = pipe_data[pipe_data["Material"] == ss.stored_material].copy()
     
         def _nps_inch_to_mm(nps_str: str) -> float:
             s = str(nps_str).replace('"', '').strip()
             if not s:
-                return float('nan')
+                return float("nan")
             parts = s.split('-')
             tot_in = 0.0
             for p in parts:
-                p = p.strip()
-                if not p:
-                    continue
                 if '/' in p:
                     num, den = p.split('/')
                     tot_in += float(num) / float(den)
                 else:
                     tot_in += float(p)
-            return tot_in * 25.4  # mm
-    
-        material_df = pipe_data[pipe_data["Material"] == selected_material].copy()
+            return tot_in * 25.4
     
         sizes_df = (
             material_df[["Nominal Size (inch)", "Nominal Size (mm)"]]
             .dropna(subset=["Nominal Size (inch)"])
-            .assign(**{
-                "Nominal Size (inch)": lambda d: d["Nominal Size (inch)"].astype(str).str.strip(),
-            })
+            .assign(**{"Nominal Size (inch)": lambda d: d["Nominal Size (inch)"].astype(str).str.strip()})
             .drop_duplicates(subset=["Nominal Size (inch)"], keep="first")
         )
-    
         sizes_df["mm_num"] = pd.to_numeric(sizes_df.get("Nominal Size (mm)"), errors="coerce")
         sizes_df.loc[sizes_df["mm_num"].isna(), "mm_num"] = sizes_df.loc[
             sizes_df["mm_num"].isna(), "Nominal Size (inch)"
@@ -2174,5 +2188,4 @@ elif tool_selection == "Manual Calculation":
                 index=default_index,
                 key="selected_size",
             )
-    
         ss.prev_pipe_mm = float(mm_map.get(selected_size, float("nan")))
