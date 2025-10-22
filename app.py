@@ -1686,7 +1686,6 @@ elif tool_selection == "Manual Calculation":
         from utils.refrigerant_enthalpies import RefrigerantEnthalpies
 
         col1, col2, col3, col4 = st.columns(4)
-        ss = st.session_state
     
         with col1:
             refrigerant = st.selectbox("Refrigerant", [
