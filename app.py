@@ -2090,21 +2090,18 @@ elif tool_selection == "Manual Calculation":
     
         with col1:
             # If Discharge ran before, use its refrigerant
-            if "refrigerant" in ss and ss.refrigerant in refrigerants:
-                refrigerant = ss.refrigerant
+            stored_ref = ss.get("refrigerant", ss.get("Refrigerant"))
+            if stored_ref in refrigerants:
+                refrigerant = stored_ref
                 st.selectbox(
                     "Refrigerant",
                     refrigerants,
                     index=refrigerants.index(refrigerant),
                     key="drain_refrigerant",
-                    disabled=True,   # show it but lock it
+                    disabled=True,
                 )
             else:
-                refrigerant = st.selectbox(
-                    "Refrigerant",
-                    refrigerants,
-                    key="drain_refrigerant"
-                )
+                refrigerant = st.selectbox("Refrigerant", refrigerants, key="drain_refrigerant")
     
         # -------------------------------
         # Pipe material (inherit from Discharge)
