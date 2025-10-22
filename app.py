@@ -2076,11 +2076,11 @@ elif tool_selection == "Manual Calculation":
         from utils.refrigerant_entropies import RefrigerantEntropies
         from utils.refrigerant_enthalpies import RefrigerantEnthalpies
 
-        ss = st.session_state
         col1, col2, col3, col4 = st.columns(4)
+        ss = st.session_state
     
         # -------------------------------
-        # 1. Refrigerant (inherit if available)
+        # Refrigerant (inherit from Discharge)
         # -------------------------------
         refrigerants = [
             "R404A","R134a","R407F","R744","R410A","R407C","R507A","R448A","R449A",
@@ -2089,20 +2089,25 @@ elif tool_selection == "Manual Calculation":
         ]
     
         with col1:
+            # If Discharge ran before, use its refrigerant
             if "refrigerant" in ss and ss.refrigerant in refrigerants:
                 refrigerant = ss.refrigerant
                 st.selectbox(
                     "Refrigerant",
                     refrigerants,
                     index=refrigerants.index(refrigerant),
-                    key="refrigerant",
-                    disabled=True,  # locked from Discharge
+                    key="drain_refrigerant",
+                    disabled=True,   # show it but lock it
                 )
             else:
-                refrigerant = st.selectbox("Refrigerant", refrigerants, key="refrigerant")
+                refrigerant = st.selectbox(
+                    "Refrigerant",
+                    refrigerants,
+                    key="drain_refrigerant"
+                )
     
         # -------------------------------
-        # 2. Pipe material (inherit if available)
+        # Pipe material (inherit from Discharge)
         # -------------------------------
         pipe_data = pd.read_csv("data/pipe_pressure_ratings_full.csv")
     
@@ -2121,78 +2126,16 @@ elif tool_selection == "Manual Calculation":
                     "Pipe Material",
                     pipe_materials,
                     index=pipe_materials.index(selected_material),
-                    key="material",
-                    disabled=True,
+                    key="drain_material",
+                    disabled=True,  # lock to match Discharge
                 )
             else:
-                selected_material = st.selectbox("Pipe Material", pipe_materials, key="material")
+                selected_material = st.selectbox(
+                    "Pipe Material",
+                    pipe_materials,
+                    key="drain_material"
+                )
     
-        # -------------------------------
-        # 3. Material DataFrame and Pipe Sizes
-        # -------------------------------
-        if selected_material not in pipe_data["Material"].unique():
-            st.error("Invalid or missing pipe material selection.")
-            st.stop()
-    
+        # Now proceed with your original Drain code, starting from:
+        # material_df = pipe_data[pipe_data["Material"] == selected_material].copy()
         material_df = pipe_data[pipe_data["Material"] == selected_material].copy()
-    
-        def _nps_inch_to_mm(nps_str: str) -> float:
-            s = str(nps_str).replace('"', '').strip()
-            if not s:
-                return float('nan')
-            parts = s.split('-')
-            total_in = 0.0
-            for p in parts:
-                if '/' in p:
-                    num, den = p.split('/')
-                    total_in += float(num) / float(den)
-                else:
-                    total_in += float(p)
-            return total_in * 25.4  # mm
-    
-        sizes_df = (
-            material_df[["Nominal Size (inch)", "Nominal Size (mm)"]]
-            .dropna(subset=["Nominal Size (inch)"])
-            .assign(**{
-                "Nominal Size (inch)": lambda d: d["Nominal Size (inch)"].astype(str).str.strip(),
-            })
-            .drop_duplicates(subset=["Nominal Size (inch)"], keep="first")
-        )
-    
-        sizes_df["mm_num"] = pd.to_numeric(sizes_df["Nominal Size (mm)"], errors="coerce")
-        sizes_df.loc[sizes_df["mm_num"].isna(), "mm_num"] = sizes_df.loc[
-            sizes_df["mm_num"].isna(), "Nominal Size (inch)"
-        ].apply(_nps_inch_to_mm)
-    
-        pipe_sizes = sizes_df["Nominal Size (inch)"].tolist()
-        mm_map = dict(zip(sizes_df["Nominal Size (inch)"], sizes_df["mm_num"]))
-    
-        def _closest_index(target_mm: float) -> int:
-            mm_list = [mm_map[s] for s in pipe_sizes]
-            return min(range(len(mm_list)), key=lambda i: abs(mm_list[i] - target_mm)) if mm_list else 0
-    
-        default_index = 0
-        if "prev_pipe_mm" in ss:
-            default_index = _closest_index(ss.prev_pipe_mm)
-    
-        with col1:
-            selected_size = st.selectbox(
-                "Nominal Pipe Size (inch)",
-                pipe_sizes,
-                index=default_index,
-                key="selected_size",
-            )
-    
-        ss.prev_pipe_mm = float(mm_map.get(selected_size, float("nan")))
-
-        gauge_options = material_df[material_df["Nominal Size (inch)"].astype(str).str.strip() == selected_size]
-        if "Gauge" in gauge_options.columns and gauge_options["Gauge"].notna().any():
-            gauges = sorted(gauge_options["Gauge"].dropna().unique())
-            with col2:
-                selected_gauge = st.selectbox("Copper Gauge", gauges, key="gauge")
-            selected_pipe_row = gauge_options[gauge_options["Gauge"] == selected_gauge].iloc[0]
-        else:
-            selected_pipe_row = gauge_options.iloc[0]
-    
-        pipe_size_inch = selected_pipe_row["Nominal Size (inch)"]
-        ID_mm = selected_pipe_row["ID_mm"]
