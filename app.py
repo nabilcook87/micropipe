@@ -2068,35 +2068,29 @@ elif tool_selection == "Manual Calculation":
                 st.metric("Compression Ratio", f"{compratio:.2f}")
 
     if mode == "Drain":
+
         from utils.refrigerant_properties import RefrigerantProperties
         from utils.refrigerant_densities import RefrigerantDensities
         from utils.refrigerant_viscosities import RefrigerantViscosities
         from utils.pipe_length_volume_calc import get_pipe_id_mm
         from utils.refrigerant_entropies import RefrigerantEntropies
         from utils.refrigerant_enthalpies import RefrigerantEnthalpies
-    
-        ss = st.session_state
+
         col1, col2, col3, col4 = st.columns(4)
     
-        # 🔹 Use the selections from Discharge mode
-        refrigerant = ss.get("last_refrigerant")
-        selected_material = ss.get("last_material")
-    
-        if not refrigerant or not selected_material:
-            st.warning("⚠️ Please run the Discharge mode first to select refrigerant and pipe material.")
-            st.stop()
-    
-        # Just display them — no editing
         with col1:
-            st.markdown(f"**Refrigerant:** {refrigerant}")
-        with col2:
-            st.markdown(f"**Pipe Material:** {selected_material}")
-    
-        # Load pipe data (you can keep the rest of your logic below)
+            refrigerant = st.selectbox("Refrigerant", [
+                "R404A", "R134a", "R407F", "R744", "R410A",
+                "R407C", "R507A", "R448A", "R449A", "R22", "R32", "R454A", "R454C", "R455A", "R407A",
+                "R290", "R1270", "R600a", "R717", "R1234ze", "R1234yf", "R12", "R11", "R454B", "R450A", "R513A", "R23", "R508B", "R502"
+            ])
+        
+        # Load pipe data
         pipe_data = pd.read_csv("data/pipe_pressure_ratings_full.csv")
     
         # --- helpers ---
         def _nps_inch_to_mm(nps_str: str) -> float:
+            # e.g. "1-1/8", '1"', "3/8"
             s = str(nps_str).replace('"', '').strip()
             if not s:
                 return float('nan')
@@ -2112,3 +2106,165 @@ elif tool_selection == "Manual Calculation":
                 else:
                     tot_in += float(p)
             return tot_in * 25.4  # mm
+    
+        ss = st.session_state
+    
+        # 1) Pipe material
+        with col2:
+            if refrigerant == "R717":
+                excluded_materials = ["Copper ACR", "Copper EN12735"]
+                pipe_materials = sorted(m for m in pipe_data["Material"].dropna().unique()
+                                        if m not in excluded_materials)
+            else:
+                pipe_materials = sorted(pipe_data["Material"].dropna().unique())
+    
+            selected_material = st.selectbox("Pipe Material", pipe_materials, key="material")
+        
+        # detect material change
+        material_changed = ss.get("last_material") is not None and ss.last_material != selected_material
+        ss.last_material = selected_material
+    
+        # 2) Sizes for selected material (de-duped)
+        material_df = pipe_data[pipe_data["Material"] == selected_material].copy()
+    
+        sizes_df = (
+            material_df[["Nominal Size (inch)", "Nominal Size (mm)"]]
+            .dropna(subset=["Nominal Size (inch)"])
+            .assign(**{
+                "Nominal Size (inch)": lambda d: d["Nominal Size (inch)"].astype(str).str.strip(),
+            })
+            .drop_duplicates(subset=["Nominal Size (inch)"], keep="first")
+        )
+    
+        # make sure we have a numeric mm per nominal (fallback: parse the inch string)
+        sizes_df["mm_num"] = pd.to_numeric(sizes_df.get("Nominal Size (mm)"), errors="coerce")
+        sizes_df.loc[sizes_df["mm_num"].isna(), "mm_num"] = sizes_df.loc[sizes_df["mm_num"].isna(), "Nominal Size (inch)"].apply(_nps_inch_to_mm)
+    
+        pipe_sizes = sizes_df["Nominal Size (inch)"].tolist()
+        mm_map = dict(zip(sizes_df["Nominal Size (inch)"], sizes_df["mm_num"]))
+    
+        # choose default index
+        def _closest_index(target_mm: float) -> int:
+            mm_list = [mm_map[s] for s in pipe_sizes]
+            return min(range(len(mm_list)), key=lambda i: abs(mm_list[i] - target_mm)) if mm_list else 0
+    
+        default_index = 0
+        if material_changed and "prev_pipe_mm" in ss:
+            default_index = _closest_index(ss.prev_pipe_mm)
+        elif selected_material == "Copper ACR" and ("5/8" in pipe_sizes or '5/8"' in pipe_sizes):
+            # first load or no previous selection → prefer 1-1/8" for Copper ACR
+            want = "5/8" if "5/8" in pipe_sizes else '5/8"'
+            default_index = pipe_sizes.index(want)
+        elif "selected_size" in ss and ss.selected_size in pipe_sizes:
+            # if Streamlit kept the selection, use it
+            default_index = pipe_sizes.index(ss.selected_size)
+    
+        with col1:
+            selected_size = st.selectbox(
+                "Nominal Pipe Size (inch)",
+                pipe_sizes,
+                index=default_index,
+                key="selected_size",
+            )
+    
+        # remember the selected size in mm for next material change
+        ss.prev_pipe_mm = float(mm_map.get(selected_size, float("nan")))
+    
+        # 3) Gauge (if applicable)
+        gauge_options = material_df[material_df["Nominal Size (inch)"].astype(str).str.strip() == selected_size]
+        if "Gauge" in gauge_options.columns and gauge_options["Gauge"].notna().any():
+            gauges = sorted(gauge_options["Gauge"].dropna().unique())
+            with col2:
+                selected_gauge = st.selectbox("Copper Gauge", gauges, key="gauge")
+            selected_pipe_row = gauge_options[gauge_options["Gauge"] == selected_gauge].iloc[0]
+        else:
+            selected_pipe_row = gauge_options.iloc[0]
+    
+        # Pipe parameters
+        pipe_size_inch = selected_pipe_row["Nominal Size (inch)"]
+        ID_mm = selected_pipe_row["ID_mm"]
+
+        with col1:
+            
+            evap_capacity_kw = st.number_input("Evaporator Capacity (kW)", min_value=0.03, max_value=20000.0, value=10.0, step=1.0)
+            
+            # --- Base ranges per refrigerant ---
+            if refrigerant in ("R23", "R508B"):
+                evap_min, evap_max, evap_default = -100.0, -20.0, -80.0
+                cond_min, cond_max, cond_default = -100.0, 10.0, -30.0
+                maxliq_min, maxliq_max, maxliq_default = -100.0, 10.0, -40.0
+            elif refrigerant == "R744":
+                evap_min, evap_max, evap_default = -50.0, 20.0, -10.0
+                cond_min, cond_max, cond_default = -23.0, 30.0, 15.0
+                maxliq_min, maxliq_max, maxliq_default = -50.0, 30.0, 10.0
+            else:
+                evap_min, evap_max, evap_default = -50.0, 30.0, -10.0
+                cond_min, cond_max, cond_default = -23.0, 60.0, 43.0
+                maxliq_min, maxliq_max, maxliq_default = -50.0, 60.0, 40.0
+    
+            # --- Init state (widget-backed) ---
+            ss = st.session_state
+    
+            if "last_refrigerant" not in ss or ss.last_refrigerant != refrigerant:
+                ss.cond_temp   = cond_default
+                ss.maxliq_temp = maxliq_default
+                ss.evap_temp   = evap_default
+                ss.last_refrigerant = refrigerant
+            
+            ss.setdefault("cond_temp",   cond_default)
+            ss.setdefault("maxliq_temp", maxliq_default)
+            ss.setdefault("evap_temp",   evap_default)
+
+            if "maxliq_temp" in ss and "cond_temp" in ss and "evap_temp" in ss:
+                ss.cond_temp = min(max(ss.cond_temp, ss.maxliq_temp, ss.evap_temp), cond_max)
+    
+            if "cond_temp" in ss and "maxliq_temp" in ss and "evap_temp" in ss:
+                ss.evap_temp = min(ss.maxliq_temp, ss.cond_temp, ss.evap_temp)
+            
+            # --- Callbacks implementing your downstream clamping logic ---
+            def on_change_cond():
+                # When cond changes: clamp maxliq down to cond, then evap down to maxliq
+                ss.maxliq_temp = min(ss.maxliq_temp, ss.cond_temp)
+                ss.evap_temp   = min(ss.evap_temp,   ss.maxliq_temp)
+    
+            def on_change_maxliq():
+                # When maxliq changes: clamp maxliq down to cond, then evap down to maxliq
+                ss.maxliq_temp = min(ss.maxliq_temp, ss.cond_temp)
+                ss.evap_temp   = min(ss.evap_temp,   ss.maxliq_temp)
+    
+            def on_change_evap():
+                # When evap changes: clamp evap down to maxliq
+                ss.evap_temp   = min(ss.evap_temp,   ss.maxliq_temp)
+    
+            # --- Inputs with inclusive caps (≤), same order as your code ---
+            condensing_temp = st.number_input(
+                "Condensing Temperature (°C)",
+                min_value=cond_min, max_value=cond_max,
+                value=ss.cond_temp, step=1.0, key="cond_temp",
+                on_change=on_change_cond,
+            )
+    
+            maxliq_temp = st.number_input(
+                "Liquid Temperature (°C)",
+                min_value=maxliq_min, max_value=min(condensing_temp, maxliq_max),
+                value=ss.maxliq_temp, step=1.0, key="maxliq_temp",
+                on_change=on_change_maxliq,
+            )
+
+            evaporating_temp = st.number_input(
+                "Evaporating Temperature (°C)",
+                min_value=evap_min, max_value=min(maxliq_temp, evap_max),
+                value=ss.evap_temp, step=1.0, key="evap_temp",
+                on_change=on_change_evap,
+            )
+        
+        with col2:
+            isen = st.number_input("Isentropic Efficiency (%)", min_value=50.0, max_value=90.0, value=75.0, step=5.0)
+            superheat_K = st.number_input("Superheat (K)", min_value=0.0, max_value=60.0, value=5.0, step=1.0)
+            max_penalty = st.number_input("Max Penalty (K)", min_value=0.0, max_value=6.0, value=1.0, step=0.1)
+
+        T_evap = evaporating_temp
+        T_liq = maxliq_temp
+        T_cond = condensing_temp
+    
+        props = RefrigerantProperties()
