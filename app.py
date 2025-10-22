@@ -2077,55 +2077,62 @@ elif tool_selection == "Manual Calculation":
         from utils.refrigerant_enthalpies import RefrigerantEnthalpies
 
         col1, col2, col3, col4 = st.columns(4)
-    
+        
+        ss = st.session_state
+        
+        # Refrigerant: inherit from Discharge if available
+        all_refrigerants = [
+            "R404A","R134a","R407F","R744","R410A","R407C","R507A","R448A","R449A",
+            "R22","R32","R454A","R454C","R455A","R407A","R290","R1270","R600a",
+            "R717","R1234ze","R1234yf","R12","R11","R454B","R450A","R513A","R23","R508B","R502"
+        ]
+        
         with col1:
-            refrigerant = st.selectbox("Refrigerant", [
-                "R404A", "R134a", "R407F", "R744", "R410A",
-                "R407C", "R507A", "R448A", "R449A", "R22", "R32", "R454A", "R454C", "R455A", "R407A",
-                "R290", "R1270", "R600a", "R717", "R1234ze", "R1234yf", "R12", "R11", "R454B", "R450A", "R513A", "R23", "R508B", "R502"
-            ])
-    
+            if "refrigerant" in ss and ss.refrigerant in all_refrigerants:
+                refrigerant = ss.refrigerant
+                st.selectbox(
+                    "Refrigerant",
+                    all_refrigerants,
+                    index=all_refrigerants.index(refrigerant),
+                    key="refrigerant",
+                    disabled=True,                    # <-- lock to Discharge choice
+                )
+            else:
+                refrigerant = st.selectbox(
+                    "Refrigerant",
+                    all_refrigerants,
+                    key="refrigerant",
+                )
+        
         # Load pipe data
         pipe_data = pd.read_csv("data/pipe_pressure_ratings_full.csv")
-    
-        # --- helpers ---
-        def _nps_inch_to_mm(nps_str: str) -> float:
-            # e.g. "1-1/8", '1"', "3/8"
-            s = str(nps_str).replace('"', '').strip()
-            if not s:
-                return float('nan')
-            parts = s.split('-')
-            tot_in = 0.0
-            for p in parts:
-                p = p.strip()
-                if not p:
-                    continue
-                if '/' in p:
-                    num, den = p.split('/')
-                    tot_in += float(num) / float(den)
-                else:
-                    tot_in += float(p)
-            return tot_in * 25.4  # mm
-    
-        ss = st.session_state
-    
-        # 1) Pipe material
+        
+        # Material options depend on refrigerant (e.g., exclude copper for R717)
+        if refrigerant == "R717":
+            excluded = {"Copper ACR", "Copper EN12735"}
+            pipe_materials = sorted(m for m in pipe_data["Material"].dropna().unique() if m not in excluded)
+        else:
+            pipe_materials = sorted(pipe_data["Material"].dropna().unique())
+        
         with col2:
-            if refrigerant == "R717":
-                excluded_materials = ["Copper ACR", "Copper EN12735"]
-                pipe_materials = sorted(m for m in pipe_data["Material"].dropna().unique()
-                                        if m not in excluded_materials)
+            # Try to inherit Discharge material; if it’s not valid for this refrigerant, fall back.
+            if "material" in ss and ss.material in pipe_materials:
+                selected_material = ss.material
+                st.selectbox(
+                    "Pipe Material",
+                    pipe_materials,
+                    index=pipe_materials.index(selected_material),
+                    key="material",
+                    disabled=True,                   # <-- lock to Discharge choice
+                )
             else:
-                pipe_materials = sorted(pipe_data["Material"].dropna().unique())
-    
-            selected_material = st.selectbox("Pipe Material", pipe_materials, key="material")
-    
-        # detect material change
-        material_changed = ss.get("last_material") is not None and ss.last_material != selected_material
-        ss.last_material = selected_material
-    
-        # 2) Sizes for selected material (de-duped)
-        material_df = pipe_data[pipe_data["Material"] == selected_material].copy()
+                # Fallback (e.g., user started in Drain or Discharge material is incompatible with R717)
+                selected_material = st.selectbox("Pipe Material", pipe_materials, key="material")
+                if "material" in ss and ss.material not in pipe_materials:
+                    st.warning(
+                        "The Discharge material isn’t valid for the selected refrigerant (e.g., R717 can’t use Copper). "
+                        "Please choose a valid material for Drain."
+                    )
     
         sizes_df = (
             material_df[["Nominal Size (inch)", "Nominal Size (mm)"]]
