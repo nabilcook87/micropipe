@@ -153,13 +153,6 @@ elif tool_selection == "System Pressure Checker":
 
 elif tool_selection == "Oil Return Checker":
     st.subheader("Oil Return Checker")
-
-    ss = st.session_state
-    # Restore shared selections if available
-    if "stored_refrigerant" in ss:
-        ss.last_refrigerant = ss.stored_refrigerant
-    if "stored_material" in ss:
-        ss.last_material = ss.stored_material
     
     col1, col2 = st.columns(2)
 
@@ -204,9 +197,6 @@ elif tool_selection == "Oil Return Checker":
             pipe_materials = sorted(pipe_data["Material"].dropna().unique())
 
         selected_material = st.selectbox("Pipe Material", pipe_materials, key="material")
-
-    ss.stored_refrigerant = refrigerant
-    ss.stored_material = selected_material
     
     # detect material change
     material_changed = ss.get("last_material") is not None and ss.last_material != selected_material
@@ -653,13 +643,6 @@ elif tool_selection == "Manual Calculation":
     mode = st.radio("", ["Dry Suction", "Liquid", "Discharge", "Drain", "Pumped Liquid", "Wet Suction"], index=1, horizontal=True, label_visibility="collapsed")
     
     if mode == "Dry Suction":
-
-        ss = st.session_state
-        # Restore shared selections if available
-        if "stored_refrigerant" in ss:
-            ss.last_refrigerant = ss.stored_refrigerant
-        if "stored_material" in ss:
-            ss.last_material = ss.stored_material
         
         col1, col2, col3, col4 = st.columns(4)
     
@@ -704,9 +687,6 @@ elif tool_selection == "Manual Calculation":
                 pipe_materials = sorted(pipe_data["Material"].dropna().unique())
     
             selected_material = st.selectbox("Pipe Material", pipe_materials, key="material")
-    
-        ss.stored_refrigerant = refrigerant
-        ss.stored_material = selected_material
         
         # detect material change
         material_changed = ss.get("last_material") is not None and ss.last_material != selected_material
@@ -1309,13 +1289,6 @@ elif tool_selection == "Manual Calculation":
 
     if mode == "Liquid":
         
-        ss = st.session_state
-        # Restore shared selections if available
-        if "stored_refrigerant" in ss:
-            ss.last_refrigerant = ss.stored_refrigerant
-        if "stored_material" in ss:
-            ss.last_material = ss.stored_material
-        
         col1, col2, col3, col4 = st.columns(4)
     
         with col1:
@@ -1359,9 +1332,6 @@ elif tool_selection == "Manual Calculation":
                 pipe_materials = sorted(pipe_data["Material"].dropna().unique())
     
             selected_material = st.selectbox("Pipe Material", pipe_materials, key="material")
-    
-        ss.stored_refrigerant = refrigerant
-        ss.stored_material = selected_material
         
         # detect material change
         material_changed = ss.get("last_material") is not None and ss.last_material != selected_material
@@ -1715,13 +1685,6 @@ elif tool_selection == "Manual Calculation":
         from utils.refrigerant_entropies import RefrigerantEntropies
         from utils.refrigerant_enthalpies import RefrigerantEnthalpies
 
-        ss = st.session_state
-        # Restore shared selections if available
-        if "stored_refrigerant" in ss:
-            ss.last_refrigerant = ss.stored_refrigerant
-        if "stored_material" in ss:
-            ss.last_material = ss.stored_material
-
         col1, col2, col3, col4 = st.columns(4)
     
         with col1:
@@ -1765,9 +1728,6 @@ elif tool_selection == "Manual Calculation":
                 pipe_materials = sorted(pipe_data["Material"].dropna().unique())
     
             selected_material = st.selectbox("Pipe Material", pipe_materials, key="material")
-    
-        ss.stored_refrigerant = refrigerant
-        ss.stored_material = selected_material
         
         # detect material change
         material_changed = ss.get("last_material") is not None and ss.last_material != selected_material
@@ -2106,126 +2066,3 @@ elif tool_selection == "Manual Calculation":
 
             with col7:
                 st.metric("Compression Ratio", f"{compratio:.2f}")
-
-    if mode == "Drain":
-    
-        from utils.refrigerant_properties import RefrigerantProperties
-        from utils.refrigerant_densities import RefrigerantDensities
-        from utils.refrigerant_viscosities import RefrigerantViscosities
-        from utils.pipe_length_volume_calc import get_pipe_id_mm
-        from utils.refrigerant_entropies import RefrigerantEntropies
-        from utils.refrigerant_enthalpies import RefrigerantEnthalpies
-    
-        ss = st.session_state
-        col1, col2, col3, col4 = st.columns(4)
-    
-        # -------------------------------
-        # 1️⃣  Always keep these safe copies
-        # -------------------------------
-        # Pick up the latest known refrigerant/material from anywhere
-        prev_refrigerant = ss.get("last_refrigerant", ss.get("Refrigerant"))
-        prev_material    = ss.get("material", ss.get("last_material"))
-    
-        # If we’re entering Drain for the first time, remember those
-        if "stored_refrigerant" not in ss and prev_refrigerant:
-            ss.stored_refrigerant = prev_refrigerant
-        if "stored_material" not in ss and prev_material:
-            ss.stored_material = prev_material
-    
-        # -------------------------------
-        # 2️⃣  Refrigerant
-        # -------------------------------
-        refrigerants = [
-            "R404A","R134a","R407F","R744","R410A","R407C","R507A","R448A","R449A",
-            "R22","R32","R454A","R454C","R455A","R407A","R290","R1270","R600a",
-            "R717","R1234ze","R1234yf","R12","R11","R454B","R450A","R513A","R23","R508B","R502"
-        ]
-    
-        with col1:
-            if ss.get("stored_refrigerant") in refrigerants:
-                refrigerant = ss.stored_refrigerant
-                st.selectbox(
-                    "Refrigerant",
-                    refrigerants,
-                    index=refrigerants.index(refrigerant),
-                    key="drain_refrigerant",
-                    disabled=True,
-                )
-            else:
-                refrigerant = st.selectbox("Refrigerant", refrigerants, key="drain_refrigerant")
-                ss.stored_refrigerant = refrigerant
-    
-        # -------------------------------
-        # 3️⃣  Pipe material
-        # -------------------------------
-        pipe_data = pd.read_csv("data/pipe_pressure_ratings_full.csv")
-    
-        if refrigerant == "R717":
-            excluded = {"Copper ACR", "Copper EN12735"}
-            pipe_materials = sorted(m for m in pipe_data["Material"].dropna().unique() if m not in excluded)
-        else:
-            pipe_materials = sorted(pipe_data["Material"].dropna().unique())
-    
-        with col2:
-            if ss.get("stored_material") in pipe_materials:
-                selected_material = ss.stored_material
-                st.selectbox(
-                    "Pipe Material",
-                    pipe_materials,
-                    index=pipe_materials.index(selected_material),
-                    key="drain_material",
-                    disabled=True,
-                )
-            else:
-                selected_material = st.selectbox("Pipe Material", pipe_materials, key="drain_material")
-                ss.stored_material = selected_material
-    
-        # -------------------------------
-        # 4️⃣  Now render sizes etc.
-        # -------------------------------
-        material_df = pipe_data[pipe_data["Material"] == ss.stored_material].copy()
-    
-        def _nps_inch_to_mm(nps_str: str) -> float:
-            s = str(nps_str).replace('"', '').strip()
-            if not s:
-                return float("nan")
-            parts = s.split('-')
-            tot_in = 0.0
-            for p in parts:
-                if '/' in p:
-                    num, den = p.split('/')
-                    tot_in += float(num) / float(den)
-                else:
-                    tot_in += float(p)
-            return tot_in * 25.4
-    
-        sizes_df = (
-            material_df[["Nominal Size (inch)", "Nominal Size (mm)"]]
-            .dropna(subset=["Nominal Size (inch)"])
-            .assign(**{"Nominal Size (inch)": lambda d: d["Nominal Size (inch)"].astype(str).str.strip()})
-            .drop_duplicates(subset=["Nominal Size (inch)"], keep="first")
-        )
-        sizes_df["mm_num"] = pd.to_numeric(sizes_df.get("Nominal Size (mm)"), errors="coerce")
-        sizes_df.loc[sizes_df["mm_num"].isna(), "mm_num"] = sizes_df.loc[
-            sizes_df["mm_num"].isna(), "Nominal Size (inch)"
-        ].apply(_nps_inch_to_mm)
-    
-        pipe_sizes = sizes_df["Nominal Size (inch)"].tolist()
-        mm_map = dict(zip(sizes_df["Nominal Size (inch)"], sizes_df["mm_num"]))
-    
-        def _closest_index(target_mm: float) -> int:
-            mm_list = [mm_map[s] for s in pipe_sizes]
-            return min(range(len(mm_list)), key=lambda i: abs(mm_list[i] - target_mm)) if mm_list else 0
-    
-        default_index = 0
-        if "prev_pipe_mm" in ss:
-            default_index = _closest_index(ss.prev_pipe_mm)
-    
-        with col1:
-            selected_size = st.selectbox(
-                "Nominal Pipe Size (inch)",
-                pipe_sizes,
-                index=default_index,
-                key="selected_size",
-            )
-        ss.prev_pipe_mm = float(mm_map.get(selected_size, float("nan")))
