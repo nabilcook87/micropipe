@@ -153,6 +153,13 @@ elif tool_selection == "System Pressure Checker":
 
 elif tool_selection == "Oil Return Checker":
     st.subheader("Oil Return Checker")
+
+    ss = st.session_state
+    # Restore shared selections if available
+    if "stored_refrigerant" in ss:
+        ss.last_refrigerant = ss.stored_refrigerant
+    if "stored_material" in ss:
+        ss.last_material = ss.stored_material
     
     col1, col2 = st.columns(2)
 
@@ -198,6 +205,9 @@ elif tool_selection == "Oil Return Checker":
 
         selected_material = st.selectbox("Pipe Material", pipe_materials, key="material")
 
+    ss.stored_refrigerant = refrigerant
+    ss.stored_material = selected_material
+    
     # detect material change
     material_changed = ss.get("last_material") is not None and ss.last_material != selected_material
     ss.last_material = selected_material
@@ -643,6 +653,13 @@ elif tool_selection == "Manual Calculation":
     mode = st.radio("", ["Dry Suction", "Liquid", "Discharge", "Drain", "Pumped Liquid", "Wet Suction"], index=1, horizontal=True, label_visibility="collapsed")
     
     if mode == "Dry Suction":
+
+        ss = st.session_state
+        # Restore shared selections if available
+        if "stored_refrigerant" in ss:
+            ss.last_refrigerant = ss.stored_refrigerant
+        if "stored_material" in ss:
+            ss.last_material = ss.stored_material
         
         col1, col2, col3, col4 = st.columns(4)
     
@@ -688,6 +705,9 @@ elif tool_selection == "Manual Calculation":
     
             selected_material = st.selectbox("Pipe Material", pipe_materials, key="material")
     
+        ss.stored_refrigerant = refrigerant
+        ss.stored_material = selected_material
+        
         # detect material change
         material_changed = ss.get("last_material") is not None and ss.last_material != selected_material
         ss.last_material = selected_material
@@ -1289,6 +1309,13 @@ elif tool_selection == "Manual Calculation":
 
     if mode == "Liquid":
         
+        ss = st.session_state
+        # Restore shared selections if available
+        if "stored_refrigerant" in ss:
+            ss.last_refrigerant = ss.stored_refrigerant
+        if "stored_material" in ss:
+            ss.last_material = ss.stored_material
+        
         col1, col2, col3, col4 = st.columns(4)
     
         with col1:
@@ -1333,6 +1360,9 @@ elif tool_selection == "Manual Calculation":
     
             selected_material = st.selectbox("Pipe Material", pipe_materials, key="material")
     
+        ss.stored_refrigerant = refrigerant
+        ss.stored_material = selected_material
+        
         # detect material change
         material_changed = ss.get("last_material") is not None and ss.last_material != selected_material
         ss.last_material = selected_material
@@ -1685,6 +1715,13 @@ elif tool_selection == "Manual Calculation":
         from utils.refrigerant_entropies import RefrigerantEntropies
         from utils.refrigerant_enthalpies import RefrigerantEnthalpies
 
+        ss = st.session_state
+        # Restore shared selections if available
+        if "stored_refrigerant" in ss:
+            ss.last_refrigerant = ss.stored_refrigerant
+        if "stored_material" in ss:
+            ss.last_material = ss.stored_material
+
         col1, col2, col3, col4 = st.columns(4)
     
         with col1:
@@ -1729,6 +1766,9 @@ elif tool_selection == "Manual Calculation":
     
             selected_material = st.selectbox("Pipe Material", pipe_materials, key="material")
     
+        ss.stored_refrigerant = refrigerant
+        ss.stored_material = selected_material
+        
         # detect material change
         material_changed = ss.get("last_material") is not None and ss.last_material != selected_material
         ss.last_material = selected_material
