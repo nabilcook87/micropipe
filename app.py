@@ -1736,9 +1736,6 @@ elif tool_selection == "Manual Calculation":
     
         # 2) Sizes for selected material (de-duped)
         material_df = pipe_data[pipe_data["Material"] == selected_material].copy()
-
-        ss.refrigerant = refrigerant
-        ss.material = selected_material
     
         sizes_df = (
             material_df[["Nominal Size (inch)", "Nominal Size (mm)"]]
