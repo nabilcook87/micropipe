@@ -2076,46 +2076,39 @@ elif tool_selection == "Manual Calculation":
         from utils.refrigerant_entropies import RefrigerantEntropies
         from utils.refrigerant_enthalpies import RefrigerantEnthalpies
 
-        col1, col2, col3, col4 = st.columns(4)
-        
         ss = st.session_state
-        
-        # Refrigerant: inherit from Discharge if available
-        all_refrigerants = [
+        col1, col2, col3, col4 = st.columns(4)
+    
+        refrigerants = [
             "R404A","R134a","R407F","R744","R410A","R407C","R507A","R448A","R449A",
             "R22","R32","R454A","R454C","R455A","R407A","R290","R1270","R600a",
             "R717","R1234ze","R1234yf","R12","R11","R454B","R450A","R513A","R23","R508B","R502"
         ]
-        
+    
         with col1:
-            if "refrigerant" in ss and ss.refrigerant in all_refrigerants:
+            if "refrigerant" in ss and ss.refrigerant in refrigerants:
                 refrigerant = ss.refrigerant
                 st.selectbox(
                     "Refrigerant",
-                    all_refrigerants,
-                    index=all_refrigerants.index(refrigerant),
+                    refrigerants,
+                    index=refrigerants.index(refrigerant),
                     key="refrigerant",
-                    disabled=True,                    # <-- lock to Discharge choice
+                    disabled=True,  # locked from Discharge
                 )
             else:
-                refrigerant = st.selectbox(
-                    "Refrigerant",
-                    all_refrigerants,
-                    key="refrigerant",
-                )
-        
-        # Load pipe data
+                refrigerant = st.selectbox("Refrigerant", refrigerants, key="refrigerant")
+    
         pipe_data = pd.read_csv("data/pipe_pressure_ratings_full.csv")
-        
-        # Material options depend on refrigerant (e.g., exclude copper for R717)
+    
         if refrigerant == "R717":
             excluded = {"Copper ACR", "Copper EN12735"}
-            pipe_materials = sorted(m for m in pipe_data["Material"].dropna().unique() if m not in excluded)
+            pipe_materials = sorted(
+                m for m in pipe_data["Material"].dropna().unique() if m not in excluded
+            )
         else:
             pipe_materials = sorted(pipe_data["Material"].dropna().unique())
-        
+    
         with col2:
-            # Try to inherit Discharge material; if it’s not valid for this refrigerant, fall back.
             if "material" in ss and ss.material in pipe_materials:
                 selected_material = ss.material
                 st.selectbox(
@@ -2123,16 +2116,30 @@ elif tool_selection == "Manual Calculation":
                     pipe_materials,
                     index=pipe_materials.index(selected_material),
                     key="material",
-                    disabled=True,                   # <-- lock to Discharge choice
+                    disabled=True,
                 )
             else:
-                # Fallback (e.g., user started in Drain or Discharge material is incompatible with R717)
                 selected_material = st.selectbox("Pipe Material", pipe_materials, key="material")
-                if "material" in ss and ss.material not in pipe_materials:
-                    st.warning(
-                        "The Discharge material isn’t valid for the selected refrigerant (e.g., R717 can’t use Copper). "
-                        "Please choose a valid material for Drain."
-                    )
+    
+        if selected_material not in pipe_data["Material"].unique():
+            st.error("Invalid or missing pipe material selection.")
+            st.stop()
+    
+        material_df = pipe_data[pipe_data["Material"] == selected_material].copy()
+    
+        def _nps_inch_to_mm(nps_str: str) -> float:
+            s = str(nps_str).replace('"', '').strip()
+            if not s:
+                return float('nan')
+            parts = s.split('-')
+            total_in = 0.0
+            for p in parts:
+                if '/' in p:
+                    num, den = p.split('/')
+                    total_in += float(num) / float(den)
+                else:
+                    total_in += float(p)
+            return total_in * 25.4  # mm
     
         sizes_df = (
             material_df[["Nominal Size (inch)", "Nominal Size (mm)"]]
@@ -2143,28 +2150,21 @@ elif tool_selection == "Manual Calculation":
             .drop_duplicates(subset=["Nominal Size (inch)"], keep="first")
         )
     
-        # make sure we have a numeric mm per nominal (fallback: parse the inch string)
-        sizes_df["mm_num"] = pd.to_numeric(sizes_df.get("Nominal Size (mm)"), errors="coerce")
-        sizes_df.loc[sizes_df["mm_num"].isna(), "mm_num"] = sizes_df.loc[sizes_df["mm_num"].isna(), "Nominal Size (inch)"].apply(_nps_inch_to_mm)
+        sizes_df["mm_num"] = pd.to_numeric(sizes_df["Nominal Size (mm)"], errors="coerce")
+        sizes_df.loc[sizes_df["mm_num"].isna(), "mm_num"] = sizes_df.loc[
+            sizes_df["mm_num"].isna(), "Nominal Size (inch)"
+        ].apply(_nps_inch_to_mm)
     
         pipe_sizes = sizes_df["Nominal Size (inch)"].tolist()
         mm_map = dict(zip(sizes_df["Nominal Size (inch)"], sizes_df["mm_num"]))
     
-        # choose default index
         def _closest_index(target_mm: float) -> int:
             mm_list = [mm_map[s] for s in pipe_sizes]
             return min(range(len(mm_list)), key=lambda i: abs(mm_list[i] - target_mm)) if mm_list else 0
     
         default_index = 0
-        if material_changed and "prev_pipe_mm" in ss:
+        if "prev_pipe_mm" in ss:
             default_index = _closest_index(ss.prev_pipe_mm)
-        elif selected_material == "Copper ACR" and ("5/8" in pipe_sizes or '5/8"' in pipe_sizes):
-            # first load or no previous selection → prefer 1-1/8" for Copper ACR
-            want = "5/8" if "5/8" in pipe_sizes else '5/8"'
-            default_index = pipe_sizes.index(want)
-        elif "selected_size" in ss and ss.selected_size in pipe_sizes:
-            # if Streamlit kept the selection, use it
-            default_index = pipe_sizes.index(ss.selected_size)
     
         with col1:
             selected_size = st.selectbox(
@@ -2174,10 +2174,8 @@ elif tool_selection == "Manual Calculation":
                 key="selected_size",
             )
     
-        # remember the selected size in mm for next material change
         ss.prev_pipe_mm = float(mm_map.get(selected_size, float("nan")))
-    
-        # 3) Gauge (if applicable)
+
         gauge_options = material_df[material_df["Nominal Size (inch)"].astype(str).str.strip() == selected_size]
         if "Gauge" in gauge_options.columns and gauge_options["Gauge"].notna().any():
             gauges = sorted(gauge_options["Gauge"].dropna().unique())
@@ -2187,6 +2185,5 @@ elif tool_selection == "Manual Calculation":
         else:
             selected_pipe_row = gauge_options.iloc[0]
     
-        # Pipe parameters
         pipe_size_inch = selected_pipe_row["Nominal Size (inch)"]
         ID_mm = selected_pipe_row["ID_mm"]
