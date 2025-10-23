@@ -2325,6 +2325,8 @@ elif tool_selection == "Manual Calculation":
                 # When evap changes: clamp evap down to maxliq
                 ss.evap_temp   = min(ss.evap_temp,   ss.maxliq_temp)
     
+        with col4:
+            
             # --- Inputs with inclusive caps (≤), same order as your code ---
             condensing_temp = st.number_input(
                 "Condensing Temperature (°C)",
