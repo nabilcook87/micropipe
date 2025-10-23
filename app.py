@@ -2360,16 +2360,12 @@ elif tool_selection == "Manual Calculation":
         props = RefrigerantProperties()
 
         h_in = props.get_properties(refrigerant, T_liq)["enthalpy_liquid2"]
-        st.write("h_in:", h_in)
 
         h_evap = props.get_properties(refrigerant, T_evap)["enthalpy_vapor"]
-        st.write("h_evap:", h_evap)
         
         delta_h = h_evap - h_in
-        st.write("delta_h:", delta_h)
 
         mass_flow_kg_s = evap_capacity_kw / delta_h if delta_h > 0 else 0.01
-        st.write("mass_flow_kg_s:", mass_flow_kg_s)
 
         if ID_mm is not None:
             ID_m = ID_mm / 1000.0
@@ -2377,16 +2373,30 @@ elif tool_selection == "Manual Calculation":
             area_m2 = math.pi * (ID_m / 2) ** 2
 
             density1 = RefrigerantProperties().get_properties(refrigerant, T_liq)["density_liquid2"]
-            st.write("density1:", density1)
+
             density2 = RefrigerantProperties().get_properties(refrigerant, T_cond)["density_liquid"]
-            st.write("density2:", density2)
 
             density = min(density1, density2)
-            st.write("density:", density)
 
             velocity_m_s = mass_flow_kg_s / (area_m2 * density)
 
         else:
             velocity_m_s = None
 
-        st.write("velocity_m_s:", velocity_m_s)
+        mf_branch = mass_flow_kg_s / no_branch
+
+        ID_m_2 = ID_mm_2 / 1000.0
+
+        area_m2_2 = math.pi * (ID_m_2 / 2) ** 2
+
+        vel_branch = mf_branch / (area_m2_2 * density)
+
+        st.subheader("Results")
+
+        with col1:
+
+            st.metric("Main Velocity", f"{velocity_m_s:.2f}m/s")
+
+        with col2:
+
+            st.metric("Branch Velocity", f"{vel_branch:.2f}m/s")
