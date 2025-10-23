@@ -397,7 +397,7 @@ elif tool_selection == "Oil Return Checker":
         ID_m = ID_mm / 1000.0
         #st.write("ID_mm:", ID_mm)
         #st.write("ID_m:", ID_m)
-        area_m2 = 3.1416 * (ID_m / 2) ** 2
+        area_m2 = math.pi * (ID_m / 2) ** 2
         #st.write("area_m2:", area_m2)
         density_super = RefrigerantDensities().get_density(refrigerant, T_evap - max_penalty + 273.15, superheat_K)
         #st.write("density_super:", density_super)
@@ -901,7 +901,7 @@ elif tool_selection == "Manual Calculation":
             ID_m = ID_mm / 1000.0
             #st.write("ID_mm:", ID_mm)
             #st.write("ID_m:", ID_m)
-            area_m2 = 3.1416 * (ID_m / 2) ** 2
+            area_m2 = math.pi * (ID_m / 2) ** 2
             #st.write("area_m2:", area_m2)
             density_super = RefrigerantDensities().get_density(refrigerant, T_evap - max_penalty + 273.15, superheat_K)
             #st.write("density_super:", density_super)
@@ -1513,7 +1513,7 @@ elif tool_selection == "Manual Calculation":
         if ID_mm is not None:
             ID_m = ID_mm / 1000.0
 
-            area_m2 = 3.1416 * (ID_m / 2) ** 2
+            area_m2 = math.pi * (ID_m / 2) ** 2
 
             density = RefrigerantProperties().get_properties(refrigerant, T_liq)["density_liquid2"]
 
@@ -2360,12 +2360,16 @@ elif tool_selection == "Manual Calculation":
         props = RefrigerantProperties()
 
         h_in = props.get_properties(refrigerant, T_liq)["enthalpy_liquid2"]
+        st.write("h_in:", h_in)
 
         h_evap = props.get_properties(refrigerant, T_evap)["enthalpy_vapor"]
+        st.write("h_evap:", h_evap)
         
         delta_h = h_evap - h_in
+        st.write("delta_h:", delta_h)
 
         mass_flow_kg_s = evap_capacity_kw / delta_h if delta_h > 0 else 0.01
+        st.write("mass_flow_kg_s:", mass_flow_kg_s)
 
         if ID_mm is not None:
             ID_m = ID_mm / 1000.0
