@@ -2376,7 +2376,13 @@ elif tool_selection == "Manual Calculation":
 
             area_m2 = math.pi * (ID_m / 2) ** 2
 
-            density = RefrigerantProperties().get_properties(refrigerant, T_liq)["density_liquid2"]
+            density1 = RefrigerantProperties().get_properties(refrigerant, T_liq)["density_liquid2"]
+            st.write("density1:", density1)
+            density2 = RefrigerantProperties().get_properties(refrigerant, T_cond)["density_liquid"]
+            st.write("density2:", density2)
+
+            density = min(density1, density2)
+            st.write("density:", density)
 
             velocity_m_s = mass_flow_kg_s / (area_m2 * density)
 
