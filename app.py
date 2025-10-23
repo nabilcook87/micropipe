@@ -2450,7 +2450,7 @@ elif tool_selection == "Manual Calculation":
 
         st.subheader("Results")
 
-        col1, col2 = st.columns(2)
+        col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
         
         with col1:
 
@@ -2459,3 +2459,14 @@ elif tool_selection == "Manual Calculation":
         with col2:
 
             st.metric("Branch Velocity", f"{vel_branch:.2f}m/s")
+
+        with col3:
+            st.metric("")
+        with col4:
+            st.metric("")
+        with col5:
+            st.metric("")
+        with col6:
+            st.metric("")
+        with col7:
+            st.metric("")
