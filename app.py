@@ -1903,7 +1903,7 @@ elif tool_selection == "Manual Calculation":
         if ID_mm is not None:
             ID_m = ID_mm / 1000.0
 
-            area_m2 = 3.1416 * (ID_m / 2) ** 2
+            area_m2 = math.pi * (ID_m / 2) ** 2
 
             suc_ent = RefrigerantEntropies().get_entropy(refrigerant, T_evap + 273.15, superheat_K)
             
@@ -2358,3 +2358,16 @@ elif tool_selection == "Manual Calculation":
         T_cond = condensing_temp
     
         props = RefrigerantProperties()
+
+        h_in = props.get_properties(refrigerant, T_liq)["enthalpy_liquid2"]
+
+        h_evap = props.get_properties(refrigerant, T_evap)["enthalpy_vapor"]
+        
+        delta_h = h_evap - h_in
+
+        mass_flow_kg_s = evap_capacity_kw / delta_h if delta_h > 0 else 0.01
+
+        if ID_mm is not None:
+            ID_m = ID_mm / 1000.0
+
+            area_m2 = math.pi * (ID_m / 2) ** 2
