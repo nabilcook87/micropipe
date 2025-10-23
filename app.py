@@ -2276,6 +2276,7 @@ elif tool_selection == "Manual Calculation":
         with col3:
             
             evap_capacity_kw = st.number_input("Evaporator Capacity (kW)", min_value=0.03, max_value=20000.0, value=10.0, step=1.0)
+            no_branch = st.number_input("No. of Branches", min_value=2, max_value=10, value=2, step=1)
             
             # --- Base ranges per refrigerant ---
             if refrigerant in ("R23", "R508B"):
