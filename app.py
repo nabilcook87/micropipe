@@ -2404,7 +2404,7 @@ elif tool_selection == "Manual Calculation":
         vel_branch = mf_branch / (area_m2_2 * density)
 
         # --- Automatic pipe size selection button ---
-        if st.button("Select Pipe Sizes for ≤ 0.55 m/s"):
+        if st.button("Auto-select"):
             target_velocity = 0.55  # m/s
         
             # Compute main pipe size
