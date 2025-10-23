@@ -2273,7 +2273,7 @@ elif tool_selection == "Manual Calculation":
         pipe_size_inch_2 = selected_pipe_row_2["Nominal Size (inch)"]
         ID_mm_2 = selected_pipe_row_2["ID_mm"]
         
-        with col1:
+        with col3:
             
             evap_capacity_kw = st.number_input("Evaporator Capacity (kW)", min_value=0.03, max_value=20000.0, value=10.0, step=1.0)
             
