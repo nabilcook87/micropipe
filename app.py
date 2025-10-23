@@ -2288,13 +2288,14 @@ elif tool_selection == "Manual Calculation":
         ID_mm_2 = selected_pipe_row_2["ID_mm"]
         
         # --- Rule: Main pipe must be >= Branch pipe ---
+        invalid_pipe_selection = False
         if ID_mm < ID_mm_2:
             st.error(
                 f"🚫 Invalid selection: The main pipe ({selected_size} – {ID_mm:.2f} mm ID) "
                 f"is smaller than the branch pipe ({selected_size_2} – {ID_mm_2:.2f} mm ID). "
                 "Please choose a larger main pipe or a smaller branch pipe."
             )
-            st.stop()
+            invalid_pipe_selection = True
         
         with col3:
             
@@ -2376,108 +2377,113 @@ elif tool_selection == "Manual Calculation":
                 disabled=True,
             )
 
-        T_evap = evaporating_temp
-        T_liq = maxliq_temp
-        T_cond = condensing_temp
-    
-        props = RefrigerantProperties()
-
-        h_in = props.get_properties(refrigerant, T_liq)["enthalpy_liquid2"]
-
-        h_evap = props.get_properties(refrigerant, T_evap)["enthalpy_vapor"]
+        if not invalid_pipe_selection:
         
-        delta_h = h_evap - h_in
-
-        mass_flow_kg_s = evap_capacity_kw / delta_h if delta_h > 0 else 0.01
-
-        if ID_mm is not None:
-            ID_m = ID_mm / 1000.0
-
-            area_m2 = math.pi * (ID_m / 2) ** 2
-
-            density1 = RefrigerantProperties().get_properties(refrigerant, T_liq)["density_liquid2"]
-
-            density2 = RefrigerantProperties().get_properties(refrigerant, T_cond)["density_liquid"]
-
-            density = min(density1, density2)
-
-            velocity_m_s = mass_flow_kg_s / (area_m2 * density)
+            T_evap = evaporating_temp
+            T_liq = maxliq_temp
+            T_cond = condensing_temp
+        
+            props = RefrigerantProperties()
+    
+            h_in = props.get_properties(refrigerant, T_liq)["enthalpy_liquid2"]
+    
+            h_evap = props.get_properties(refrigerant, T_evap)["enthalpy_vapor"]
+            
+            delta_h = h_evap - h_in
+    
+            mass_flow_kg_s = evap_capacity_kw / delta_h if delta_h > 0 else 0.01
+    
+            if ID_mm is not None:
+                ID_m = ID_mm / 1000.0
+    
+                area_m2 = math.pi * (ID_m / 2) ** 2
+    
+                density1 = RefrigerantProperties().get_properties(refrigerant, T_liq)["density_liquid2"]
+    
+                density2 = RefrigerantProperties().get_properties(refrigerant, T_cond)["density_liquid"]
+    
+                density = min(density1, density2)
+    
+                velocity_m_s = mass_flow_kg_s / (area_m2 * density)
+    
+            else:
+                velocity_m_s = None
+    
+            mf_branch = mass_flow_kg_s / no_branch
+    
+            ID_m_2 = ID_mm_2 / 1000.0
+    
+            area_m2_2 = math.pi * (ID_m_2 / 2) ** 2
+    
+            vel_branch = mf_branch / (area_m2_2 * density)
+    
+            # --- Automatic pipe size selection button ---
+            if st.button("Auto-select"):
+                target_velocity = 0.55  # m/s
+            
+                # Compute main pipe size
+                best_main = None
+                for size in pipe_sizes:
+                    ID_main_mm = material_df.loc[
+                        material_df["Nominal Size (inch)"].astype(str).str.strip() == size, "ID_mm"
+                    ].iloc[0]
+                    ID_main_m = ID_main_mm / 1000.0
+                    area_main = math.pi * (ID_main_m / 2) ** 2
+                    vel_main = mass_flow_kg_s / (area_main * density)
+                    if vel_main <= target_velocity:
+                        best_main = size
+                        break
+            
+                # Compute branch pipe size
+                best_branch = None
+                for size in pipe_sizes_2:
+                    ID_branch_mm = material_df_2.loc[
+                        material_df_2["Nominal Size (inch)"].astype(str).str.strip() == size, "ID_mm"
+                    ].iloc[0]
+                    ID_branch_m = ID_branch_mm / 1000.0
+                    area_branch = math.pi * (ID_branch_m / 2) ** 2
+                    vel_branch_calc = mf_branch / (area_branch * density)
+                    if vel_branch_calc <= target_velocity:
+                        best_branch = size
+                        break
+            
+                # ✅ Store in temp state (safe names that are not bound to widgets)
+                if best_main:
+                    st.session_state["auto_selected_main"] = best_main
+                    st.success(f"✅ Main pipe set to {best_main} (velocity ≤ {target_velocity} m/s)")
+                else:
+                    st.warning("⚠️ No main pipe found with velocity ≤ 0.55 m/s")
+            
+                if best_branch:
+                    st.session_state["auto_selected_branch"] = best_branch
+                    st.success(f"✅ Branch pipe set to {best_branch} (velocity ≤ {target_velocity} m/s)")
+                else:
+                    st.warning("⚠️ No branch pipe found with velocity ≤ 0.55 m/s")
+            
+                st.rerun()
+    
+            st.subheader("Results")
+    
+            col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
+            
+            with col1:
+    
+                st.metric("Main Velocity", f"{velocity_m_s:.2f}m/s")
+    
+            with col2:
+    
+                st.metric("Branch Velocity", f"{vel_branch:.2f}m/s")
+    
+            with col3:
+                st.empty()
+            with col4:
+                st.empty()
+            with col5:
+                st.empty()
+            with col6:
+                st.empty()
+            with col7:
+                st.empty()
 
         else:
-            velocity_m_s = None
-
-        mf_branch = mass_flow_kg_s / no_branch
-
-        ID_m_2 = ID_mm_2 / 1000.0
-
-        area_m2_2 = math.pi * (ID_m_2 / 2) ** 2
-
-        vel_branch = mf_branch / (area_m2_2 * density)
-
-        # --- Automatic pipe size selection button ---
-        if st.button("Auto-select"):
-            target_velocity = 0.55  # m/s
-        
-            # Compute main pipe size
-            best_main = None
-            for size in pipe_sizes:
-                ID_main_mm = material_df.loc[
-                    material_df["Nominal Size (inch)"].astype(str).str.strip() == size, "ID_mm"
-                ].iloc[0]
-                ID_main_m = ID_main_mm / 1000.0
-                area_main = math.pi * (ID_main_m / 2) ** 2
-                vel_main = mass_flow_kg_s / (area_main * density)
-                if vel_main <= target_velocity:
-                    best_main = size
-                    break
-        
-            # Compute branch pipe size
-            best_branch = None
-            for size in pipe_sizes_2:
-                ID_branch_mm = material_df_2.loc[
-                    material_df_2["Nominal Size (inch)"].astype(str).str.strip() == size, "ID_mm"
-                ].iloc[0]
-                ID_branch_m = ID_branch_mm / 1000.0
-                area_branch = math.pi * (ID_branch_m / 2) ** 2
-                vel_branch_calc = mf_branch / (area_branch * density)
-                if vel_branch_calc <= target_velocity:
-                    best_branch = size
-                    break
-        
-            # ✅ Store in temp state (safe names that are not bound to widgets)
-            if best_main:
-                st.session_state["auto_selected_main"] = best_main
-                st.success(f"✅ Main pipe set to {best_main} (velocity ≤ {target_velocity} m/s)")
-            else:
-                st.warning("⚠️ No main pipe found with velocity ≤ 0.55 m/s")
-        
-            if best_branch:
-                st.session_state["auto_selected_branch"] = best_branch
-                st.success(f"✅ Branch pipe set to {best_branch} (velocity ≤ {target_velocity} m/s)")
-            else:
-                st.warning("⚠️ No branch pipe found with velocity ≤ 0.55 m/s")
-        
-            st.rerun()
-
-        st.subheader("Results")
-
-        col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
-        
-        with col1:
-
-            st.metric("Main Velocity", f"{velocity_m_s:.2f}m/s")
-
-        with col2:
-
-            st.metric("Branch Velocity", f"{vel_branch:.2f}m/s")
-
-        with col3:
-            st.empty()
-        with col4:
-            st.empty()
-        with col5:
-            st.empty()
-        with col6:
-            st.empty()
-        with col7:
-            st.empty()
+            st.warning("Pipe size validation failed — calculations skipped.")
