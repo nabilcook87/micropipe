@@ -2175,7 +2175,7 @@ elif tool_selection == "Manual Calculation":
         if "Gauge" in gauge_options.columns and gauge_options["Gauge"].notna().any():
             gauges = sorted(gauge_options["Gauge"].dropna().unique())
             with col2:
-                selected_gauge = st.selectbox("Copper Gauge", gauges, key="gauge")
+                selected_gauge = st.selectbox("Main Copper Gauge", gauges, key="gauge")
             selected_pipe_row = gauge_options[gauge_options["Gauge"] == selected_gauge].iloc[0]
         else:
             selected_pipe_row = gauge_options.iloc[0]
@@ -2248,7 +2248,7 @@ elif tool_selection == "Manual Calculation":
         # 4️⃣ Size selector
         with col1:
             selected_size_2 = st.selectbox(
-                "Secondary Pipe Size (inch)",
+                "Branch Pipe Size (inch)",
                 pipe_sizes_2,
                 index=default_index_2,
                 key="selected_size_2",
@@ -2264,7 +2264,7 @@ elif tool_selection == "Manual Calculation":
         if "Gauge" in gauge_options_2.columns and gauge_options_2["Gauge"].notna().any():
             gauges_2 = sorted(gauge_options_2["Gauge"].dropna().unique())
             with col2:
-                selected_gauge_2 = st.selectbox("Secondary Copper Gauge", gauges_2, key="gauge_2")
+                selected_gauge_2 = st.selectbox("Branch Copper Gauge", gauges_2, key="gauge_2")
             selected_pipe_row_2 = gauge_options_2[gauge_options_2["Gauge"] == selected_gauge_2].iloc[0]
         else:
             selected_pipe_row_2 = gauge_options_2.iloc[0]
