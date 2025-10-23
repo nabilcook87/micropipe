@@ -2447,7 +2447,7 @@ elif tool_selection == "Manual Calculation":
             else:
                 st.warning("⚠️ No branch pipe found with velocity ≤ 0.55 m/s")
         
-            st.experimental_rerun()
+            st.rerun()
 
         st.subheader("Results")
 
