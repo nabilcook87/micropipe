@@ -2148,17 +2148,29 @@ elif tool_selection == "Manual Calculation":
             mm_list = [mm_map[s] for s in pipe_sizes]
             return min(range(len(mm_list)), key=lambda i: abs(mm_list[i] - target_mm)) if mm_list else 0
     
+        # --- Choose default index (preserve user choice between reruns) ---
         default_index = 0
-        if material_changed and "prev_pipe_mm" in ss:
-            default_index = _closest_index(ss.prev_pipe_mm)
-        elif selected_material == "Copper ACR" and ("5/8" in pipe_sizes or '5/8"' in pipe_sizes):
-            # first load or no previous selection → prefer 1-1/8" for Copper ACR
-            want = "5/8" if "5/8" in pipe_sizes else '5/8"'
-            default_index = pipe_sizes.index(want)
-        elif "selected_size" in ss and ss.selected_size in pipe_sizes:
-            # if Streamlit kept the selection, use it
+        
+        # If we already have a user-selected pipe size, keep it
+        if "selected_size" in ss and ss.selected_size in pipe_sizes:
             default_index = pipe_sizes.index(ss.selected_size)
-    
+        
+        # If auto-selected from button
+        elif "auto_selected_main" in ss and ss.auto_selected_main in pipe_sizes:
+            default_index = pipe_sizes.index(ss.auto_selected_main)
+            del ss.auto_selected_main  # clear after use
+        
+        # If material changed, try to match previous pipe dimension
+        elif material_changed and "prev_pipe_mm" in ss:
+            default_index = _closest_index(ss.prev_pipe_mm)
+        
+        # Only apply 5/8" Copper ACR rule on first load
+        elif "drain_first_load_done" not in ss:
+            if selected_material == "Copper ACR" and ("5/8" in pipe_sizes or '5/8"' in pipe_sizes):
+                want = "5/8" if "5/8" in pipe_sizes else '5/8"'
+                default_index = pipe_sizes.index(want)
+            ss.drain_first_load_done = True
+
         with col1:
 
             # --- Before main pipe selectbox ---
