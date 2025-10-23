@@ -2160,6 +2160,12 @@ elif tool_selection == "Manual Calculation":
             default_index = pipe_sizes.index(ss.selected_size)
     
         with col1:
+
+            # --- Before main pipe selectbox ---
+            if "auto_selected_main" in st.session_state and st.session_state.auto_selected_main in pipe_sizes:
+                default_index = pipe_sizes.index(st.session_state.auto_selected_main)
+                del st.session_state.auto_selected_main  # clear after use
+
             selected_size = st.selectbox(
                 "Main Pipe Size (inch)",
                 pipe_sizes,
@@ -2247,6 +2253,12 @@ elif tool_selection == "Manual Calculation":
 
         # 4️⃣ Size selector
         with col1:
+
+            # --- Before branch pipe selectbox ---
+            if "auto_selected_branch" in st.session_state and st.session_state.auto_selected_branch in pipe_sizes_2:
+                default_index_2 = pipe_sizes_2.index(st.session_state.auto_selected_branch)
+                del st.session_state.auto_selected_branch  # clear after use
+
             selected_size_2 = st.selectbox(
                 "Branch Pipe Size (inch)",
                 pipe_sizes_2,
@@ -2407,7 +2419,7 @@ elif tool_selection == "Manual Calculation":
                 vel_main = mass_flow_kg_s / (area_main * density)
                 if vel_main <= target_velocity:
                     best_main = size
-                    break  # pick the smallest that meets the target
+                    break
         
             # Compute branch pipe size
             best_branch = None
@@ -2422,20 +2434,19 @@ elif tool_selection == "Manual Calculation":
                     best_branch = size
                     break
         
-            # Update session state if found
+            # ✅ Store in temp state (safe names that are not bound to widgets)
             if best_main:
-                ss.selected_size = best_main
+                st.session_state["auto_selected_main"] = best_main
                 st.success(f"✅ Main pipe set to {best_main} (velocity ≤ {target_velocity} m/s)")
             else:
                 st.warning("⚠️ No main pipe found with velocity ≤ 0.55 m/s")
         
             if best_branch:
-                ss.selected_size_2 = best_branch
+                st.session_state["auto_selected_branch"] = best_branch
                 st.success(f"✅ Branch pipe set to {best_branch} (velocity ≤ {target_velocity} m/s)")
             else:
                 st.warning("⚠️ No branch pipe found with velocity ≤ 0.55 m/s")
         
-            # Force rerun to apply new selections
             st.experimental_rerun()
 
         st.subheader("Results")
