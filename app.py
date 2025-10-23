@@ -2461,12 +2461,12 @@ elif tool_selection == "Manual Calculation":
             st.metric("Branch Velocity", f"{vel_branch:.2f}m/s")
 
         with col3:
-            st.metric("")
+            st.empty()
         with col4:
-            st.metric("")
+            st.empty()
         with col5:
-            st.metric("")
+            st.empty()
         with col6:
-            st.metric("")
+            st.empty()
         with col7:
-            st.metric("")
+            st.empty()
