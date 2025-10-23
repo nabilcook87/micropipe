@@ -2211,7 +2211,6 @@ elif tool_selection == "Manual Calculation":
             st.stop()
 
         with col2:
-            st.markdown(f"**Secondary Pipe Material:** {selected_material_2}")
 
         # 2️⃣ Filter data for that material only
         material_df_2 = pipe_data[pipe_data["Material"] == selected_material_2].copy()
