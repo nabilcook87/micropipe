@@ -2391,6 +2391,53 @@ elif tool_selection == "Manual Calculation":
 
         vel_branch = mf_branch / (area_m2_2 * density)
 
+        # --- Automatic pipe size selection button ---
+        st.markdown("---")
+        if st.button("Select Pipe Sizes for ≤ 0.55 m/s"):
+            target_velocity = 0.55  # m/s
+        
+            # Compute main pipe size
+            best_main = None
+            for size in pipe_sizes:
+                ID_main_mm = material_df.loc[
+                    material_df["Nominal Size (inch)"].astype(str).str.strip() == size, "ID_mm"
+                ].iloc[0]
+                ID_main_m = ID_main_mm / 1000.0
+                area_main = math.pi * (ID_main_m / 2) ** 2
+                vel_main = mass_flow_kg_s / (area_main * density)
+                if vel_main <= target_velocity:
+                    best_main = size
+                    break  # pick the smallest that meets the target
+        
+            # Compute branch pipe size
+            best_branch = None
+            for size in pipe_sizes_2:
+                ID_branch_mm = material_df_2.loc[
+                    material_df_2["Nominal Size (inch)"].astype(str).str.strip() == size, "ID_mm"
+                ].iloc[0]
+                ID_branch_m = ID_branch_mm / 1000.0
+                area_branch = math.pi * (ID_branch_m / 2) ** 2
+                vel_branch_calc = mf_branch / (area_branch * density)
+                if vel_branch_calc <= target_velocity:
+                    best_branch = size
+                    break
+        
+            # Update session state if found
+            if best_main:
+                ss.selected_size = best_main
+                st.success(f"✅ Main pipe set to {best_main} (velocity ≤ {target_velocity} m/s)")
+            else:
+                st.warning("⚠️ No main pipe found with velocity ≤ 0.55 m/s")
+        
+            if best_branch:
+                ss.selected_size_2 = best_branch
+                st.success(f"✅ Branch pipe set to {best_branch} (velocity ≤ {target_velocity} m/s)")
+            else:
+                st.warning("⚠️ No branch pipe found with velocity ≤ 0.55 m/s")
+        
+            # Force rerun to apply new selections
+            st.experimental_rerun()
+
         st.subheader("Results")
 
         col1, col2 = st.columns(2)
