@@ -2977,7 +2977,7 @@ elif tool_selection == "Manual Calculation":
             
             evaporating_temp = st.number_input(
                 "Evaporating Temperature (°C)",
-                min_value=evap_min, max_value=min(maxliq_temp, evap_max),
+                min_value=evap_min, max_value=evap_max,
                 value=ss.evap_temp, step=1.0, key="evap_temp",
                 on_change=on_change_evap,
             )
