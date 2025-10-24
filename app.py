@@ -1523,6 +1523,11 @@ elif tool_selection == "Manual Calculation":
         
             return mor_num, float(dt_local)
         
+        # Handle deferred pipe selection (set by the "Select Optimal Pipe Size" button)
+        if "_next_selected_size" in st.session_state:
+            st.session_state["selected_size"] = st.session_state["_next_selected_size"]
+            del st.session_state["_next_selected_size"]
+        
         if st.button("Select Optimal Pipe Size"):
             results, errors = [], []
         
@@ -1546,8 +1551,7 @@ elif tool_selection == "Manual Calculation":
                 if valid:
                     best = min(valid, key=lambda x: mm_map[x["size"]])
                     # ✅ Update state safely
-                    st.session_state.update({"selected_size": best["size"]})
-
+                    st.session_state["_next_selected_size"] = best["size"]
                     # ✅ Immediately trigger a rerun so the selectbox refreshes with the new value
                     st.rerun()
                     st.success(
@@ -1569,7 +1573,7 @@ elif tool_selection == "Manual Calculation":
                 best = min(valid, key=lambda x: mm_map[x["size"]])
         
                 # ✅ use st.session_state update + rerun
-                st.session_state["selected_size"] = best["size"]
+                st.session_state["_next_selected_size"] = best["size"]
                 st.success(
                     f"✅ Selected optimal pipe size: **{best['size']}**  \n"
                     f"MOR: {best['MORfinal']:.1f}% | ΔT: {best['dt']:.2f} K"
