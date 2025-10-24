@@ -1534,7 +1534,7 @@ elif tool_selection == "Manual Calculation":
         
             return mor_num, float(dt_local)
         
-        if st.button("Select Optimal Pipe Size"):
+        if st.button("Auto-select"):
             results, errors = [], []
         
             # --- Run the calculations ---
@@ -1571,13 +1571,8 @@ elif tool_selection == "Manual Calculation":
                     st.rerun()
         
                 else:
-                    # Show “why not” summary
-                    best_mor = min(r["MORfinal"] for r in results if math.isfinite(r["MORfinal"]))
-                    best_dt = min(r["dt"] for r in results if math.isfinite(r["dt"]))
                     st.error(
                         "❌ No pipe meets both limits simultaneously.  \n"
-                        f"Best achievable MOR = {best_mor:.1f}% (must be ≤ {required_oil_duty_pct}%)  \n"
-                        f"Best achievable ΔT = {best_dt:.2f} K (must be ≤ {max_penalty:.2f} K)  \n"
                         "➡ Please relax one or more input limits."
                     )
         
