@@ -3019,3 +3019,4 @@ elif tool_selection == "Manual Calculation":
         d_vapour = props.get_properties(refrigerant, T_evap)["density_vapour"]
 
         v_liquid = props.get_properties(refrigerant, T_evap)["viscosity_liquid"] / 1000000
+        v_vapour = RefrigerantViscosities().get_viscosity(refrigerant, T_evap + 273.15, 0) / 1000000
