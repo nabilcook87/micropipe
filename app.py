@@ -1536,6 +1536,7 @@ elif tool_selection == "Manual Calculation":
         if st.button("Select Optimal Pipe Size"):
             results, errors = [], []
         
+            # --- Run the calculations ---
             for ps in pipe_sizes:
                 try:
                     MOR_i, dt_i = get_pipe_results(ps)
@@ -1546,45 +1547,38 @@ elif tool_selection == "Manual Calculation":
                 except Exception as e:
                     errors.append((ps, str(e)))
         
+            # --- Handle results ---
             if not results:
                 with st.expander("⚠️ Pipe selection debug details", expanded=True):
                     for ps, msg in errors:
                         st.write(f"❌ {ps}: {msg}")
                 st.error("No valid pipe size results. Check inputs and CSV rows.")
+        
             else:
                 valid = [r for r in results if (r["MORfinal"] <= required_oil_duty_pct) and (r["dt"] <= max_penalty)]
+        
                 if valid:
                     best = min(valid, key=lambda x: mm_map[x["size"]])
-                    # ✅ Update state safely
                     st.session_state["_next_selected_size"] = best["size"]
-                    # ✅ Immediately trigger a rerun so the selectbox refreshes with the new value
-                    st.rerun()
+        
                     st.success(
                         f"✅ Selected optimal pipe size: **{best['size']}**  \n"
                         f"MOR: {best['MORfinal']:.1f}% | ΔT: {best['dt']:.2f} K"
                     )
+        
+                    # ✅ Trigger a rerun AFTER displaying success
+                    st.rerun()
+        
                 else:
-                    # Show “why not” using achievable mins
-                    best_mor = min(r["MORfinal"] for r in results)
-                    best_dt = min(r["dt"] for r in results)
+                    # Show “why not” summary
+                    best_mor = min(r["MORfinal"] for r in results if math.isfinite(r["MORfinal"]))
+                    best_dt = min(r["dt"] for r in results if math.isfinite(r["dt"]))
                     st.error(
                         "❌ No pipe meets both limits simultaneously.  \n"
                         f"Best achievable MOR = {best_mor:.1f}% (must be ≤ {required_oil_duty_pct}%)  \n"
                         f"Best achievable ΔT = {best_dt:.2f} K (must be ≤ {max_penalty:.2f} K)  \n"
                         "➡ Please relax one or more input limits."
                     )
-        
-            if valid:
-                best = min(valid, key=lambda x: mm_map[x["size"]])
-        
-                # ✅ use st.session_state update + rerun
-                st.session_state["_next_selected_size"] = best["size"]
-                st.success(
-                    f"✅ Selected optimal pipe size: **{best['size']}**  \n"
-                    f"MOR: {best['MORfinal']:.1f}% | ΔT: {best['dt']:.2f} K"
-                )
-                # trigger a rerun to refresh the selectbox with new selection
-                st.rerun()
         
         st.subheader("Results")
     
