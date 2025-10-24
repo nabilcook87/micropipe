@@ -735,6 +735,9 @@ elif tool_selection == "Manual Calculation":
                 key="selected_size",
             )
     
+        if "selected_size_override" in st.session_state:
+            selected_size = st.session_state["selected_size_override"]
+        
         # remember the selected size in mm for next material change
         ss.prev_pipe_mm = float(mm_map.get(selected_size, float("nan")))
     
@@ -1525,8 +1528,10 @@ elif tool_selection == "Manual Calculation":
         
         # Handle deferred pipe selection (set by the "Select Optimal Pipe Size" button)
         if "_next_selected_size" in st.session_state:
-            st.session_state["selected_size"] = st.session_state["_next_selected_size"]
+            # Temporarily store it, but don't overwrite the widget key directly
+            new_val = st.session_state["_next_selected_size"]
             del st.session_state["_next_selected_size"]
+            st.session_state["selected_size_override"] = new_val
         
         if st.button("Select Optimal Pipe Size"):
             results, errors = [], []
