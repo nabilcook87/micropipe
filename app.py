@@ -727,6 +727,12 @@ elif tool_selection == "Manual Calculation":
             # if Streamlit kept the selection, use it
             default_index = pipe_sizes.index(ss.selected_size)
     
+        # Handle deferred pipe selection (set by the "Select Optimal Pipe Size" button)
+        if "_next_selected_size" in st.session_state:
+            new_val = st.session_state["_next_selected_size"]
+            del st.session_state["_next_selected_size"]
+            st.session_state["selected_size_override"] = new_val
+        
         with col1:
             selected_size = st.selectbox(
                 "Nominal Pipe Size (inch)",
@@ -1525,13 +1531,6 @@ elif tool_selection == "Manual Calculation":
                 mor_num = float(MORfinal_local)
         
             return mor_num, float(dt_local)
-        
-        # Handle deferred pipe selection (set by the "Select Optimal Pipe Size" button)
-        if "_next_selected_size" in st.session_state:
-            # Temporarily store it, but don't overwrite the widget key directly
-            new_val = st.session_state["_next_selected_size"]
-            del st.session_state["_next_selected_size"]
-            st.session_state["selected_size_override"] = new_val
         
         if st.button("Select Optimal Pipe Size"):
             results, errors = [], []
