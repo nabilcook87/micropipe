@@ -3016,7 +3016,7 @@ elif tool_selection == "Manual Calculation":
         massflow = (evap_capacity_kw / deltah) * (1 + (liq_oq / 100))
 
         d_liquid = props.get_properties(refrigerant, T_evap)["density_liquid"]
-        d_vapour = props.get_properties(refrigerant, T_evap)["density_vapour"]
+        d_vapour = props.get_properties(refrigerant, T_evap)["density_vapor"]
 
         v_liquid = props.get_properties(refrigerant, T_evap)["viscosity_liquid"] / 1000000
         v_vapour = RefrigerantViscosities().get_viscosity(refrigerant, T_evap + 273.15, 0) / 1000000
