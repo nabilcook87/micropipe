@@ -2973,6 +2973,8 @@ elif tool_selection == "Manual Calculation":
         
             ss.setdefault("evap_temp",   evap_default)
 
+            liq_oq = st.number_input("Liquid Overfeed Quantity (%)", min_value=0.0, max_value=2000.0, value=100.0, step=25.0)
+
         with col2:
             
             evaporating_temp = st.number_input(
