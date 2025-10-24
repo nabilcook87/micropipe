@@ -1222,6 +1222,44 @@ elif tool_selection == "Manual Calculation":
         else:
             MinCap = MORfinal * evap_capacity_kw / 100
         
+        # --- Auto Select Button ---
+        if st.button("Select Optimal Pipe Size"):
+        
+            results = []  # will store all computed results per pipe size
+        
+            for ps in pipe_sizes:
+                # Get pipe inner diameter for each size
+                ID_mm_i = material_df.loc[material_df["Nominal Size (inch)"] == ps, "ID_mm"].values[0]
+                # Re-run the MORfinal and dt calculations for each pipe (you can refactor into a function)
+                # For brevity, assume we have a function get_pipe_results(size_inch) returning (MORfinal, dt)
+                try:
+                    MOR_i, dt_i = get_pipe_results(ps)
+                    results.append({"size": ps, "MORfinal": MOR_i, "dt": dt_i})
+                except Exception:
+                    continue
+        
+            # Filter those that meet both criteria
+            valid = [r for r in results if (r["MORfinal"] <= required_oil_duty_pct) and (r["dt"] <= max_penalty)]
+        
+            if valid:
+                # Choose the smallest size that satisfies both
+                best = min(valid, key=lambda x: mm_map[x["size"]])
+                ss.selected_size = best["size"]
+                st.success(
+                    f"✅ Selected optimal pipe size: **{best['size']}**\n\n"
+                    f"MOR: {best['MORfinal']:.1f}% | ΔT: {best['dt']:.2f} K"
+                )
+            else:
+                # If not possible, find why
+                min_mor = min(r["MORfinal"] for r in results)
+                min_dt = min(r["dt"] for r in results)
+                st.error(
+                    f"❌ No available pipe meets both conditions.\n\n"
+                    f"Lowest achievable MOR = {min_mor:.1f}% (required ≤ {required_oil_duty_pct}%)\n"
+                    f"Lowest achievable ΔT = {min_dt:.2f} K (required ≤ {max_penalty} K)\n\n"
+                    f"➡ Try relaxing one or more input limits."
+                )
+        
         st.subheader("Results")
     
         if velocity_m_sfinal:
