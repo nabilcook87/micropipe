@@ -1561,6 +1561,18 @@ elif tool_selection == "Manual Calculation":
                         "➡ Please relax one or more input limits."
                     )
         
+            if valid:
+                best = min(valid, key=lambda x: mm_map[x["size"]])
+        
+                # ✅ use st.session_state update + rerun
+                st.session_state["selected_size"] = best["size"]
+                st.success(
+                    f"✅ Selected optimal pipe size: **{best['size']}**  \n"
+                    f"MOR: {best['MORfinal']:.1f}% | ΔT: {best['dt']:.2f} K"
+                )
+                # trigger a rerun to refresh the selectbox with new selection
+                st.rerun()
+        
         st.subheader("Results")
     
         if velocity_m_sfinal:
