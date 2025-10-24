@@ -1545,7 +1545,11 @@ elif tool_selection == "Manual Calculation":
                 valid = [r for r in results if (r["MORfinal"] <= required_oil_duty_pct) and (r["dt"] <= max_penalty)]
                 if valid:
                     best = min(valid, key=lambda x: mm_map[x["size"]])
-                    st.session_state.selected_size = best["size"]
+                    # ✅ Update state safely
+                    st.session_state.update({"selected_size": best["size"]})
+
+                    # ✅ Immediately trigger a rerun so the selectbox refreshes with the new value
+                    st.rerun()
                     st.success(
                         f"✅ Selected optimal pipe size: **{best['size']}**  \n"
                         f"MOR: {best['MORfinal']:.1f}% | ΔT: {best['dt']:.2f} K"
