@@ -716,11 +716,13 @@ elif tool_selection == "Manual Calculation":
             mm_list = [mm_map[s] for s in pipe_sizes]
             return min(range(len(mm_list)), key=lambda i: abs(mm_list[i] - target_mm)) if mm_list else 0
 
-        # Handle deferred pipe selection (set by the "Select Optimal Pipe Size" button)
+        # --- Handle deferred pipe selection (from "Select Optimal Pipe Size" button) ---
         if "_next_selected_size" in st.session_state:
             new_val = st.session_state["_next_selected_size"]
+            # ✅ directly set the selectbox value itself
+            st.session_state["selected_size"] = new_val
+            # clean up the temporary flag
             del st.session_state["_next_selected_size"]
-            st.session_state["selected_size_override"] = new_val
 
         default_index = 0
         override_val = st.session_state.get("selected_size_override")
@@ -1643,9 +1645,6 @@ elif tool_selection == "Manual Calculation":
             st.success(f"{message}")
         else:
             st.error(f"{message}")
-
-        if "selected_size_override" in st.session_state:
-            del st.session_state["selected_size_override"]
     
     if mode == "Liquid":
         
