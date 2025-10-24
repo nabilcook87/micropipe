@@ -715,8 +715,14 @@ elif tool_selection == "Manual Calculation":
         def _closest_index(target_mm: float) -> int:
             mm_list = [mm_map[s] for s in pipe_sizes]
             return min(range(len(mm_list)), key=lambda i: abs(mm_list[i] - target_mm)) if mm_list else 0
-    
-        default_index = 0
+
+        # Handle deferred pipe selection (set by the "Select Optimal Pipe Size" button)
+        if "_next_selected_size" in st.session_state:
+            new_val = st.session_state["_next_selected_size"]
+            del st.session_state["_next_selected_size"]
+            st.session_state["selected_size_override"] = new_val
+        
+        """ default_index = 0
         if material_changed and "prev_pipe_mm" in ss:
             default_index = _closest_index(ss.prev_pipe_mm)
         elif selected_material == "Copper ACR" and ("1-1/8" in pipe_sizes or '1-1/8"' in pipe_sizes):
@@ -725,13 +731,15 @@ elif tool_selection == "Manual Calculation":
             default_index = pipe_sizes.index(want)
         elif "selected_size" in ss and ss.selected_size in pipe_sizes:
             # if Streamlit kept the selection, use it
-            default_index = pipe_sizes.index(ss.selected_size)
-    
-        # Handle deferred pipe selection (set by the "Select Optimal Pipe Size" button)
-        if "_next_selected_size" in st.session_state:
-            new_val = st.session_state["_next_selected_size"]
-            del st.session_state["_next_selected_size"]
-            st.session_state["selected_size_override"] = new_val
+            default_index = pipe_sizes.index(ss.selected_size) """
+
+        default_index = 0
+        override_val = st.session_state.get("selected_size_override")
+        
+        if override_val and override_val in pipe_sizes:
+            default_index = pipe_sizes.index(override_val)
+        elif "selected_size" in st.session_state and st.session_state["selected_size"] in pipe_sizes:
+            default_index = pipe_sizes.index(st.session_state["selected_size"])
         
         with col1:
             selected_size = st.selectbox(
@@ -741,8 +749,11 @@ elif tool_selection == "Manual Calculation":
                 key="selected_size",
             )
     
+        """ if "selected_size_override" in st.session_state:
+            selected_size = st.session_state["selected_size_override"] """
+
         if "selected_size_override" in st.session_state:
-            selected_size = st.session_state["selected_size_override"]
+            del st.session_state["selected_size_override"]
         
         # remember the selected size in mm for next material change
         ss.prev_pipe_mm = float(mm_map.get(selected_size, float("nan")))
