@@ -3008,3 +3008,12 @@ elif tool_selection == "Manual Calculation":
         T_evap = evaporating_temp
     
         props = RefrigerantProperties()
+
+        h_in = props.get_properties(refrigerant, T_evap)["enthalpy_liquid"]
+        h_out = props.get_properties(refrigerant, T_evap)["enthalpy_vapor"]
+        deltah = h_out - h_in
+
+        massflow = (evap_capacity_kw / deltah) * (1 + (liq_oq / 100))
+
+        d_liquid = props.get_properties(refrigerant, T_evap)["density_liquid"]
+        d_vapour = props.get_properties(refrigerant, T_evap)["density_vapour"]
