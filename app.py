@@ -742,8 +742,7 @@ elif tool_selection == "Manual Calculation":
                 key="selected_size",
             )
 
-        if "selected_size_override" in st.session_state:
-            del st.session_state["selected_size_override"]
+        ss.prev_pipe_mm = float(mm_map.get(selected_size, float("nan")))
         
         # remember the selected size in mm for next material change
         ss.prev_pipe_mm = float(mm_map.get(selected_size, float("nan")))
@@ -1645,6 +1644,9 @@ elif tool_selection == "Manual Calculation":
         else:
             st.error(f"{message}")
 
+        if "selected_size_override" in st.session_state:
+            del st.session_state["selected_size_override"]
+    
     if mode == "Liquid":
         
         col1, col2, col3, col4 = st.columns(4)
