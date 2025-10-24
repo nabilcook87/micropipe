@@ -1225,18 +1225,28 @@ elif tool_selection == "Manual Calculation":
         # --- Auto Select Button ---
         if st.button("Select Optimal Pipe Size"):
         
-            results = []  # will store all computed results per pipe size
-        
+            results = []
+            errors = []
+            
             for ps in pipe_sizes:
-                # Get pipe inner diameter for each size
-                ID_mm_i = material_df.loc[material_df["Nominal Size (inch)"] == ps, "ID_mm"].values[0]
-                # Re-run the MORfinal and dt calculations for each pipe (you can refactor into a function)
-                # For brevity, assume we have a function get_pipe_results(size_inch) returning (MORfinal, dt)
                 try:
                     MOR_i, dt_i = get_pipe_results(ps)
-                    results.append({"size": ps, "MORfinal": MOR_i, "dt": dt_i})
-                except Exception:
-                    continue
+                    if isinstance(MOR_i, (int, float)) and isinstance(dt_i, (int, float)):
+                        results.append({"size": ps, "MORfinal": MOR_i, "dt": dt_i})
+                    else:
+                        errors.append((ps, "Invalid numeric outputs"))
+                except Exception as e:
+                    errors.append((ps, str(e)))
+            
+            # Show diagnostics if nothing succeeded
+            if not results:
+                with st.expander("⚠️ Pipe selection debug details"):
+                    for ps, msg in errors:
+                        st.write(f"❌ {ps}: {msg}")
+                st.error("No valid pipe size results. Check your get_pipe_results() implementation.")
+            else:
+                valid = [r for r in results if (r["MORfinal"] <= required_oil_duty_pct) and (r["dt"] <= max_penalty)]
+                ...
         
             # Filter those that meet both criteria
             valid = [r for r in results if (r["MORfinal"] <= required_oil_duty_pct) and (r["dt"] <= max_penalty)]
