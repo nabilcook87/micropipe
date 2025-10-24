@@ -748,9 +748,6 @@ elif tool_selection == "Manual Calculation":
                 index=default_index,
                 key="selected_size",
             )
-    
-        """ if "selected_size_override" in st.session_state:
-            selected_size = st.session_state["selected_size_override"] """
 
         if "selected_size_override" in st.session_state:
             del st.session_state["selected_size_override"]
