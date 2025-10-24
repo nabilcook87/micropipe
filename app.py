@@ -2979,7 +2979,6 @@ elif tool_selection == "Manual Calculation":
                 "Evaporating Temperature (°C)",
                 min_value=evap_min, max_value=evap_max,
                 value=ss.evap_temp, step=1.0, key="evap_temp",
-                on_change=on_change_evap,
             )
     
         with col2:
