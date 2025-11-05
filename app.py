@@ -1716,7 +1716,7 @@ elif tool_selection == "Manual Calculation":
             return min(range(len(mm_list)), key=lambda i: abs(mm_list[i] - target_mm)) if mm_list else 0
     
         default_index = 0
-        if material_changed and "prev_pipe_mm" in ss:
+        elif material_changed and "prev_pipe_mm" in ss:
             default_index = _closest_index(ss.prev_pipe_mm)
         elif selected_material == "Copper ACR" and ("1/2" in pipe_sizes or '1/2"' in pipe_sizes):
             # first load or no previous selection → prefer 1-1/8" for Copper ACR
@@ -1725,7 +1725,14 @@ elif tool_selection == "Manual Calculation":
         elif "selected_size" in ss and ss.selected_size in pipe_sizes:
             # if Streamlit kept the selection, use it
             default_index = pipe_sizes.index(ss.selected_size)
-    
+
+        # default_index = 0
+        # override_val = st.session_state.get("selected_size_override")
+        # if override_val and override_val in pipe_sizes:
+            # default_index = pipe_sizes.index(override_val)
+        # elif "selected_size" in ss and ss.selected_size in pipe_sizes:
+            # default_index = pipe_sizes.index(ss.selected_size)
+        
         with col1:
             selected_size = st.selectbox(
                 "Nominal Pipe Size (inch)",
