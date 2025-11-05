@@ -1979,6 +1979,110 @@ elif tool_selection == "Manual Calculation":
 
         compratio = condpres / evappres
 
+        def _pipe_row_for_size(size_inch: str):
+            """Return the CSV row for a given nominal size, respecting selected gauge if present."""
+            rows = material_df[material_df["Nominal Size (inch)"].astype(str).str.strip() == str(size_inch)]
+            if rows.empty:
+                return None
+            if "Gauge" in rows.columns and rows["Gauge"].notna().any():
+                if "gauge" in st.session_state:
+                    g = st.session_state["gauge"]
+                    rows_g = rows[rows["Gauge"] == g]
+                    if not rows_g.empty:
+                        return rows_g.iloc[0]
+                return rows.iloc[0]
+            return rows.iloc[0]
+        
+        def get_liquid_dt_for_size(size_inch: str) -> float:
+            """
+            Compute ΔT (dt) for a given pipe size using the SAME logic as your main Liquid calc
+            (without static head — use 'dt', not 'tall').
+            Returns float('nan') on any failure.
+            """
+            try:
+                pipe_row = _pipe_row_for_size(size_inch)
+                if pipe_row is None:
+                    return float("nan")
+        
+                ID_mm_local = float(pipe_row["ID_mm"])
+                ID_m_local = ID_mm_local / 1000.0
+                area_m2_local = math.pi * (ID_m_local / 2) ** 2
+        
+                # Properties at liquid temperature (size-independent)
+                density_liq = RefrigerantProperties().get_properties(refrigerant, T_liq)["density_liquid2"]
+                visc_liq = RefrigerantProperties().get_properties(refrigerant, T_liq)["viscosity_liquid"]
+        
+                # Mass flow already computed outside (size-independent)
+                v_local = mass_flow_kg_s / (area_m2_local * density_liq)
+        
+                # Reynolds
+                Re = (density_liq * v_local * ID_m_local) / (visc_liq / 1_000_000)
+        
+                # Roughness by material
+                eps = 0.00004572 if selected_material in ["Steel SCH40", "Steel SCH80"] else 0.000001524
+        
+                # Friction factor (laminar vs Colebrook)
+                if Re < 2000.0 and Re > 0:
+                    f_local = 64.0 / Re
+                else:
+                    flo, fhi = 1e-5, 0.1
+                    tol, max_iter = 1e-5, 60
+        
+                    def bal(gg):
+                        s = math.sqrt(gg)
+                        lhs = 1.0 / s
+                        rhs = -2.0 * math.log10((eps / (3.7 * ID_m_local)) + (2.51 / (Re * s)))
+                        return lhs, rhs
+        
+                    f_local = 0.5 * (flo + fhi)
+                    for _ in range(max_iter):
+                        f_try = 0.5 * (flo + fhi)
+                        lhs, rhs = bal(f_try)
+                        if abs(1.0 - lhs / rhs) < tol:
+                            f_local = f_try
+                            break
+                        if (lhs - rhs) > 0.0:
+                            flo = f_try
+                        else:
+                            fhi = f_try
+                    else:
+                        f_local = 0.5 * (flo + fhi)
+        
+                # Dynamic pressure (kPa)
+                q_kPa_local = 0.5 * density_liq * (v_local ** 2) / 1000.0
+        
+                # K-factors for this size
+                for c in ["SRB", "LRB", "BALL", "GLOBE"]:
+                    if c not in pipe_row.index or pd.isna(pipe_row[c]):
+                        return float("nan")
+                K_SRB   = float(pipe_row["SRB"])
+                K_LRB   = float(pipe_row["LRB"])
+                K_BALL  = float(pipe_row["BALL"])
+                K_GLOBE = float(pipe_row["GLOBE"])
+        
+                # Bend/valve counts
+                B_SRB = SRB + 0.5 * _45 + 2.0 * ubend + 3.0 * ptrap
+                B_LRB = LRB + MAC
+        
+                # Pressure drops (kPa)
+                dp_pipe_kPa_local    = f_local * (L / ID_m_local) * q_kPa_local
+                dp_plf_kPa_local     = q_kPa_local * PLF
+                dp_fittings_kPa_local= q_kPa_local * (K_SRB * B_SRB + K_LRB * B_LRB)
+                dp_valves_kPa_local  = q_kPa_local * (K_BALL * ball    + K_GLOBE * globe)
+        
+                dp_total_kPa_local = dp_pipe_kPa_local + dp_fittings_kPa_local + dp_valves_kPa_local + dp_plf_kPa_local
+        
+                # Convert DP to post-circ temperature and get ΔT
+                conv = PressureTemperatureConverter()
+                condpres_local = conv.temp_to_pressure(refrigerant, T_cond)
+                postcirc_local = condpres_local - (dp_total_kPa_local / 100.0)  # kPa -> bar: /100
+                postcirctemp_local = conv.pressure_to_temp(refrigerant, postcirc_local)
+                dt_local = T_cond - postcirctemp_local
+        
+                return float(dt_local)
+            except Exception:
+                return float("nan")
+        
         if st.button("Auto-select"):
             results, errors = [], []
         
