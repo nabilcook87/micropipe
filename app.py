@@ -1979,7 +1979,7 @@ elif tool_selection == "Manual Calculation":
 
         compratio = condpres / evappres
 
-        if st.button("Select Pipe Size (ΔT ≤ Max Penalty)"):
+        if st.button("Auto-select"):
             results, errors = [], []
         
             for ps in pipe_sizes:
