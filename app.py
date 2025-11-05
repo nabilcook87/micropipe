@@ -1715,6 +1715,16 @@ elif tool_selection == "Manual Calculation":
             mm_list = [mm_map[s] for s in pipe_sizes]
             return min(range(len(mm_list)), key=lambda i: abs(mm_list[i] - target_mm)) if mm_list else 0
     
+        # --- consume any deferred selection from the button ---
+        if "_next_selected_size" in st.session_state:
+            new_val = st.session_state.pop("_next_selected_size")
+            # only accept if the option exists for the current material
+            if new_val in pipe_sizes:
+                # force the widget to pick this value on next render
+                st.session_state["selected_size"] = new_val
+                # optional: keep a one-shot override flag so we can clean up later
+                st.session_state["_selected_size_just_set"] = True
+        
         default_index = 0
         if material_changed and "prev_pipe_mm" in ss:
             default_index = _closest_index(ss.prev_pipe_mm)
@@ -1725,9 +1735,6 @@ elif tool_selection == "Manual Calculation":
         elif "selected_size" in ss and ss.selected_size in pipe_sizes:
             # if Streamlit kept the selection, use it
             default_index = pipe_sizes.index(ss.selected_size)
-        elif "_next_selected_size" in st.session_state:
-            st.session_state["selected_size"] = st.session_state["_next_selected_size"]
-            del st.session_state["_next_selected_size"]
         
         with col1:
             selected_size = st.selectbox(
@@ -1737,6 +1744,10 @@ elif tool_selection == "Manual Calculation":
                 key="selected_size",
             )
     
+        # remove the one-shot flag so future reruns don't keep forcing it
+        if st.session_state.get("_selected_size_just_set"):
+            del st.session_state["_selected_size_just_set"]
+        
         # remember the selected size in mm for next material change
         ss.prev_pipe_mm = float(mm_map.get(selected_size, float("nan")))
     
