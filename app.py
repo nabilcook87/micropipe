@@ -2264,6 +2264,13 @@ elif tool_selection == "Manual Calculation":
             mm_list = [mm_map[s] for s in pipe_sizes]
             return min(range(len(mm_list)), key=lambda i: abs(mm_list[i] - target_mm)) if mm_list else 0
     
+        # --- consume any deferred selection from the button ---
+        if "_next_selected_size" in st.session_state:
+            new_val = st.session_state.pop("_next_selected_size")
+            if new_val in pipe_sizes:
+                st.session_state["selected_size"] = new_val
+                st.session_state["_selected_size_just_set"] = True
+        
         default_index = 0
         if material_changed and "prev_pipe_mm" in ss:
             default_index = _closest_index(ss.prev_pipe_mm)
@@ -2283,6 +2290,9 @@ elif tool_selection == "Manual Calculation":
                 key="selected_size",
             )
     
+        if st.session_state.get("_selected_size_just_set"):
+            del st.session_state["_selected_size_just_set"]
+        
         # remember the selected size in mm for next material change
         ss.prev_pipe_mm = float(mm_map.get(selected_size, float("nan")))
     
@@ -2524,6 +2534,150 @@ elif tool_selection == "Manual Calculation":
         volflow = mass_flow_kg_s / dis_dens
 
         compratio = condpres / evappres
+        
+        def _pipe_row_for_size(size_inch: str):
+            rows = material_df[material_df["Nominal Size (inch)"].astype(str).str.strip() == str(size_inch)]
+            if rows.empty:
+                return None
+            if "Gauge" in rows.columns and rows["Gauge"].notna().any():
+                if "gauge" in st.session_state:
+                    g = st.session_state["gauge"]
+                    rows_g = rows[rows["Gauge"] == g]
+                    if not rows_g.empty:
+                        return rows_g.iloc[0]
+                return rows.iloc[0]
+            return rows.iloc[0]
+
+        def get_discharge_dt_for_size(size_inch: str) -> float:
+            """
+            Compute ΔT (dt) for a given discharge pipe size using the SAME method as the main block:
+            1) Isentropic chain → discharge superheat, enthalpy, temperature
+            2) Discharge density/viscosity at (T_cond, dis_sup)
+            3) Velocity/Reynolds → friction factor (Colebrook or laminar)
+            4) q_kPa → dp's (pipe + fittings + valves + PLF)
+            5) Convert dp to post-circ temperature → dt = T_cond - postcirc_temp
+            Returns NaN on failure.
+            """
+            try:
+                pipe_row = _pipe_row_for_size(size_inch)
+                if pipe_row is None:
+                    return float("nan")
+        
+                # Geometry
+                ID_mm_local = float(pipe_row["ID_mm"])
+                ID_m_local  = ID_mm_local / 1000.0
+                area_m2     = math.pi * (ID_m_local / 2) ** 2
+        
+                # 1) Isentropic chain – size independent, but we recompute to be safe
+                suc_ent    = RefrigerantEntropies().get_entropy(refrigerant, T_evap + 273.15, superheat_K)
+                isen_sup   = RefrigerantEntropies().get_superheat_from_entropy(refrigerant, T_cond + 273.15, suc_ent)
+                isen_enth  = RefrigerantEnthalpies().get_enthalpy(refrigerant, T_cond + 273.15, isen_sup)
+                suc_enth   = RefrigerantEnthalpies().get_enthalpy(refrigerant, T_evap + 273.15, superheat_K)
+                isen_change = isen_enth - suc_enth
+                enth_change = isen_change / (isen / 100.0)
+                dis_enth    = suc_enth + enth_change
+                dis_sup     = RefrigerantEnthalpies().get_superheat_from_enthalpy(refrigerant, T_cond + 273.15, dis_enth)
+        
+                # Discharge properties at (T_cond, dis_sup)
+                dis_dens = RefrigerantDensities().get_density(refrigerant, T_cond + 273.15, dis_sup)
+                dis_visc = RefrigerantViscosities().get_viscosity(refrigerant, T_cond + 273.15, dis_sup)
+        
+                # Mass flow is size-independent (already computed in main code)
+                v = mass_flow_kg_s / (area_m2 * dis_dens)
+        
+                # 2) Reynolds
+                Re = (dis_dens * v * ID_m_local) / (dis_visc / 1_000_000)
+        
+                # 3) Roughness and friction factor
+                eps = 0.00004572 if selected_material in ["Steel SCH40", "Steel SCH80"] else 0.000001524
+                if Re < 2000.0 and Re > 0:
+                    f_local = 64.0 / Re
+                else:
+                    flo, fhi = 1e-5, 0.1
+                    tol, max_iter = 1e-5, 60
+                    def balance(gg):
+                        s = math.sqrt(gg)
+                        lhs = 1.0 / s
+                        rhs = -2.0 * math.log10((eps / (3.7 * ID_m_local)) + 2.51 / (Re * s))
+                        return lhs, rhs
+                    f_local = 0.5 * (flo + fhi)
+                    for _ in range(max_iter):
+                        f_try = 0.5 * (flo + fhi)
+                        lhs, rhs = balance(f_try)
+                        if abs(1.0 - lhs / rhs) < tol:
+                            f_local = f_try
+                            break
+                        if (lhs - rhs) > 0.0:
+                            flo = f_try
+                        else:
+                            fhi = f_try
+                    else:
+                        f_local = 0.5 * (flo + fhi)
+        
+                # 4) Dynamic pressure and K-based losses
+                q_kPa = 0.5 * dis_dens * (v ** 2) / 1000.0
+        
+                for c in ["SRB", "LRB", "BALL", "GLOBE"]:
+                    if c not in pipe_row.index or pd.isna(pipe_row[c]):
+                        return float("nan")
+                K_SRB   = float(pipe_row["SRB"])
+                K_LRB   = float(pipe_row["LRB"])
+                K_BALL  = float(pipe_row["BALL"])
+                K_GLOBE = float(pipe_row["GLOBE"])
+        
+                B_SRB = SRB + 0.5 * _45 + 2.0 * ubend + 3.0 * ptrap
+                B_LRB = LRB + MAC
+        
+                dp_pipe_kPa = f_local * (L / ID_m_local) * q_kPa
+                dp_plf_kPa  = q_kPa * PLF
+                dp_fit_kPa  = q_kPa * (K_SRB * B_SRB + K_LRB * B_LRB)
+                dp_val_kPa  = q_kPa * (K_BALL * ball + K_GLOBE * globe)
+        
+                dp_total_kPa_local = dp_pipe_kPa + dp_fit_kPa + dp_val_kPa + dp_plf_kPa
+        
+                # 5) Convert Δp → ΔT at condenser side
+                conv = PressureTemperatureConverter()
+                condpres_local   = conv.temp_to_pressure(refrigerant, T_cond)
+                postcirc_local   = condpres_local - (dp_total_kPa_local / 100.0)  # kPa→bar
+                postcirctemp_loc = conv.pressure_to_temp(refrigerant, postcirc_local)
+                dt_local         = T_cond - postcirctemp_loc
+        
+                return float(dt_local)
+        
+            except Exception:
+                return float("nan")
+        
+        if st.button("Auto-select"):
+            results, errors = [], []
+            for ps in pipe_sizes:
+                dt_i = get_discharge_dt_for_size(ps)
+                if math.isfinite(dt_i):
+                    results.append({"size": ps, "dt": dt_i})
+                else:
+                    errors.append((ps, "Non-numeric ΔT"))
+        
+            if not results:
+                with st.expander("⚠️ Discharge selection debug details", expanded=True):
+                    for ps, msg in errors:
+                        st.write(f"❌ {ps}: {msg}")
+                st.error("No valid pipe size results. Check inputs and CSV rows.")
+            else:
+                valid = [r for r in results if r["dt"] <= max_penalty]
+                if valid:
+                    best = min(valid, key=lambda x: mm_map[x["size"]])  # smallest OD that passes
+                    st.session_state["_next_selected_size"] = best["size"]
+                    st.success(
+                        f"✅ Selected discharge pipe size: **{best['size']}**  \n"
+                        f"ΔT: {best['dt']:.3f} K (limit {max_penalty:.3f} K)"
+                    )
+                    st.rerun()
+                else:
+                    best_dt = min(r["dt"] for r in results if math.isfinite(r["dt"]))
+                    st.error(
+                        "❌ No pipe meets the ΔT limit.  \n"
+                        f"Best achievable ΔT = {best_dt:.3f} K (must be ≤ {max_penalty:.3f} K)  \n"
+                        "➡ Relax the Max Penalty or change material/length/fittings."
+                    )
         
         st.subheader("Results")
     
