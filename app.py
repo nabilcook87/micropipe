@@ -3479,9 +3479,26 @@ elif tool_selection == "Manual Calculation":
         K_BALL  * ball +
         K_GLOBE * globe
         )
-        
-        dp_total_kPa = dp_pipe_kPa + dp_fittings_kPa + dp_valves_kPa + dp_plf_kPa
 
+        WetSucPenaltyFactor = 1.5
+
+        if refrigerant == "R404A": C_ref = 0.77
+        elif refrigerant == "R502": C_ref = 0.76
+        elif refrigerant == "R717": C_ref = 0.64
+        elif refrigerant == "R134a": C_ref = 0.71
+        else: C_ref = 0.73
+        
+        WetSucFactor = 1.0 + (WetSucPenaltyFactor - 1.0) * (liquid_ratio / C_ref if C_ref > 0 else 0.0)
+        if WetSucFactor < 1.0:
+            WetSucFactor = 1.0
+
+        dp_pipe_kPa_ws = dp_pipe_kPa * WetSucFactor
+        dp_fittings_kPa_ws = dp_fittings_kPa * WetSucFactor
+        dp_valves_kPa_ws = dp_valves_kPa * WetSucFactor
+        dp_plf_kPa_ws = dp_plf_kPa * WetSucFactor
+
+        dp_total_kPa_ws = dp_pipe_kPa_ws + dp_fittings_kPa_ws + dp_valves_kPa_ws + dp_plf_kPa_ws
+        
         st.write(f"gas_velocity {gas_velocity:.2f} m/s")
         st.write(f"dp_total_kPa {dp_total_kPa:.2f} kPa")
         st.write(f"dp_pipe_kPa {dp_pipe_kPa:.2f} kPa")
