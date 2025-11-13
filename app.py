@@ -3373,6 +3373,9 @@ elif tool_selection == "Manual Calculation":
         from utils.refrigerant_viscosities import RefrigerantViscosities
         from utils.pipe_length_volume_calc import get_pipe_id_mm
     
+        D_int = ID_mm / 1000
+        A_total = math.pi * (D_int / 2)**2
+        
         T_evap = evaporating_temp
     
         props = RefrigerantProperties()
