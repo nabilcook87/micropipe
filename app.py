@@ -3445,4 +3445,5 @@ elif tool_selection == "Manual Calculation":
         # straight pipe ΔP [Pa]
         dp_pipe = f * (L / D_h) * dyn
 
+        st.write(f"gas_velocity {gas_velocity:.2f} m/s")
         st.write(f"dp_pipe {dp_pipe:.2f} Pa")
