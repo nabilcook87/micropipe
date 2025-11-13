@@ -3400,7 +3400,7 @@ elif tool_selection == "Manual Calculation":
         if A_gas <= 0.0:
             gas_velocity = 0.0
         else:
-            gas_velocity = Q_g / A_gas
+            gas_velocity = Q_g / A_total
     
         # hydraulic diameter for gas [m]
         if liquid_ratio > 0.0:
