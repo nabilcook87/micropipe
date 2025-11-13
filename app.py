@@ -3335,10 +3335,10 @@ elif tool_selection == "Manual Calculation":
 
         v_vapour2 = RefrigerantViscosities().get_viscosity(refrigerant, T_evap + 273.15 - max_penalty, 0) / 1000000
 
-        d_liquid = (d_liquid1 + d_liquid2) / 2
-        d_vapour = (d_vapour1 + d_vapour2) / 2
+        d_liq = (d_liquid1 + d_liquid2) / 2
+        d_vap = (d_vapour1 + d_vapour2) / 2
 
-        v_vapour = (v_vapour1 + v_vapour2) / 2
+        v_vap = (v_vapour1 + v_vapour2) / 2
 
         Q_g = m_g / d_vap
         Q_l = m_l / d_liq if liq_oq > 0 else 0
