@@ -3454,7 +3454,7 @@ elif tool_selection == "Manual Calculation":
             gas_velocity = Q_g / A_gas if A_gas > 0 else 0
     
         if v_vap > 0:
-            Re = d_vap * gas_velocity * D_int / v_vap
+            Re = d_vap * gas_velocity * D_h / v_vap
         else:
             Re = 0
     
@@ -3468,7 +3468,7 @@ elif tool_selection == "Manual Calculation":
         elif Re < 2000:
             f = 64 / Re
         else:
-            rel = eps / D_int
+            rel = eps / D_h
             f = 0.02
             for _ in range(60):
                 rhs = -2.0 * math.log10((rel / 3.7) + (2.51 / (Re * math.sqrt(f))))
@@ -3480,7 +3480,7 @@ elif tool_selection == "Manual Calculation":
     
         dyn = 0.5 * d_vap * gas_velocity**2 / 1000
     
-        dp_pipe = f * (L / D_int) * dyn
+        dp_pipe = f * (L / D_h) * dyn
         dp_plf = dyn * PLF
     
         K_SRB = float(selected_pipe_row["SRB"])
