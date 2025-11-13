@@ -3427,7 +3427,7 @@ elif tool_selection == "Manual Calculation":
             
             # VB-equivalent diameters for gas and liquid
             A_diam = find_pipe_diameter(0.1, v_vap, d_vap, D, 1, surface_roughness)
-            B_diam = find_pipe_diameter(0.1, v_vap, d_liq, D * (overfeed_ratio - 1), 2, surface_roughness)
+            B_diam = find_pipe_diameter(0.1, v_liq, d_liq, D * (overfeed_ratio - 1), 2, surface_roughness)
             
             # Convert diameters to areas (VB logic)
             A_area = math.pi * (A_diam / 2)**2
