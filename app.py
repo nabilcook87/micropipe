@@ -3406,54 +3406,61 @@ elif tool_selection == "Manual Calculation":
 
         Q_g = m_g / d_vap
         Q_l = m_l / d_liq if liq_oq > 0 else 0
-    
-        # --- VB6 Wet Suction Logic (faithful) ---
-        
-        # Determine surface roughness exactly like VB
-        if selected_material in ["Steel SCH40", "Steel SCH80"]:
-            surface_roughness = 0.00004572
+
+        if liq_oq <= 0 or overfeed_ratio <= 1:
+            # Dry suction – behave like your old code's dry branch
+            liquid_ratio = 0.0
+            A_gas = A_total
+            gas_velocity = Q_g / A_gas if A_gas > 0 else 0.0
+            D_h = D_int
         else:
-            surface_roughness = 0.000001524
-        
-        # Mass flow terms for VB
-        D = (1_000_000 / 12_000) * base_massflow   # VB scaling
-        
-        # VB-equivalent diameters for gas and liquid
-        A_diam = find_pipe_diameter(0.1, v_vap, d_vap, D, 1, surface_roughness)
-        B_diam = find_pipe_diameter(0.1, v_vap, d_liq, D * (overfeed_ratio - 1), 2, surface_roughness)
-        
-        # Convert diameters to areas (VB logic)
-        A_area = math.pi * (A_diam / 2)**2
-        B_area = math.pi * (B_diam / 2)**2
-        C_area = A_area + B_area
-        
-        # VB liquid ratio
-        liquid_ratio = B_area / C_area if C_area > 0 else 0
-        
-        # --- Geometry (VB strata model) ---
-        Radius = D_int / 2
-        TotalArea = math.pi * Radius**2
-        LiqArea = TotalArea * liquid_ratio
-        SucArea = TotalArea - LiqArea  # gas area
-        
-        # Solve Angle exactly like VB
-        DegCon = 57.2957795130824
-        Angle = (LiqArea / (Radius**2 * 0.5)) * DegCon
-        
-        # Chord / Arc / Perimeter (VB)
-        Chord = math.sin((Angle / DegCon) / 2) * Radius * 2
-        Arc = ((360 - Angle) * math.pi) / (360 / (Radius * 2))
-        Perimeter = Chord + Arc
-        
-        # Hydraulic diameter
-        if Perimeter > 0:
-            D_h = 4 * SucArea / Perimeter
-        else:
-            D_h = D_int  # dry fallback
-        
-        # Gas velocity using VB suction area
-        A_gas = SucArea
-        gas_velocity = Q_g / A_gas if A_gas > 0 else 0
+            # --- VB6 Wet Suction Logic (faithful) ---
+            
+            # Determine surface roughness exactly like VB
+            if selected_material in ["Steel SCH40", "Steel SCH80"]:
+                surface_roughness = 0.00004572
+            else:
+                surface_roughness = 0.000001524
+            
+            # Mass flow terms for VB
+            D = (1_000_000 / 12_000) * base_massflow   # VB scaling
+            
+            # VB-equivalent diameters for gas and liquid
+            A_diam = find_pipe_diameter(0.1, v_vap, d_vap, D, 1, surface_roughness)
+            B_diam = find_pipe_diameter(0.1, v_vap, d_liq, D * (overfeed_ratio - 1), 2, surface_roughness)
+            
+            # Convert diameters to areas (VB logic)
+            A_area = math.pi * (A_diam / 2)**2
+            B_area = math.pi * (B_diam / 2)**2
+            C_area = A_area + B_area
+            
+            # VB liquid ratio
+            liquid_ratio = B_area / C_area if C_area > 0 else 0
+            
+            # --- Geometry (VB strata model) ---
+            Radius = D_int / 2
+            TotalArea = math.pi * Radius**2
+            LiqArea = TotalArea * liquid_ratio
+            SucArea = TotalArea - LiqArea  # gas area
+            
+            # Solve Angle exactly like VB
+            DegCon = 57.2957795130824
+            Angle = (LiqArea / (Radius**2 * 0.5)) * DegCon
+            
+            # Chord / Arc / Perimeter (VB)
+            Chord = math.sin((Angle / DegCon) / 2) * Radius * 2
+            Arc = ((360 - Angle) * math.pi) / (360 / (Radius * 2))
+            Perimeter = Chord + Arc
+            
+            # Hydraulic diameter
+            if Perimeter > 0:
+                D_h = 4 * SucArea / Perimeter
+            else:
+                D_h = D_int  # dry fallback
+            
+            # Gas velocity using VB suction area
+            A_gas = SucArea
+            gas_velocity = Q_g / A_gas if A_gas > 0 else 0
     
         if v_vap > 0:
             Re = d_vap * gas_velocity * D_int / v_vap
