@@ -3439,11 +3439,52 @@ elif tool_selection == "Manual Calculation":
                     break
                 f = f_new
         
-        # dynamic pressure [Pa]
-        dyn = 0.5 * d_vapour * gas_velocity ** 2
+        # dynamic pressure [kPa]
+        dyn = 0.5 * d_vapour * gas_velocity ** 2 / 1000
     
-        # straight pipe ΔP [Pa]
-        dp_pipe = f * (L / D_h) * dyn
+        # straight pipe ΔP [kPa]
+        dp_pipe_kPa = f * (L / D_h) * dyn
+
+        dp_plf_kPa = dyn * PLF
+    
+        required_cols = ["SRB", "LRB", "BALL", "GLOBE"]
+        missing = [c for c in required_cols if c not in selected_pipe_row.index]
+        if missing:
+            st.error(f"CSV missing required K columns: {missing}")
+            st.stop()
+    
+        # Convert to floats and check NaNs
+        try:
+            K_SRB  = float(selected_pipe_row["SRB"])
+            K_LRB  = float(selected_pipe_row["LRB"])
+            K_BALL = float(selected_pipe_row["BALL"])
+            K_GLOBE= float(selected_pipe_row["GLOBE"])
+        except Exception as e:
+            st.error(f"Failed to parse K-factors as numbers: {e}")
+            st.stop()
+    
+        if any(pd.isna([K_SRB, K_LRB, K_BALL, K_GLOBE])):
+            st.error("One or more K-factors are NaN in the CSV row.")
+            st.stop()
+        
+        B_SRB = SRB + 0.5 * _45 + 2.0 * ubend + 3.0 * ptrap
+        B_LRB = LRB + MAC
+    
+        dp_fittings_kPa = dyn * (
+        K_SRB   * B_SRB +
+        K_LRB   * B_LRB
+        )
+
+        dp_valves_kPa = dyn * (
+        K_BALL  * ball +
+        K_GLOBE * globe
+        )
+        
+        dp_total_kPa = dp_pipe_kPa + dp_fittings_kPa + dp_valves_kPa + dp_plf_kPa
 
         st.write(f"gas_velocity {gas_velocity:.2f} m/s")
-        st.write(f"dp_pipe {dp_pipe:.2f} Pa")
+        st.write(f"dp_total_kPa {ddp_total_kPa:.2f} kPa")
+        st.write(f"dp_pipe_kPa {dp_pipe_kPa:.2f} kPa")
+        st.write(f"dp_fittings_kPa {dp_fittings_kPa:.2f} kPa")
+        st.write(f"dp_valves_kPa {dp_valves_kPa:.2f} kPa")
+        st.write(f"dp_plf_kPa {dp_plf_kPa:.2f} kPa")
