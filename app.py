@@ -3519,12 +3519,3 @@ elif tool_selection == "Manual Calculation":
         st.write(f"Fittings pressure loss: {dp_fittings_ws:.2f} kPa")
         st.write(f"Valve pressure loss: {dp_valves_ws:.2f} kPa")
         st.write(f"PLF loss: {dp_plf_ws:.2f} kPa")
-
-        st.write("d_vap:", d_vap)
-        st.write("d_liq:", d_liq)
-        st.write("h_vap:", h_out)
-        st.write("h_liq:", h_in)
-        st.write("deltah:", deltah)
-        st.write("base_massflow:", base_massflow)
-        st.write("Q_g:", Q_g)
-        st.write("velocity predicted:", gas_velocity)
