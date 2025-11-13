@@ -3320,7 +3320,9 @@ elif tool_selection == "Manual Calculation":
         h_out = props.get_properties(refrigerant, T_evap)["enthalpy_vapor"]
         deltah = h_out - h_in
 
-        massflow = (evap_capacity_kw / deltah) * (1 + (liq_oq / 100))
+        base_massflow = evap_capacity_kw / deltah
+        overfeed_ratio = 1.0 + liq_oq / 100.0
+        massflow = base_massflow * overfeed_ratio
 
         d_liquid1 = props.get_properties(refrigerant, T_evap)["density_liquid"]
         d_vapour1 = props.get_properties(refrigerant, T_evap)["density_vapor"]
@@ -3339,3 +3341,108 @@ elif tool_selection == "Manual Calculation":
 
         v_liquid = (v_liquid1 + v_liquid2) / 2
         v_vapour = (v_vapour1 + v_vapour2) / 2
+
+        # --- Geometry & wet suction hydraulics ---
+    
+        # Internal diameter [m]
+        D_int = ID_mm / 1000.0
+        A_total = math.pi * (D_int / 2.0) ** 2  # m²
+    
+        # Gas and liquid mass flows [kg/s]
+        m_dot_gas = base_massflow                  # gas mass
+        m_dot_liq = base_massflow * (overfeed_ratio - 1.0)  # liquid mass added as overfeed
+    
+        # Volumetric flows [m³/s]
+        Q_g = m_dot_gas / d_vapour if d_vapour > 0 else 0.0
+        Q_l = m_dot_liq / d_liquid if d_liquid > 0 else 0.0
+    
+        if Q_l <= 0.0 or liq_oq <= 0.0:
+            # dry suction
+            liquid_ratio = 0.0
+            perimeter_ratio = 1.0
+            A_gas = A_total
+            A_liq = 0.0
+        else:
+            # area split A ∝ Q
+            A_gas = A_total * (Q_g / (Q_g + Q_l))
+            A_liq = A_total - A_gas
+            liquid_ratio = A_liq / A_total
+    
+            # stratified segment geometry to get gas perimeter
+            R = D_int / 2.0
+            total_area_circle = math.pi * R * R
+            liquid_area = total_area_circle * liquid_ratio
+    
+            # solve for theta such that 0.5 * R^2 * (theta - sin(theta)) = liquid_area
+            theta_lo = 0.0
+            theta_hi = 2.0 * math.pi
+            for _ in range(60):
+                theta_mid = 0.5 * (theta_lo + theta_hi)
+                seg_area = 0.5 * R * R * (theta_mid - math.sin(theta_mid))
+                if abs(seg_area - liquid_area) < 1e-9 * total_area_circle:
+                    break
+                if seg_area < liquid_area:
+                    theta_lo = theta_mid
+                else:
+                    theta_hi = theta_mid
+            theta_liq = theta_mid
+    
+            # gas perimeter = chord (interface) + arc (wall)
+            chord = 2.0 * R * math.sin(theta_liq / 2.0)
+            arc = (2.0 * math.pi - theta_liq) * R
+            perimeter_gas = chord + arc
+            perimeter_ratio = perimeter_gas / (2.0 * math.pi * R)
+    
+            # gas area from geometry (complement of liquid segment)
+            A_gas = total_area_circle - liquid_area  # should be consistent with above
+    
+        # gas velocity [m/s]
+        if A_gas <= 0.0:
+            gas_velocity = 0.0
+        else:
+            gas_velocity = Q_g / A_gas
+    
+        # hydraulic diameter for gas [m]
+        if liquid_ratio > 0.0:
+            # D_h = 4A / P (Darcy definition)
+            # perimeter_gas defined only in wet case
+            D_h = 4.0 * A_gas / perimeter_gas
+        else:
+            D_h = D_int
+    
+        # Reynolds number (vapour-only properties)
+        if v_vapour > 0.0:
+            Re = d_vapour * gas_velocity * D_h / v_vapour
+        else:
+            Re = 0.0
+    
+        # roughness estimate by material (very simple)
+        if selected_material in ["Steel SCH40", "Steel SCH80"]:
+            eps = 0.00004572 #0.00015
+        else:
+            eps = 0.000001524 #0.000005
+    
+        # Darcy friction factor (Colebrook, inline)
+        if Re < 2000 and Re > 0:
+            f = 64.0 / Re
+        elif Re <= 0:
+            f = 0.0
+        else:
+            rel_rough = eps / D_h
+            f = 0.02  # initial guess
+            for _ in range(60):
+                lhs = 1.0 / math.sqrt(f)
+                rhs = -2.0 * math.log10((rel_rough / 3.7) + 2.51 / (Re * math.sqrt(f)))
+                f_new = 1.0 / (rhs * rhs)
+                if abs(f_new - f) / f < 1e-5:
+                    f = f_new
+                    break
+                f = f_new
+        
+        # dynamic pressure [Pa]
+        dyn = 0.5 * d_vapour * gas_velocity ** 2
+    
+        # straight pipe ΔP [Pa]
+        dp_pipe = f * (L / D_h) * dyn
+
+        
