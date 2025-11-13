@@ -3500,8 +3500,8 @@ elif tool_selection == "Manual Calculation":
         dp_total_kPa_ws = dp_pipe_kPa_ws + dp_fittings_kPa_ws + dp_valves_kPa_ws + dp_plf_kPa_ws
         
         st.write(f"gas_velocity {gas_velocity:.2f} m/s")
-        st.write(f"dp_total_kPa {dp_total_kPa:.2f} kPa")
-        st.write(f"dp_pipe_kPa {dp_pipe_kPa:.2f} kPa")
-        st.write(f"dp_fittings_kPa {dp_fittings_kPa:.2f} kPa")
-        st.write(f"dp_valves_kPa {dp_valves_kPa:.2f} kPa")
-        st.write(f"dp_plf_kPa {dp_plf_kPa:.2f} kPa")
+        st.write(f"dp_total_kPa {dp_total_kPa_ws:.2f} kPa")
+        st.write(f"dp_pipe_kPa {dp_pipe_kPa_ws:.2f} kPa")
+        st.write(f"dp_fittings_kPa {dp_fittings_kPa_ws:.2f} kPa")
+        st.write(f"dp_valves_kPa {dp_valves_kPa_ws:.2f} kPa")
+        st.write(f"dp_plf_kPa {dp_plf_kPa_ws:.2f} kPa")
