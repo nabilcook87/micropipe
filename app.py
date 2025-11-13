@@ -3321,187 +3321,96 @@ elif tool_selection == "Manual Calculation":
         deltah = h_out - h_in
 
         base_massflow = evap_capacity_kw / deltah
-        overfeed_ratio = 1.0 + liq_oq / 100.0
-        massflow = base_massflow * overfeed_ratio
+        overfeed_ratio = 1 + liq_oq / 100
+        m_g = base_massflow                # vapour mass
+        m_l = base_massflow * (overfeed_ratio - 1)   # liquid mass
 
         d_liquid1 = props.get_properties(refrigerant, T_evap)["density_liquid"]
         d_vapour1 = props.get_properties(refrigerant, T_evap)["density_vapor"]
 
-        v_liquid1 = props.get_properties(refrigerant, T_evap)["viscosity_liquid"] / 1000000
         v_vapour1 = RefrigerantViscosities().get_viscosity(refrigerant, T_evap + 273.15, 0) / 1000000
 
         d_liquid2 = props.get_properties(refrigerant, T_evap - max_penalty)["density_liquid"]
         d_vapour2 = props.get_properties(refrigerant, T_evap - max_penalty)["density_vapor"]
 
-        v_liquid2 = props.get_properties(refrigerant, T_evap - max_penalty)["viscosity_liquid"] / 1000000
         v_vapour2 = RefrigerantViscosities().get_viscosity(refrigerant, T_evap + 273.15 - max_penalty, 0) / 1000000
 
         d_liquid = (d_liquid1 + d_liquid2) / 2
         d_vapour = (d_vapour1 + d_vapour2) / 2
 
-        v_liquid = (v_liquid1 + v_liquid2) / 2
         v_vapour = (v_vapour1 + v_vapour2) / 2
 
-        # --- Geometry & wet suction hydraulics ---
+        Q_g = m_g / d_vap
+        Q_l = m_l / d_liq if liq_oq > 0 else 0
     
-        # Internal diameter [m]
-        D_int = ID_mm / 1000.0
-        A_total = math.pi * (D_int / 2.0) ** 2  # m²
+        liquid_ratio = Q_l / (Q_g + Q_l) if (Q_g + Q_l) > 0 else 0
     
-        # Gas and liquid mass flows [kg/s]
-        m_dot_gas = base_massflow                  # gas mass
-        m_dot_liq = base_massflow * (overfeed_ratio - 1.0)  # liquid mass added as overfeed
+        D_int = ID_mm / 1000
+        A_total = math.pi * (D_int / 2)**2
     
-        # Volumetric flows [m³/s]
-        Q_g = m_dot_gas / d_vapour if d_vapour > 0 else 0.0
-        Q_l = m_dot_liq / d_liquid if d_liquid > 0 else 0.0
+        gas_velocity = Q_g / A_total
     
-        if Q_l <= 0.0 or liq_oq <= 0.0:
-            # dry suction
-            liquid_ratio = 0.0
-            perimeter_ratio = 1.0
-            A_gas = A_total
-            A_liq = 0.0
+        if v_vap > 0:
+            Re = d_vap * gas_velocity * D_int / v_vap
         else:
-            # area split A ∝ Q
-            A_gas = A_total * (Q_g / (Q_g + Q_l))
-            A_liq = A_total - A_gas
-            liquid_ratio = A_liq / A_total
+            Re = 0
     
-            # stratified segment geometry to get gas perimeter
-            R = D_int / 2.0
-            total_area_circle = math.pi * R * R
-            liquid_area = total_area_circle * liquid_ratio
-    
-            # solve for theta such that 0.5 * R^2 * (theta - sin(theta)) = liquid_area
-            theta_lo = 0.0
-            theta_hi = 2.0 * math.pi
-            for _ in range(60):
-                theta_mid = 0.5 * (theta_lo + theta_hi)
-                seg_area = 0.5 * R * R * (theta_mid - math.sin(theta_mid))
-                if abs(seg_area - liquid_area) < 1e-9 * total_area_circle:
-                    break
-                if seg_area < liquid_area:
-                    theta_lo = theta_mid
-                else:
-                    theta_hi = theta_mid
-            theta_liq = theta_mid
-    
-            # gas perimeter = chord (interface) + arc (wall)
-            chord = 2.0 * R * math.sin(theta_liq / 2.0)
-            arc = (2.0 * math.pi - theta_liq) * R
-            perimeter_gas = chord + arc
-            perimeter_ratio = perimeter_gas / (2.0 * math.pi * R)
-    
-            # gas area from geometry (complement of liquid segment)
-            A_gas = total_area_circle - liquid_area  # should be consistent with above
-    
-        # gas velocity [m/s]
-        if A_gas <= 0.0:
-            gas_velocity = 0.0
-        else:
-            gas_velocity = Q_g / A_total
-    
-        # hydraulic diameter for gas [m]
-        if liquid_ratio > 0.0:
-            # D_h = 4A / P (Darcy definition)
-            # perimeter_gas defined only in wet case
-            D_h = 4.0 * A_gas / perimeter_gas
-        else:
-            D_h = D_int
-    
-        # Reynolds number (vapour-only properties)
-        if v_vapour > 0.0:
-            Re = d_vapour * gas_velocity * D_h / v_vapour
-        else:
-            Re = 0.0
-    
-        # roughness estimate by material (very simple)
         if selected_material in ["Steel SCH40", "Steel SCH80"]:
-            eps = 0.00004572 #0.00015
+            eps = 0.00004572
         else:
-            eps = 0.000001524 #0.000005
+            eps = 0.000001524
     
-        # Darcy friction factor (Colebrook, inline)
-        if Re < 2000 and Re > 0:
-            f = 64.0 / Re
-        elif Re <= 0:
-            f = 0.0
+        if Re <= 0:
+            f = 0
+        elif Re < 2000:
+            f = 64 / Re
         else:
-            rel_rough = eps / D_h
-            f = 0.02  # initial guess
+            rel = eps / D_int
+            f = 0.02
             for _ in range(60):
-                lhs = 1.0 / math.sqrt(f)
-                rhs = -2.0 * math.log10((rel_rough / 3.7) + 2.51 / (Re * math.sqrt(f)))
+                rhs = -2.0 * math.log10((rel / 3.7) + (2.51 / (Re * math.sqrt(f))))
                 f_new = 1.0 / (rhs * rhs)
                 if abs(f_new - f) / f < 1e-5:
                     f = f_new
                     break
                 f = f_new
-        
-        # dynamic pressure [kPa]
-        dyn = 0.5 * d_vapour * gas_velocity ** 2 / 1000
     
-        # straight pipe ΔP [kPa]
-        dp_pipe_kPa = f * (L / D_h) * dyn
-
-        dp_plf_kPa = dyn * PLF
+        dyn = 0.5 * d_vap * gas_velocity**2 / 1000
     
-        required_cols = ["SRB", "LRB", "BALL", "GLOBE"]
-        missing = [c for c in required_cols if c not in selected_pipe_row.index]
-        if missing:
-            st.error(f"CSV missing required K columns: {missing}")
-            st.stop()
+        dp_pipe = f * (L / D_int) * dyn
+        dp_plf = dyn * PLF
     
-        # Convert to floats and check NaNs
-        try:
-            K_SRB  = float(selected_pipe_row["SRB"])
-            K_LRB  = float(selected_pipe_row["LRB"])
-            K_BALL = float(selected_pipe_row["BALL"])
-            K_GLOBE= float(selected_pipe_row["GLOBE"])
-        except Exception as e:
-            st.error(f"Failed to parse K-factors as numbers: {e}")
-            st.stop()
+        K_SRB = float(selected_pipe_row["SRB"])
+        K_LRB = float(selected_pipe_row["LRB"])
+        K_BALL = float(selected_pipe_row["BALL"])
+        K_GLOBE = float(selected_pipe_row["GLOBE"])
     
-        if any(pd.isna([K_SRB, K_LRB, K_BALL, K_GLOBE])):
-            st.error("One or more K-factors are NaN in the CSV row.")
-            st.stop()
-        
-        B_SRB = SRB + 0.5 * _45 + 2.0 * ubend + 3.0 * ptrap
+        B_SRB = SRB + 0.5 * _45 + 2 * ubend + 3 * ptrap
         B_LRB = LRB + MAC
     
-        dp_fittings_kPa = dyn * (
-        K_SRB   * B_SRB +
-        K_LRB   * B_LRB
-        )
-
-        dp_valves_kPa = dyn * (
-        K_BALL  * ball +
-        K_GLOBE * globe
-        )
-
-        WetSucPenaltyFactor = 1.5
-
+        dp_fittings = dyn * (K_SRB * B_SRB + K_LRB * B_LRB)
+        dp_valves = dyn * (K_BALL * ball + K_GLOBE * globe)
+    
         if refrigerant == "R404A": C_ref = 0.77
         elif refrigerant == "R502": C_ref = 0.76
         elif refrigerant == "R717": C_ref = 0.64
         elif refrigerant == "R134a": C_ref = 0.71
         else: C_ref = 0.73
-        
-        WetSucFactor = 1.0 + (WetSucPenaltyFactor - 1.0) * (liquid_ratio / C_ref if C_ref > 0 else 0.0)
-        if WetSucFactor < 1.0:
-            WetSucFactor = 1.0
-
-        dp_pipe_kPa_ws = dp_pipe_kPa * WetSucFactor
-        dp_fittings_kPa_ws = dp_fittings_kPa * WetSucFactor
-        dp_valves_kPa_ws = dp_valves_kPa * WetSucFactor
-        dp_plf_kPa_ws = dp_plf_kPa * WetSucFactor
-
-        dp_total_kPa_ws = dp_pipe_kPa_ws + dp_fittings_kPa_ws + dp_valves_kPa_ws + dp_plf_kPa_ws
-        
-        st.write(f"gas_velocity {gas_velocity:.2f} m/s")
-        st.write(f"dp_total_kPa {dp_total_kPa_ws:.2f} kPa")
-        st.write(f"dp_pipe_kPa {dp_pipe_kPa_ws:.2f} kPa")
-        st.write(f"dp_fittings_kPa {dp_fittings_kPa_ws:.2f} kPa")
-        st.write(f"dp_valves_kPa {dp_valves_kPa_ws:.2f} kPa")
-        st.write(f"dp_plf_kPa {dp_plf_kPa_ws:.2f} kPa")
+    
+        WetSucFactor = 1 + (1.5 - 1) * (liquid_ratio / C_ref)
+        if WetSucFactor < 1:
+            WetSucFactor = 1
+    
+        dp_pipe_ws = dp_pipe * WetSucFactor
+        dp_fittings_ws = dp_fittings * WetSucFactor
+        dp_valves_ws = dp_valves * WetSucFactor
+        dp_plf_ws = dp_plf * WetSucFactor
+    
+        dp_total_ws = dp_pipe_ws + dp_fittings_ws + dp_valves_ws + dp_plf_ws
+    
+        st.write(f"Average velocity: {gas_velocity:.2f} m/s")
+        st.write(f"Total pressure drop: {dp_total_ws:.2f} kPa")
+        st.write(f"Pipe pressure loss: {dp_pipe_ws:.2f} kPa")
+        st.write(f"Fittings pressure loss: {dp_fittings_ws:.2f} kPa")
+        st.write(f"Valve pressure loss: {dp_valves_ws:.2f} kPa")
+        st.write(f"PLF loss: {dp_plf_ws:.2f} kPa")
