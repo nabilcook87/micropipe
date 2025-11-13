@@ -3151,6 +3151,67 @@ elif tool_selection == "Manual Calculation":
 
     if mode == "Wet Suction":
 
+        def find_pipe_diameter(PD, Vis, Den, MassF, choice, surface_roughness):
+            """
+            Fully faithful translation of VB6 FindPipeDiameter().
+            PD  = target pressure drop (kPa in VB logic)
+            Vis = viscosity (Pa·s, but VB uses lbm/ft-s › unitless scaling handled)
+            Den = density (kg/m3)
+            MassF = massflow (kg/s)
+            choice = 1 or 2 (VB does not treat them differently)
+            surface_roughness = eps (m)
+            """
+        
+            import math
+        
+            VPEA = (2 * 32.17 * 144)   # VB constant
+            VEA = MassF / Den
+            RenoEA = Vis / 3600        # VB bizarre scaling preserved exactly
+        
+            # Hi2 / Lo2 bounds
+            Hi2 = 1.0
+            Lo2 = 0.001
+        
+            for _ in range(200):
+                PipeDia = (Hi2 + Lo2) / 2.0
+                PipeArea = math.pi * (PipeDia * 0.5) ** 2
+        
+                Vel = VEA / PipeArea
+                VP = Den * Vel**2 / VPEA
+                Reno = Den * PipeDia * Vel / RenoEA
+        
+                # Friction factor
+                if Reno < 2000:
+                    FF = 64.0 / Reno
+                else:
+                    # Colebrook bisection exactly like VB
+                    Hi = 0.1
+                    Lo = 0.00001
+                    FF = None
+                    for _ in range(60):
+                        FF_try = (Hi + Lo) / 2.0
+                        LHS = 1.0 / math.sqrt(FF_try)
+                        RHS = -2 * (math.log10((surface_roughness / (PipeDia * 3.7)) +
+                                               (2.51 / (Reno * math.sqrt(FF_try)))))
+                        if LHS > RHS:
+                            Lo = FF_try
+                        else:
+                            Hi = FF_try
+                    FF = (Hi + Lo) / 2.0
+        
+                # Pipe pressure drop
+                PPD = FF * 100.0 / PipeDia * VP
+        
+                if PPD > PD:
+                    Lo2 = PipeDia
+                else:
+                    Hi2 = PipeDia
+        
+                if abs(1 - (PPD / PD)) < 0.00001:
+                    break
+        
+            return PipeDia
+
         col1, col2, col3, col4 = st.columns(4)
     
         with col1:
@@ -3343,12 +3404,53 @@ elif tool_selection == "Manual Calculation":
         Q_g = m_g / d_vap
         Q_l = m_l / d_liq if liq_oq > 0 else 0
     
-        liquid_ratio = Q_l / (Q_g + Q_l) if (Q_g + Q_l) > 0 else 0
-    
-        D_int = ID_mm / 1000
-        A_total = math.pi * (D_int / 2)**2
-    
-        gas_velocity = Q_g / A_total
+        # --- VB6 Wet Suction Logic (faithful) ---
+        
+        # Determine surface roughness exactly like VB
+        if selected_material in ["Steel SCH40", "Steel SCH80"]:
+            surface_roughness = 0.00004572
+        else:
+            surface_roughness = 0.000001524
+        
+        # Mass flow terms for VB
+        D = (1_000_000 / 12_000) * base_massflow   # VB scaling
+        
+        # VB-equivalent diameters for gas and liquid
+        A_diam = find_pipe_diameter(0.1, v_vap, d_vap, D, 1, surface_roughness)
+        B_diam = find_pipe_diameter(0.1, v_vap, d_liq, D * (overfeed_ratio - 1), 2, surface_roughness)
+        
+        # Convert diameters to areas (VB logic)
+        A_area = math.pi * (A_diam / 2)**2
+        B_area = math.pi * (B_diam / 2)**2
+        C_area = A_area + B_area
+        
+        # VB liquid ratio
+        liquid_ratio = B_area / C_area if C_area > 0 else 0
+        
+        # --- Geometry (VB strata model) ---
+        Radius = D_int / 2
+        TotalArea = math.pi * Radius**2
+        LiqArea = TotalArea * liquid_ratio
+        SucArea = TotalArea - LiqArea  # gas area
+        
+        # Solve Angle exactly like VB
+        DegCon = 57.2957795130824
+        Angle = (LiqArea / (Radius**2 * 0.5)) * DegCon
+        
+        # Chord / Arc / Perimeter (VB)
+        Chord = math.sin((Angle / DegCon) / 2) * Radius * 2
+        Arc = ((360 - Angle) * math.pi) / (360 / (Radius * 2))
+        Perimeter = Chord + Arc
+        
+        # Hydraulic diameter
+        if Perimeter > 0:
+            D_h = 4 * SucArea / Perimeter
+        else:
+            D_h = D_int  # dry fallback
+        
+        # Gas velocity using VB suction area
+        A_gas = SucArea
+        gas_velocity = Q_g / A_gas if A_gas > 0 else 0
     
         if v_vap > 0:
             Re = d_vap * gas_velocity * D_int / v_vap
