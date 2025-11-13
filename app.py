@@ -3496,13 +3496,15 @@ elif tool_selection == "Manual Calculation":
         dp_fittings = dyn * (K_SRB * B_SRB + K_LRB * B_LRB)
         dp_valves = dyn * (K_BALL * ball + K_GLOBE * globe)
     
+        WetSucPenaltyFactor = 1.5
+        
         if refrigerant == "R404A": C_ref = 0.77
         elif refrigerant == "R502": C_ref = 0.76
         elif refrigerant == "R717": C_ref = 0.64
         elif refrigerant == "R134a": C_ref = 0.71
         else: C_ref = 0.73
     
-        WetSucFactor = 1 + (1.5 - 1) * (liquid_ratio / C_ref)
+        WetSucFactor = 1 + (WetSucPenaltyFactor - 1) * (liquid_ratio / C_ref)
         if WetSucFactor < 1:
             WetSucFactor = 1
     
