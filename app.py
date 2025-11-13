@@ -3445,7 +3445,7 @@ elif tool_selection == "Manual Calculation":
             
             # Hydraulic diameter
             if Perimeter > 0:
-                D_h = 4 * SucArea / Perimeter
+                D_h = 4 * TotalArea / Perimeter
             else:
                 D_h = D_int  # dry fallback
             
