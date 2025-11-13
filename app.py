@@ -3392,16 +3392,19 @@ elif tool_selection == "Manual Calculation":
         d_liquid1 = props.get_properties(refrigerant, T_evap)["density_liquid"]
         d_vapour1 = props.get_properties(refrigerant, T_evap)["density_vapor"]
 
+        v_liquid1 = props.get_properties(refrigerant, T_evap)["viscosity_liquid"] / 1000000
         v_vapour1 = RefrigerantViscosities().get_viscosity(refrigerant, T_evap + 273.15, 0) / 1000000
 
         d_liquid2 = props.get_properties(refrigerant, T_evap - max_penalty)["density_liquid"]
         d_vapour2 = props.get_properties(refrigerant, T_evap - max_penalty)["density_vapor"]
 
+        v_liquid2 = props.get_properties(refrigerant, T_evap - max_penalty)["viscosity_liquid"] / 1000000
         v_vapour2 = RefrigerantViscosities().get_viscosity(refrigerant, T_evap + 273.15 - max_penalty, 0) / 1000000
 
         d_liq = (d_liquid1 + d_liquid2) / 2
         d_vap = (d_vapour1 + d_vapour2) / 2
 
+        v_liq = (v_liquid1 + v_liquid2) / 2
         v_vap = (v_vapour1 + v_vapour2) / 2
 
         Q_g = m_g / d_vap
