@@ -3524,6 +3524,15 @@ elif tool_selection == "Manual Calculation":
         dp_plf_ws = dp_plf * WetSucFactor
     
         dp_total_ws = dp_pipe_ws + dp_fittings_ws + dp_valves_ws + dp_plf_ws
+        
+        converter = PressureTemperatureConverter()
+        evappres = converter.temp_to_pressure(refrigerant, T_evap)
+
+        postcirc = evappres - (dp_total_ws / 100)
+        
+        postcirctemp = converter.pressure_to_temp(refrigerant, postcirc)
+
+        dt = T_evap - postcirctemp
     
         st.write(f"Average velocity: {gas_velocity:.2f} m/s")
         st.write(f"Total pressure drop: {dp_total_ws:.2f} kPa")
@@ -3552,10 +3561,10 @@ elif tool_selection == "Manual Calculation":
             st.metric("Temp Penalty", f"{dt:.2f}K")
 
         with col6:
-            st.metric("Saturated Temperature", f"{:.2f}")
+            st.metric("Saturated Temperature", f"{postcirctemp:.2f}°C")
 
         with col7:
-            st.metric("Condensing Pressure", f"{condpres:.2f}bar(a)")
+            st.metric("Evaporating Pressure", f"{evappress:.2f}bar(a)")
             
         col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
     
