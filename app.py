@@ -3533,13 +3533,6 @@ elif tool_selection == "Manual Calculation":
         postcirctemp = converter.pressure_to_temp(refrigerant, postcirc)
 
         dt = T_evap - postcirctemp
-    
-        st.write(f"Average velocity: {gas_velocity:.2f} m/s")
-        st.write(f"Total pressure drop: {dp_total_ws:.2f} kPa")
-        st.write(f"Pipe pressure loss: {dp_pipe_ws:.2f} kPa")
-        st.write(f"Fittings pressure loss: {dp_fittings_ws:.2f} kPa")
-        st.write(f"Valve pressure loss: {dp_valves_ws:.2f} kPa")
-        st.write(f"PLF loss: {dp_plf_ws:.2f} kPa")
 
         st.subheader("Results")
     
@@ -3572,19 +3565,19 @@ elif tool_selection == "Manual Calculation":
             st.metric("Mass Flow Rate", f"{m_gplusl:.5f}kg/s")
     
         with col2:
-            st.metric("Liquid Volumetric Flow", f"{Q_l:.5f}m³/s")
+            st.metric("Liquid Density", f"{d_liq:.1f}kg/m³")
     
         with col3:
-            st.metric("Pipe PD", f"{dp_pipe_kPa:.2f}kPa")
+            st.metric("Liquid Volumetric Flow", f"{Q_l:.5f}m³/s")
     
         with col4:
-            st.metric("Fittings PD", f"{dp_fittings_kPa:.2f}kPa")
+            st.metric("Pipe PD", f"{dp_pipe_ws:.2f}kPa")
 
         with col5:
-            st.metric("Valves PD", f"{dp_valves_kPa:.2f}kPa")
+            st.metric("Fittings PD", f"{dp_fittings_ws:.2f}kPa")
 
         with col6:
-            st.metric("Velocity Pressure PD", f"{dp_plf_kPa:.2f}kPa")
+            st.metric("Valves PD", f"{dp_valves_ws:.2f}kPa")
 
         with col7:
-            st.metric("Compression Ratio", f"{compratio:.2f}")
+            st.metric("Velocity Pressure PD", f"{dp_plf_ws:.2f}kPa")
