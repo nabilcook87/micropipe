@@ -3546,13 +3546,13 @@ elif tool_selection == "Manual Calculation":
             st.metric("Vapour Volumetric Flow", f"{Q_g:.5f}m³/s")
     
         with col4:
-            st.metric("Temp Penalty", f"{dt:.2f}K")
+            st.metric("Pressure Drop", f"{dp_total_ws:.2f}kPa")
 
         with col5:
-            st.metric("Discharge Temperature", f"{dis_t:.2f}°C")
+            st.metric("Temp Penalty", f"{dt:.2f}K")
 
         with col6:
-            st.metric("Evaporating Pressure", f"{evappres:.2f}bar(a)")
+            st.metric("Saturated Temperature", f"{:.2f}")
 
         with col7:
             st.metric("Condensing Pressure", f"{condpres:.2f}bar(a)")
