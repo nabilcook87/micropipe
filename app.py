@@ -3536,10 +3536,10 @@ elif tool_selection == "Manual Calculation":
         col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
     
         with col1:
-            st.metric("Refrigerant Velocity", f"{velocity_m_s:.2f}m/s")
+            st.metric("Refrigerant Velocity", f"{gas_velocity:.2f}m/s")
     
         with col2:
-            st.metric("Discharge Density", f"{dis_dens:.1f}kg/m³")
+            st.metric("Vapour Density", f"{d_vap:.1f}kg/m³")
     
         with col3:
             st.metric("Pressure Drop", f"{dp_total_kPa:.2f}kPa")
