@@ -3152,54 +3152,51 @@ elif tool_selection == "Manual Calculation":
     if mode == "Wet Suction":
 
         def find_pipe_diameter(PD, Vis, Den, MassF, choice, surface_roughness):
-            """
-            Fully faithful translation of VB6 FindPipeDiameter().
-            PD  = target pressure drop (kPa in VB logic)
-            Vis = viscosity (Pa·s, but VB uses lbm/ft-s › unitless scaling handled)
-            Den = density (kg/m3)
-            MassF = massflow (kg/s)
-            choice = 1 or 2 (VB does not treat them differently)
-            surface_roughness = eps (m)
-            """
         
             import math
         
-            VPEA = (2 * 32.17 * 144)   # VB constant
+            VPEA = (2 * 32.17 * 144)
             VEA = MassF / Den
-            RenoEA = Vis / 3600        # VB bizarre scaling preserved exactly
+            RenoEA = Vis / 3600.0
         
-            # Hi2 / Lo2 bounds
             Hi2 = 1.0
             Lo2 = 0.001
         
-            for _ in range(200):
+            while True:
                 PipeDia = (Hi2 + Lo2) / 2.0
                 PipeArea = math.pi * (PipeDia * 0.5) ** 2
         
                 Vel = VEA / PipeArea
+        
                 VP = Den * Vel**2 / VPEA
+        
                 Reno = Den * PipeDia * Vel / RenoEA
         
-                # Friction factor
                 if Reno < 2000:
                     FF = 64.0 / Reno
                 else:
-                    # Colebrook bisection exactly like VB
                     Hi = 0.1
                     Lo = 0.00001
-                    FF = None
-                    for _ in range(60):
+                    FFL = 0
+        
+                    while True:
+                        FFL += 1
+        
                         FF_try = (Hi + Lo) / 2.0
+        
                         LHS = 1.0 / math.sqrt(FF_try)
                         RHS = -2 * (math.log10((surface_roughness / (PipeDia * 3.7)) +
                                                (2.51 / (Reno * math.sqrt(FF_try)))))
+        
                         if LHS > RHS:
                             Lo = FF_try
                         else:
                             Hi = FF_try
-                    FF = (Hi + Lo) / 2.0
         
-                # Pipe pressure drop
+                        if abs(1 - (LHS / RHS)) < 1e-5:
+                            FF = FF_try
+                            break
+        
                 PPD = FF * 100.0 / PipeDia * VP
         
                 if PPD > PD:
@@ -3207,10 +3204,8 @@ elif tool_selection == "Manual Calculation":
                 else:
                     Hi2 = PipeDia
         
-                if abs(1 - (PPD / PD)) < 0.00001:
-                    break
-        
-            return PipeDia
+                if abs(1 - (PPD / PD)) < 1e-5:
+                    return PipeDia
 
         col1, col2, col3, col4 = st.columns(4)
     
