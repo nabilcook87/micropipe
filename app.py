@@ -3342,6 +3342,7 @@ elif tool_selection == "Manual Calculation":
             ss.setdefault("evap_temp",   evap_default)
 
             liq_oq = st.number_input("Liquid Overfeed Quantity (%)", min_value=0.0, max_value=2000.0, value=100.0, step=25.0)
+            WetSucPenaltyFactor = st.number_input("Max Liquid Hold-Up Penalty Bias", min_value=1.0, max_value=3.0, value=1.5, step=0.1)
 
         with col2:
             
@@ -3505,8 +3506,6 @@ elif tool_selection == "Manual Calculation":
     
         dp_fittings = dyn * (K_SRB * B_SRB + K_LRB * B_LRB)
         dp_valves = dyn * (K_BALL * ball + K_GLOBE * globe)
-    
-        WetSucPenaltyFactor = 1.5
         
         if refrigerant == "R404A": C_ref = 0.77
         elif refrigerant == "R502": C_ref = 0.76
