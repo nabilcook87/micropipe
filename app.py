@@ -3543,7 +3543,7 @@ elif tool_selection == "Manual Calculation":
             st.metric("Vapour Density", f"{d_vap:.1f}kg/m³")
     
         with col3:
-            st.metric("Pressure Drop", f"{dp_total_kPa:.2f}kPa")
+            st.metric("Vapour Volumetric Flow", f"{Q_g:.5f}m³/s")
     
         with col4:
             st.metric("Temp Penalty", f"{dt:.2f}K")
@@ -3563,7 +3563,7 @@ elif tool_selection == "Manual Calculation":
             st.metric("Mass Flow Rate", f"{m_gplusl:.5f}kg/s")
     
         with col2:
-            st.metric("Volumetric Flow Rate", f"{volflow:.5f}m³/s")
+            st.metric("Liquid Volumetric Flow", f"{Q_l:.5f}m³/s")
     
         with col3:
             st.metric("Pipe PD", f"{dp_pipe_kPa:.2f}kPa")
