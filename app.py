@@ -3388,6 +3388,7 @@ elif tool_selection == "Manual Calculation":
         overfeed_ratio = 1 + liq_oq / 100
         m_g = base_massflow                # vapour mass
         m_l = base_massflow * (overfeed_ratio - 1)   # liquid mass
+        m_gplusl = m_g + m_l
 
         d_liq1 = props.get_properties(refrigerant, T_evap)["density_liquid"]
         d_vap1 = props.get_properties(refrigerant, T_evap)["density_vapor"]
@@ -3559,7 +3560,7 @@ elif tool_selection == "Manual Calculation":
         col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
     
         with col1:
-            st.metric("Mass Flow Rate", f"{mass_flow_kg_s:.5f}kg/s")
+            st.metric("Mass Flow Rate", f"{m_gplusl:.5f}kg/s")
     
         with col2:
             st.metric("Volumetric Flow Rate", f"{volflow:.5f}m³/s")
