@@ -3389,11 +3389,22 @@ elif tool_selection == "Manual Calculation":
         m_g = base_massflow                # vapour mass
         m_l = base_massflow * (overfeed_ratio - 1)   # liquid mass
 
-        d_liq = props.get_properties(refrigerant, T_evap)["density_liquid"]
-        d_vap = props.get_properties(refrigerant, T_evap)["density_vapor"]
+        d_liq1 = props.get_properties(refrigerant, T_evap)["density_liquid"]
+        d_vap1 = props.get_properties(refrigerant, T_evap)["density_vapor"]
 
-        v_liq = props.get_properties(refrigerant, T_evap)["viscosity_liquid"] / 1000000
-        v_vap = RefrigerantViscosities().get_viscosity(refrigerant, T_evap + 273.15, 0) / 1000000
+        v_liq1 = props.get_properties(refrigerant, T_evap)["viscosity_liquid"] / 1000000
+        v_vap1 = RefrigerantViscosities().get_viscosity(refrigerant, T_evap + 273.15, 0) / 1000000
+
+        d_liq2 = props.get_properties(refrigerant, T_evap - max_penalty)["density_liquid"]
+        d_vap2 = props.get_properties(refrigerant, T_evap - max_penalty)["density_vapor"]
+
+        v_liq2 = props.get_properties(refrigerant, T_evap - max_penalty)["viscosity_liquid"] / 1000000
+        v_vap2 = RefrigerantViscosities().get_viscosity(refrigerant, T_evap + 273.15 - max_penalty, 0) / 1000000
+
+        d_liq = (d_liq1 + d_liq2) / 2
+        d_vap = (d_vap1 + d_vap2) / 2
+        v_liq = (v_liq1 + v_liq2) / 2
+        v_vap = (v_vap1 + v_vap2) / 2
 
         Q_g = m_g / d_vap
         Q_l = m_l / d_liq if liq_oq > 0 else 0
