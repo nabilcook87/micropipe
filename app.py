@@ -3564,7 +3564,7 @@ elif tool_selection == "Manual Calculation":
             st.metric("Saturated Temperature", f"{postcirctemp:.2f}°C")
 
         with col7:
-            st.metric("Evaporating Pressure", f"{evappress:.2f}bar(a)")
+            st.metric("Evaporating Pressure", f"{evappres:.2f}bar(a)")
             
         col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
     
