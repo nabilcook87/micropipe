@@ -3166,7 +3166,7 @@ elif tool_selection == "Manual Calculation":
         
             VPEA = 2
             VEA = MassF / Den
-            RenoEA = Vis / 3600        # VB bizarre scaling preserved exactly
+            RenoEA = Vis
         
             # Hi2 / Lo2 bounds
             Hi2 = 1.0
