@@ -3190,7 +3190,7 @@ elif tool_selection == "Manual Calculation":
                     FF = (Hi + Lo) / 2.0
         
                 # Pipe pressure drop
-                PPD = FF * 100.0 / PipeDia * VP
+                PPD = FF * 30.48 / PipeDia * VP
         
                 if PPD > PD:
                     Lo2 = PipeDia
@@ -3420,8 +3420,8 @@ elif tool_selection == "Manual Calculation":
             D = (1_000_000 / 12_000) * base_massflow   # VB scaling
             
             # VB-equivalent diameters for gas and liquid
-            A_diam = find_pipe_diameter(2261.450820326, v_vap, d_vap, D, 1, surface_roughness)
-            B_diam = find_pipe_diameter(2261.450820326, v_liq, d_liq, D * (overfeed_ratio - 1), 2, surface_roughness)
+            A_diam = find_pipe_diameter(689.476, v_vap, d_vap, D, 1, surface_roughness)
+            B_diam = find_pipe_diameter(689.476, v_liq, d_liq, D * (overfeed_ratio - 1), 2, surface_roughness)
             
             # Convert diameters to areas (VB logic)
             A_area = math.pi * (A_diam / 2)**2
