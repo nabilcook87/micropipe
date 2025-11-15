@@ -3152,19 +3152,9 @@ elif tool_selection == "Manual Calculation":
     if mode == "Wet Suction":
 
         def find_pipe_diameter(PD, Vis, Den, MassF, choice, surface_roughness):
-            """
-            Fully faithful translation of VB6 FindPipeDiameter().
-            PD  = target pressure drop (kPa in VB logic)
-            Vis = viscosity (Pa·s, but VB uses lbm/ft-s › unitless scaling handled)
-            Den = density (kg/m3)
-            MassF = massflow (kg/s)
-            choice = 1 or 2 (VB does not treat them differently)
-            surface_roughness = eps (m)
-            """
         
             import math
         
-            VPEA = 2
             VEA = MassF / Den
             RenoEA = Vis
         
@@ -3177,7 +3167,7 @@ elif tool_selection == "Manual Calculation":
                 PipeArea = math.pi * (PipeDia * 0.5) ** 2
         
                 Vel = VEA / PipeArea
-                VP = Den * Vel**2 / VPEA
+                VP = 0.5 * Den * Vel**2
                 Reno = Den * PipeDia * Vel / RenoEA
         
                 # Friction factor
