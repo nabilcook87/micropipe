@@ -3164,7 +3164,7 @@ elif tool_selection == "Manual Calculation":
         
             import math
         
-            VPEA = (2 * 32.17 * 144)   # VB constant
+            VPEA = 2
             VEA = MassF / Den
             RenoEA = Vis / 3600        # VB bizarre scaling preserved exactly
         
