@@ -3376,6 +3376,7 @@ elif tool_selection == "Manual Calculation":
         deltah = h_out - h_in
 
         base_massflow = evap_capacity_kw / deltah
+        BMR_massflow = 293.07107017224996 / deltah
         overfeed_ratio = 1 + liq_oq / 100
         m_g = base_massflow                # vapour mass
         m_l = base_massflow * (overfeed_ratio - 1)   # liquid mass
@@ -3417,7 +3418,7 @@ elif tool_selection == "Manual Calculation":
                 surface_roughness = 0.000001524
             
             # Mass flow terms for VB
-            D = (1_000_000 / 12_000) * base_massflow   # VB scaling
+            D = BMR_massflow   # VB scaling
             
             # VB-equivalent diameters for gas and liquid
             A_diam = find_pipe_diameter(689.476, v_vap, d_vap, D, 1, surface_roughness)
