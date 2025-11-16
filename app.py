@@ -3159,8 +3159,8 @@ elif tool_selection == "Manual Calculation":
             RenoEA = Vis
         
             # Hi2 / Lo2 bounds
-            Hi2 = 1.0
-            Lo2 = 0.001
+            Hi2 = 0.3048
+            Lo2 = 0.0003048
         
             for _ in range(200):
                 PipeDia = (Hi2 + Lo2) / 2.0
