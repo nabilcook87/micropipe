@@ -3524,6 +3524,37 @@ elif tool_selection == "Manual Calculation":
 
         dt = T_evap - postcirctemp
 
+        if st.button("Auto-select (ΔT ≤ Max Penalty)"):
+            results, errors = [], []
+            for ps in pipe_sizes:
+                dt_i = get_wet_suction_dt_for_size(ps)
+                if math.isfinite(dt_i):
+                    results.append({"size": ps, "dt": dt_i})
+                else:
+                    errors.append((ps, "failed or non-numeric ΔT"))
+        
+            if not results:
+                with st.expander("⚠️ Debug Details", expanded=True):
+                    for ps, msg in errors:
+                        st.write(f"❌ {ps}: {msg}")
+                st.error("No valid results for any pipe size — check CSV or inputs.")
+            else:
+                valid = [r for r in results if r["dt"] <= max_penalty]
+                if valid:
+                    best = min(valid, key=lambda x: mm_map[x["size"]])  # smallest ID that passes
+                    st.session_state["_next_selected_size"] = best["size"]
+                    st.success(
+                        f"✅ Auto-selected pipe: **{best['size']}**  \n"
+                        f"ΔT = {best['dt']:.3f} K ≤ {max_penalty:.3f} K"
+                    )
+                    st.rerun()
+                else:
+                    best_dt = min(r["dt"] for r in results if math.isfinite(r["dt"]))
+                    st.error(
+                        f"❌ No pipe meets ΔT ≤ {max_penalty:.3f} K.  \n"
+                        f"Best achievable ΔT = {best_dt:.3f} K."
+                    )
+        
         st.subheader("Results")
     
         col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
