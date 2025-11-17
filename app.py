@@ -3268,6 +3268,19 @@ elif tool_selection == "Manual Calculation":
     
         pipe_sizes = sizes_df["Nominal Size (inch)"].tolist()
         mm_map = dict(zip(sizes_df["Nominal Size (inch)"], sizes_df["mm_num"]))
+
+        def _pipe_row_for_size(size_inch: str):
+            rows = material_df[material_df["Nominal Size (inch)"].astype(str).str.strip() == str(size_inch)]
+            if rows.empty:
+                return None
+            if "Gauge" in rows.columns and rows["Gauge"].notna().any():
+                if "gauge" in st.session_state:
+                    g = st.session_state["gauge"]
+                    match = rows[rows["Gauge"] == g]
+                    if not match.empty:
+                        return match.iloc[0]
+                return rows.iloc[0]
+            return rows.iloc[0]
     
         # choose default index
         def _closest_index(target_mm: float) -> int:
