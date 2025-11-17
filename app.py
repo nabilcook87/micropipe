@@ -3524,7 +3524,134 @@ elif tool_selection == "Manual Calculation":
 
         dt = T_evap - postcirctemp
 
-        if st.button("Auto-select (ΔT ≤ Max Penalty)"):
+        def get_wet_suction_dt_for_size(size_inch: str) -> float:
+            """Compute ΔT for a given Wet Suction pipe size using identical logic to the main block."""
+            try:
+                pipe_row = _pipe_row_for_size(size_inch)
+                if pipe_row is None:
+                    return float("nan")
+        
+                # Geometry
+                ID_mm_local = float(pipe_row["ID_mm"])
+                D_int = ID_mm_local / 1000
+                A_total = math.pi * (D_int / 2) ** 2
+        
+                # --- identical property setup ---
+                T_evap_local = T_evap
+                props = RefrigerantProperties()
+                h_in = props.get_properties(refrigerant, T_evap_local)["enthalpy_liquid"]
+                h_out = props.get_properties(refrigerant, T_evap_local)["enthalpy_vapor"]
+                deltah = h_out - h_in
+                base_massflow = evap_capacity_kw / deltah
+                BMR_massflow = 293.07107017224996 / deltah
+                overfeed_ratio = 1 + liq_oq / 100
+                m_g = base_massflow
+                m_l = base_massflow * (overfeed_ratio - 1)
+                m_gplusl = m_g + m_l
+        
+                d_liq1 = props.get_properties(refrigerant, T_evap_local)["density_liquid"]
+                d_vap1 = props.get_properties(refrigerant, T_evap_local)["density_vapor"]
+                v_liq1 = props.get_properties(refrigerant, T_evap_local)["viscosity_liquid"] / 1_000_000
+                v_vap1 = RefrigerantViscosities().get_viscosity(refrigerant, T_evap_local + 273.15, 0) / 1_000_000
+                d_liq2 = props.get_properties(refrigerant, T_evap_local - max_penalty)["density_liquid"]
+                d_vap2 = props.get_properties(refrigerant, T_evap_local - max_penalty)["density_vapor"]
+                v_liq2 = props.get_properties(refrigerant, T_evap_local - max_penalty)["viscosity_liquid"] / 1_000_000
+                v_vap2 = RefrigerantViscosities().get_viscosity(refrigerant, T_evap_local + 273.15 - max_penalty, 0) / 1_000_000
+        
+                d_liq = (d_liq1 + d_liq2) / 2
+                d_vap = (d_vap1 + d_vap2) / 2
+                v_liq = (v_liq1 + v_liq2) / 2
+                v_vap = (v_vap1 + v_vap2) / 2
+        
+                Q_g = m_g / d_vap
+                Q_l = m_l / d_liq if liq_oq > 0 else 0
+        
+                # --- identical wet suction geometry logic ---
+                if liq_oq <= 0 or overfeed_ratio <= 1:
+                    liquid_ratio = 0.0
+                    A_gas = A_total
+                    gas_velocity = Q_g / A_gas if A_gas > 0 else 0.0
+                    D_h = D_int
+                else:
+                    # surface roughness
+                    surface_roughness = 0.00004572 if selected_material in ["Steel SCH40", "Steel SCH80"] else 0.000001524
+        
+                    D = BMR_massflow
+                    A_diam = find_pipe_diameter(689.476, v_vap, d_vap, D, 1, surface_roughness)
+                    B_diam = find_pipe_diameter(689.476, v_liq, d_liq, D * (overfeed_ratio - 1), 2, surface_roughness)
+                    A_area = math.pi * (A_diam / 2) ** 2
+                    B_area = math.pi * (B_diam / 2) ** 2
+                    C_area = A_area + B_area
+                    liquid_ratio = B_area / C_area if C_area > 0 else 0
+                    Radius = D_int / 2
+                    TotalArea = math.pi * Radius**2
+                    LiqArea = TotalArea * liquid_ratio
+                    SucArea = TotalArea - LiqArea
+                    DegCon = 57.2957795130824
+                    Angle = (LiqArea / (Radius**2 * 0.5)) * DegCon
+                    Chord = math.sin((Angle / DegCon) / 2) * Radius * 2
+                    Arc = ((360 - Angle) * math.pi) / (360 / (Radius * 2))
+                    Perimeter = Chord + Arc
+                    D_h = 4 * TotalArea / Perimeter if Perimeter > 0 else D_int
+                    A_gas = SucArea
+                    gas_velocity = Q_g / A_gas if A_gas > 0 else 0
+        
+                # --- identical friction and dp chain ---
+                Re = d_vap * gas_velocity * D_h / v_vap if v_vap > 0 else 0
+                eps = 0.00004572 if selected_material in ["Steel SCH40", "Steel SCH80"] else 0.000001524
+        
+                if Re <= 0:
+                    f = 0
+                elif Re < 2000:
+                    f = 64 / Re
+                else:
+                    rel = eps / D_h
+                    f = 0.02
+                    for _ in range(60):
+                        rhs = -2.0 * math.log10((rel / 3.7) + (2.51 / (Re * math.sqrt(f))))
+                        f_new = 1.0 / (rhs * rhs)
+                        if abs(f_new - f) / f < 1e-5:
+                            f = f_new
+                            break
+                        f = f_new
+        
+                dyn = 0.5 * d_vap * gas_velocity**2 / 1000
+                dp_pipe = f * (L / D_h) * dyn
+                dp_plf = dyn * PLF
+                K_SRB = float(pipe_row["SRB"])
+                K_LRB = float(pipe_row["LRB"])
+                K_BALL = float(pipe_row["BALL"])
+                K_GLOBE = float(pipe_row["GLOBE"])
+                B_SRB = SRB + 0.5 * _45 + 2 * ubend + 3 * ptrap
+                B_LRB = LRB + MAC
+                dp_fittings = dyn * (K_SRB * B_SRB + K_LRB * B_LRB)
+                dp_valves = dyn * (K_BALL * ball + K_GLOBE * globe)
+        
+                # --- identical wet suction correction ---
+                if refrigerant == "R404A": C_ref = 0.77
+                elif refrigerant == "R502": C_ref = 0.76
+                elif refrigerant == "R717": C_ref = 0.64
+                elif refrigerant == "R134a": C_ref = 0.71
+                else: C_ref = 0.73
+        
+                WetSucFactor = 1 + (WetSucPenaltyFactor - 1) * (liquid_ratio / C_ref)
+                if WetSucFactor < 1:
+                    WetSucFactor = 1
+        
+                dp_total_ws = (dp_pipe + dp_fittings + dp_valves + dp_plf) * WetSucFactor
+        
+                conv = PressureTemperatureConverter()
+                evappres = conv.temp_to_pressure(refrigerant, T_evap_local)
+                postcirc = evappres - (dp_total_ws / 100)
+                postcirctemp = conv.pressure_to_temp(refrigerant, postcirc)
+                dt_local = T_evap_local - postcirctemp
+        
+                return float(dt_local)
+        
+            except Exception:
+                return float("nan")
+
+        if st.button("Auto-select"):
             results, errors = [], []
             for ps in pipe_sizes:
                 dt_i = get_wet_suction_dt_for_size(ps)
