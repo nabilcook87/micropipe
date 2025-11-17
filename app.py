@@ -3274,6 +3274,13 @@ elif tool_selection == "Manual Calculation":
             mm_list = [mm_map[s] for s in pipe_sizes]
             return min(range(len(mm_list)), key=lambda i: abs(mm_list[i] - target_mm)) if mm_list else 0
     
+        # --- consume any deferred selection from Auto-select button ---
+        if "_next_selected_size" in st.session_state:
+            new_val = st.session_state.pop("_next_selected_size")
+            if new_val in pipe_sizes:
+                st.session_state["selected_size"] = new_val
+                st.session_state["_selected_size_just_set"] = True
+        
         default_index = 0
         if material_changed and "prev_pipe_mm" in ss:
             default_index = _closest_index(ss.prev_pipe_mm)
@@ -3292,6 +3299,10 @@ elif tool_selection == "Manual Calculation":
                 index=default_index,
                 key="selected_size",
             )
+
+        # --- clean up one-shot flag ---
+        if st.session_state.get("_selected_size_just_set"):
+            del st.session_state["_selected_size_just_set"]
     
         # remember the selected size in mm for next material change
         ss.prev_pipe_mm = float(mm_map.get(selected_size, float("nan")))
