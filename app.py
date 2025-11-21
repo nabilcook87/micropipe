@@ -4018,78 +4018,52 @@ elif tool_selection == "Manual Calculation":
         dp_total_kPa = dp_pipe_kPa + dp_fittings_kPa + dp_valves_kPa + dp_plf_kPa
         
         converter = PressureTemperatureConverter()
-        condpres = converter.temp_to_pressure(refrigerant, T_cond)
+        evappres = converter.temp_to_pressure(refrigerant, T_evap)
         postcirc = condpres - (dp_total_kPa / 100)
-        postcirctemp = converter.pressure_to_temp(refrigerant, postcirc)
-        
-        dt = T_cond - postcirctemp
 
         head = 9.80665 * risem * density / 1000
         
         dp_withhead = dp_total_kPa + head
 
         postall = condpres - (dp_withhead / 100)
-        postalltemp = converter.pressure_to_temp(refrigerant, postall)
-        
-        tall = T_cond - postalltemp
-
-        exsub = T_cond - T_liq
-
-        addsub = max(tall - exsub, 0)
-
-        evappres = converter.temp_to_pressure(refrigerant, T_evap)
 
         volflow = mass_flow_kg_s / density
-
-        compratio = condpres / evappres
         
         st.subheader("Results")
     
         if velocity_m_s:
-            col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
+            col1, col2, col3, col4, col5 = st.columns(5)
     
             with col1:
                 st.metric("Refrigerant Velocity", f"{velocity_m_s:.2f}m/s")
     
             with col2:
                 st.metric("Liquid Density", f"{density:.1f}kg/m³")
-    
+
             with col3:
-                st.metric("Pressure Drop", f"{dp_total_kPa:.2f}kPa")
+                st.metric("Volumetric Flow Rate", f"{volflow:.5f}m³/s")
     
             with col4:
-                st.metric("Temp Penalty", f"{dt:.2f}K")
+                st.metric("Pressure Drop", f"{dp_total_kPa:.2f}kPa")
 
             with col5:
-                st.metric("Additional Subcooling Required", f"{addsub:.2f}K")
-
-            with col6:
                 st.metric("Evaporating Pressure", f"{evappres:.2f}bar(a)")
-
-            with col7:
-                st.metric("Condensing Pressure", f"{condpres:.2f}bar(a)")
 
             # correcting default values between cond, max liq, and min liq between liquid calcs and dry suction calcs
             
-            col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
+            col1, col2, col3, col4, col5 = st.columns(5)
     
             with col1:
                 st.metric("Mass Flow Rate", f"{mass_flow_kg_s:.5f}kg/s")
     
             with col2:
-                st.metric("Volumetric Flow Rate", f"{volflow:.5f}m³/s")
-    
-            with col3:
                 st.metric("Pipe PD", f"{dp_pipe_kPa:.2f}kPa")
     
-            with col4:
+            with col3:
                 st.metric("Fittings PD", f"{dp_fittings_kPa:.2f}kPa")
 
-            with col5:
+            with col4:
                 st.metric("Valves PD", f"{dp_valves_kPa:.2f}kPa")
 
-            with col6:
+            with col5:
                 st.metric("Velocity Pressure PD", f"{dp_plf_kPa:.2f}kPa")
-
-            with col7:
-                st.metric("Compression Ratio", f"{compratio:.2f}")
