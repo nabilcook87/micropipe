@@ -3919,25 +3919,21 @@ elif tool_selection == "Manual Calculation":
         from utils.pipe_length_volume_calc import get_pipe_id_mm
     
         T_evap = evaporating_temp
-        T_liq = maxliq_temp
-        T_cond = condensing_temp
     
         props = RefrigerantProperties()
-        
-        h_in = props.get_properties(refrigerant, T_liq)["enthalpy_liquid2"]
 
-        h_evap = props.get_properties(refrigerant, T_evap)["enthalpy_vapor"]
-        
-        delta_h = h_evap - h_in
+        h_in = props.get_properties(refrigerant, T_evap)["enthalpy_liquid"]
+        h_out = props.get_properties(refrigerant, T_evap)["enthalpy_vapor"]
+        deltah = h_out - h_in
 
-        mass_flow_kg_s = evap_capacity_kw / delta_h if delta_h > 0 else 0.01
+        mass_flow_kg_s = (evap_capacity_kw / delta_h) * (1 + (liq_oq / 100)) if delta_h > 0 else 0.01
     
         if ID_mm is not None:
             ID_m = ID_mm / 1000.0
 
             area_m2 = math.pi * (ID_m / 2) ** 2
 
-            density = RefrigerantProperties().get_properties(refrigerant, T_liq)["density_liquid2"]
+            density = RefrigerantProperties().get_properties(refrigerant, T_evap)["density_liquid"]
 
             velocity_m_s = mass_flow_kg_s / (area_m2 * density)
 
