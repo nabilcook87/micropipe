@@ -3753,3 +3753,545 @@ elif tool_selection == "Manual Calculation":
 
         with col7:
             st.metric("Velocity Pressure PD", f"{dp_plf_ws:.2f}kPa")
+
+    if mode == "Pumped Liquid":
+        
+        col1, col2, col3, col4 = st.columns(4)
+    
+        with col1:
+            refrigerant = st.selectbox("Refrigerant", [
+                "R404A", "R134a", "R407F", "R744", "R410A",
+                "R407C", "R507A", "R448A", "R449A", "R22", "R32", "R454A", "R454C", "R455A", "R407A",
+                "R290", "R1270", "R600a", "R717", "R1234ze", "R1234yf", "R12", "R11", "R454B", "R450A", "R513A", "R23", "R508B", "R502"
+            ])
+    
+        # Load pipe data
+        pipe_data = pd.read_csv("data/pipe_pressure_ratings_full.csv")
+    
+        # --- helpers ---
+        def _nps_inch_to_mm(nps_str: str) -> float:
+            # e.g. "1-1/8", '1"', "3/8"
+            s = str(nps_str).replace('"', '').strip()
+            if not s:
+                return float('nan')
+            parts = s.split('-')
+            tot_in = 0.0
+            for p in parts:
+                p = p.strip()
+                if not p:
+                    continue
+                if '/' in p:
+                    num, den = p.split('/')
+                    tot_in += float(num) / float(den)
+                else:
+                    tot_in += float(p)
+            return tot_in * 25.4  # mm
+    
+        ss = st.session_state
+    
+        # 1) Pipe material
+        with col2:
+            if refrigerant == "R717":
+                excluded_materials = ["Copper ACR", "Copper EN12735"]
+                pipe_materials = sorted(m for m in pipe_data["Material"].dropna().unique()
+                                        if m not in excluded_materials)
+            else:
+                pipe_materials = sorted(pipe_data["Material"].dropna().unique())
+    
+            selected_material = st.selectbox("Pipe Material", pipe_materials, key="material")
+        
+        # detect material change
+        material_changed = ss.get("last_material") is not None and ss.last_material != selected_material
+        ss.last_material = selected_material
+    
+        # 2) Sizes for selected material (de-duped)
+        material_df = pipe_data[pipe_data["Material"] == selected_material].copy()
+    
+        sizes_df = (
+            material_df[["Nominal Size (inch)", "Nominal Size (mm)"]]
+            .dropna(subset=["Nominal Size (inch)"])
+            .assign(**{
+                "Nominal Size (inch)": lambda d: d["Nominal Size (inch)"].astype(str).str.strip(),
+            })
+            .drop_duplicates(subset=["Nominal Size (inch)"], keep="first")
+        )
+    
+        # make sure we have a numeric mm per nominal (fallback: parse the inch string)
+        sizes_df["mm_num"] = pd.to_numeric(sizes_df.get("Nominal Size (mm)"), errors="coerce")
+        sizes_df.loc[sizes_df["mm_num"].isna(), "mm_num"] = sizes_df.loc[sizes_df["mm_num"].isna(), "Nominal Size (inch)"].apply(_nps_inch_to_mm)
+    
+        pipe_sizes = sizes_df["Nominal Size (inch)"].tolist()
+        mm_map = dict(zip(sizes_df["Nominal Size (inch)"], sizes_df["mm_num"]))
+    
+        # choose default index
+        def _closest_index(target_mm: float) -> int:
+            mm_list = [mm_map[s] for s in pipe_sizes]
+            return min(range(len(mm_list)), key=lambda i: abs(mm_list[i] - target_mm)) if mm_list else 0
+    
+        # --- consume any deferred selection from the button ---
+        if "_next_selected_size" in st.session_state:
+            new_val = st.session_state.pop("_next_selected_size")
+            # only accept if the option exists for the current material
+            if new_val in pipe_sizes:
+                # force the widget to pick this value on next render
+                st.session_state["selected_size"] = new_val
+                # optional: keep a one-shot override flag so we can clean up later
+                st.session_state["_selected_size_just_set"] = True
+        
+        default_index = 0
+        if material_changed and "prev_pipe_mm" in ss:
+            default_index = _closest_index(ss.prev_pipe_mm)
+        elif selected_material == "Copper ACR" and ("1/2" in pipe_sizes or '1/2"' in pipe_sizes):
+            # first load or no previous selection → prefer 1-1/8" for Copper ACR
+            want = "1/2" if "1/2" in pipe_sizes else '1/2"'
+            default_index = pipe_sizes.index(want)
+        elif "selected_size" in ss and ss.selected_size in pipe_sizes:
+            # if Streamlit kept the selection, use it
+            default_index = pipe_sizes.index(ss.selected_size)
+        
+        with col1:
+            selected_size = st.selectbox(
+                "Nominal Pipe Size (inch)",
+                pipe_sizes,
+                index=default_index,
+                key="selected_size",
+            )
+    
+        # remove the one-shot flag so future reruns don't keep forcing it
+        if st.session_state.get("_selected_size_just_set"):
+            del st.session_state["_selected_size_just_set"]
+        
+        # remember the selected size in mm for next material change
+        ss.prev_pipe_mm = float(mm_map.get(selected_size, float("nan")))
+    
+        # 3) Gauge (if applicable)
+        gauge_options = material_df[material_df["Nominal Size (inch)"].astype(str).str.strip() == selected_size]
+        if "Gauge" in gauge_options.columns and gauge_options["Gauge"].notna().any():
+            gauges = sorted(gauge_options["Gauge"].dropna().unique())
+            with col2:
+                selected_gauge = st.selectbox("Copper Gauge", gauges, key="gauge")
+            selected_pipe_row = gauge_options[gauge_options["Gauge"] == selected_gauge].iloc[0]
+        else:
+            selected_pipe_row = gauge_options.iloc[0]
+    
+        # Pipe parameters
+        pipe_size_inch = selected_pipe_row["Nominal Size (inch)"]
+        ID_mm = selected_pipe_row["ID_mm"]
+    
+        with col1:
+            
+            evap_capacity_kw = st.number_input("Evaporator Capacity (kW)", min_value=0.03, max_value=20000.0, value=10.0, step=1.0)
+            
+            # --- Base ranges per refrigerant ---
+            if refrigerant in ("R23", "R508B"):
+                evap_min, evap_max, evap_default = -100.0, -20.0, -80.0
+                cond_min, cond_max, cond_default = -100.0, 10.0, -30.0
+                maxliq_min, maxliq_max, maxliq_default = -100.0, 10.0, -40.0
+            elif refrigerant == "R744":
+                evap_min, evap_max, evap_default = -50.0, 20.0, -10.0
+                cond_min, cond_max, cond_default = -23.0, 30.0, 15.0
+                maxliq_min, maxliq_max, maxliq_default = -50.0, 30.0, 10.0
+            else:
+                evap_min, evap_max, evap_default = -50.0, 30.0, -10.0
+                cond_min, cond_max, cond_default = -23.0, 60.0, 43.0
+                maxliq_min, maxliq_max, maxliq_default = -50.0, 60.0, 40.0
+    
+            # --- Init state (widget-backed) ---
+            ss = st.session_state
+    
+            if "last_refrigerant" not in ss or ss.last_refrigerant != refrigerant:
+                ss.cond_temp   = cond_default
+                ss.maxliq_temp = maxliq_default
+                ss.evap_temp   = evap_default
+                ss.last_refrigerant = refrigerant
+            
+            ss.setdefault("cond_temp",   cond_default)
+            ss.setdefault("maxliq_temp", maxliq_default)
+            ss.setdefault("evap_temp",   evap_default)
+
+            if "maxliq_temp" in ss and "cond_temp" in ss and "evap_temp" in ss:
+                ss.cond_temp = min(max(ss.cond_temp, ss.maxliq_temp, ss.evap_temp), cond_max)
+    
+            if "cond_temp" in ss and "maxliq_temp" in ss and "evap_temp" in ss:
+                ss.evap_temp = min(ss.maxliq_temp, ss.cond_temp, ss.evap_temp)
+            
+            # --- Callbacks implementing your downstream clamping logic ---
+            def on_change_cond():
+                # When cond changes: clamp maxliq down to cond, then evap down to maxliq
+                ss.maxliq_temp = min(ss.maxliq_temp, ss.cond_temp)
+                ss.evap_temp   = min(ss.evap_temp,   ss.maxliq_temp)
+    
+            def on_change_maxliq():
+                # When maxliq changes: clamp maxliq down to cond, then evap down to maxliq
+                ss.maxliq_temp = min(ss.maxliq_temp, ss.cond_temp)
+                ss.evap_temp   = min(ss.evap_temp,   ss.maxliq_temp)
+    
+            def on_change_evap():
+                # When evap changes: clamp evap down to maxliq
+                ss.evap_temp   = min(ss.evap_temp,   ss.maxliq_temp)
+    
+            # --- Inputs with inclusive caps (≤), same order as your code ---
+            condensing_temp = st.number_input(
+                "Condensing Temperature (°C)",
+                min_value=cond_min, max_value=cond_max,
+                value=ss.cond_temp, step=1.0, key="cond_temp",
+                on_change=on_change_cond,
+            )
+    
+            maxliq_temp = st.number_input(
+                "Liquid Temperature (°C)",
+                min_value=maxliq_min, max_value=min(condensing_temp, maxliq_max),
+                value=ss.maxliq_temp, step=1.0, key="maxliq_temp",
+                on_change=on_change_maxliq,
+            )
+
+        with col2:
+            
+            evaporating_temp = st.number_input(
+                "Evaporating Temperature (°C)",
+                min_value=evap_min, max_value=min(maxliq_temp, evap_max),
+                value=ss.evap_temp, step=1.0, key="evap_temp",
+                on_change=on_change_evap,
+            )
+    
+        with col2:
+            risem = st.number_input("Liquid Line Rise (m)", min_value=0.0, max_value=30.0, value=0.0, step=1.0)
+            max_penalty = st.number_input("Max Penalty (K)", min_value=0.0, max_value=6.0, value=1.0, step=0.1)
+    
+        with col3:
+            L = st.number_input("Pipe Length (m)", min_value=0.1, max_value=300.0, value=10.0, step=1.0)
+            LRB = st.number_input("Long Radius Bends", min_value=0, max_value=50, value=0, step=1)
+            SRB = st.number_input("Short Radius Bends", min_value=0, max_value=50, value=0, step=1)
+            _45 = st.number_input("45° Bends", min_value=0, max_value=50, value=0, step=1)
+            MAC = st.number_input("Machine Bends", min_value=0, max_value=50, value=0, step=1)
+    
+        with col4:
+            ptrap = st.number_input("P Traps", min_value=0, max_value=10, value=0, step=1)
+            ubend = st.number_input("U Bends", min_value=0, max_value=10, value=0, step=1)
+            ball = st.number_input("Ball Valves", min_value=0, max_value=20, value=0, step=1)
+            globe = st.number_input("Globe Valves", min_value=0, max_value=20, value=0, step=1)
+            PLF = st.number_input("Pressure Loss Factors", min_value=0.0, max_value=20.0, value=0.0, step=0.1)
+        
+        from utils.refrigerant_properties import RefrigerantProperties
+        from utils.refrigerant_densities import RefrigerantDensities
+        from utils.refrigerant_viscosities import RefrigerantViscosities
+        from utils.pipe_length_volume_calc import get_pipe_id_mm
+    
+        T_evap = evaporating_temp
+        T_liq = maxliq_temp
+        T_cond = condensing_temp
+    
+        props = RefrigerantProperties()
+        
+        h_in = props.get_properties(refrigerant, T_liq)["enthalpy_liquid2"]
+
+        h_evap = props.get_properties(refrigerant, T_evap)["enthalpy_vapor"]
+        
+        delta_h = h_evap - h_in
+
+        mass_flow_kg_s = evap_capacity_kw / delta_h if delta_h > 0 else 0.01
+    
+        if ID_mm is not None:
+            ID_m = ID_mm / 1000.0
+
+            area_m2 = math.pi * (ID_m / 2) ** 2
+
+            density = RefrigerantProperties().get_properties(refrigerant, T_liq)["density_liquid2"]
+
+            velocity_m_s = mass_flow_kg_s / (area_m2 * density)
+
+        else:
+            velocity_m_s = None
+
+        viscosity = RefrigerantProperties().get_properties(refrigerant, T_liq)["viscosity_liquid"]
+    
+        reynolds = (density * velocity_m_s * ID_m) / (viscosity / 1000000)
+    
+        if selected_material in ["Steel SCH40", "Steel SCH80"]:
+            eps = 0.00004572 #0.00015
+        else:
+            eps = 0.000001524 #0.000005
+        
+        tol = 1e-5
+        max_iter = 60
+        
+        if reynolds < 2000.0:
+            f = 64.0 / reynolds
+        else:
+            flo, fhi = 1e-5, 0.1
+            def balance(gg):
+                s = math.sqrt(gg)
+                lhs = 1.0 / s
+                rhs = -2.0 * math.log10((eps / (3.7 * ID_m)) + 2.51 / (reynolds * s))
+                return lhs, rhs
+    
+            f = 0.5 * (flo + fhi)
+            for _ in range(max_iter):
+                f = 0.5 * (flo + fhi)
+                lhs, rhs = balance(f)
+                if abs(1.0 - lhs/rhs) < tol:
+                    break
+                # decide side using sign of (lhs - rhs)
+                if (lhs - rhs) > 0.0:
+                    flo = f
+                else:
+                    fhi = f
+        
+        # dynamic (velocity) pressure, kPa
+        q_kPa = 0.5 * density * (velocity_m_s ** 2) / 1000.0
+    
+        # 1) straight pipe only
+        dp_pipe_kPa = f * (L / ID_m) * q_kPa
+        
+        dp_plf_kPa = q_kPa * PLF
+    
+        required_cols = ["SRB", "LRB", "BALL", "GLOBE"]
+        missing = [c for c in required_cols if c not in selected_pipe_row.index]
+        if missing:
+            st.error(f"CSV missing required K columns: {missing}")
+            st.stop()
+    
+        # Convert to floats and check NaNs
+        try:
+            K_SRB  = float(selected_pipe_row["SRB"])
+            K_LRB  = float(selected_pipe_row["LRB"])
+            K_BALL = float(selected_pipe_row["BALL"])
+            K_GLOBE= float(selected_pipe_row["GLOBE"])
+        except Exception as e:
+            st.error(f"Failed to parse K-factors as numbers: {e}")
+            st.stop()
+    
+        if any(pd.isna([K_SRB, K_LRB, K_BALL, K_GLOBE])):
+            st.error("One or more K-factors are NaN in the CSV row.")
+            st.stop()
+        
+        B_SRB = SRB + 0.5 * _45 + 2.0 * ubend + 3.0 * ptrap
+        B_LRB = LRB + MAC
+    
+        dp_fittings_kPa = q_kPa * (
+        K_SRB   * B_SRB +
+        K_LRB   * B_LRB
+        )
+
+        dp_valves_kPa = q_kPa * (
+        K_BALL  * ball +
+        K_GLOBE * globe
+        )
+        
+        dp_total_kPa = dp_pipe_kPa + dp_fittings_kPa + dp_valves_kPa + dp_plf_kPa
+        
+        converter = PressureTemperatureConverter()
+        condpres = converter.temp_to_pressure(refrigerant, T_cond)
+        postcirc = condpres - (dp_total_kPa / 100)
+        postcirctemp = converter.pressure_to_temp(refrigerant, postcirc)
+        
+        dt = T_cond - postcirctemp
+
+        head = 9.80665 * risem * density / 1000
+        
+        dp_withhead = dp_total_kPa + head
+
+        postall = condpres - (dp_withhead / 100)
+        postalltemp = converter.pressure_to_temp(refrigerant, postall)
+        
+        tall = T_cond - postalltemp
+
+        exsub = T_cond - T_liq
+
+        addsub = max(tall - exsub, 0)
+
+        evappres = converter.temp_to_pressure(refrigerant, T_evap)
+
+        volflow = mass_flow_kg_s / density
+
+        compratio = condpres / evappres
+
+        def _pipe_row_for_size(size_inch: str):
+            """Return the CSV row for a given nominal size, respecting selected gauge if present."""
+            rows = material_df[material_df["Nominal Size (inch)"].astype(str).str.strip() == str(size_inch)]
+            if rows.empty:
+                return None
+            if "Gauge" in rows.columns and rows["Gauge"].notna().any():
+                if "gauge" in st.session_state:
+                    g = st.session_state["gauge"]
+                    rows_g = rows[rows["Gauge"] == g]
+                    if not rows_g.empty:
+                        return rows_g.iloc[0]
+                return rows.iloc[0]
+            return rows.iloc[0]
+        
+        def get_liquid_dt_for_size(size_inch: str) -> float:
+            """
+            Compute ΔT (dt) for a given pipe size using the SAME logic as your main Liquid calc
+            (without static head — use 'dt', not 'tall').
+            Returns float('nan') on any failure.
+            """
+            try:
+                pipe_row = _pipe_row_for_size(size_inch)
+                if pipe_row is None:
+                    return float("nan")
+        
+                ID_mm_local = float(pipe_row["ID_mm"])
+                ID_m_local = ID_mm_local / 1000.0
+                area_m2_local = math.pi * (ID_m_local / 2) ** 2
+        
+                # Properties at liquid temperature (size-independent)
+                density_liq = RefrigerantProperties().get_properties(refrigerant, T_liq)["density_liquid2"]
+                visc_liq = RefrigerantProperties().get_properties(refrigerant, T_liq)["viscosity_liquid"]
+        
+                # Mass flow already computed outside (size-independent)
+                v_local = mass_flow_kg_s / (area_m2_local * density_liq)
+        
+                # Reynolds
+                Re = (density_liq * v_local * ID_m_local) / (visc_liq / 1_000_000)
+        
+                # Roughness by material
+                eps = 0.00004572 if selected_material in ["Steel SCH40", "Steel SCH80"] else 0.000001524
+        
+                # Friction factor (laminar vs Colebrook)
+                if Re < 2000.0 and Re > 0:
+                    f_local = 64.0 / Re
+                else:
+                    flo, fhi = 1e-5, 0.1
+                    tol, max_iter = 1e-5, 60
+        
+                    def bal(gg):
+                        s = math.sqrt(gg)
+                        lhs = 1.0 / s
+                        rhs = -2.0 * math.log10((eps / (3.7 * ID_m_local)) + (2.51 / (Re * s)))
+                        return lhs, rhs
+        
+                    f_local = 0.5 * (flo + fhi)
+                    for _ in range(max_iter):
+                        f_try = 0.5 * (flo + fhi)
+                        lhs, rhs = bal(f_try)
+                        if abs(1.0 - lhs / rhs) < tol:
+                            f_local = f_try
+                            break
+                        if (lhs - rhs) > 0.0:
+                            flo = f_try
+                        else:
+                            fhi = f_try
+                    else:
+                        f_local = 0.5 * (flo + fhi)
+        
+                # Dynamic pressure (kPa)
+                q_kPa_local = 0.5 * density_liq * (v_local ** 2) / 1000.0
+        
+                # K-factors for this size
+                for c in ["SRB", "LRB", "BALL", "GLOBE"]:
+                    if c not in pipe_row.index or pd.isna(pipe_row[c]):
+                        return float("nan")
+                K_SRB   = float(pipe_row["SRB"])
+                K_LRB   = float(pipe_row["LRB"])
+                K_BALL  = float(pipe_row["BALL"])
+                K_GLOBE = float(pipe_row["GLOBE"])
+        
+                # Bend/valve counts
+                B_SRB = SRB + 0.5 * _45 + 2.0 * ubend + 3.0 * ptrap
+                B_LRB = LRB + MAC
+        
+                # Pressure drops (kPa)
+                dp_pipe_kPa_local    = f_local * (L / ID_m_local) * q_kPa_local
+                dp_plf_kPa_local     = q_kPa_local * PLF
+                dp_fittings_kPa_local= q_kPa_local * (K_SRB * B_SRB + K_LRB * B_LRB)
+                dp_valves_kPa_local  = q_kPa_local * (K_BALL * ball    + K_GLOBE * globe)
+        
+                dp_total_kPa_local = dp_pipe_kPa_local + dp_fittings_kPa_local + dp_valves_kPa_local + dp_plf_kPa_local
+        
+                # Convert DP to post-circ temperature and get ΔT
+                conv = PressureTemperatureConverter()
+                condpres_local = conv.temp_to_pressure(refrigerant, T_cond)
+                postcirc_local = condpres_local - (dp_total_kPa_local / 100.0)  # kPa -> bar: /100
+                postcirctemp_local = conv.pressure_to_temp(refrigerant, postcirc_local)
+                dt_local = T_cond - postcirctemp_local
+        
+                return float(dt_local)
+            except Exception:
+                return float("nan")
+        
+        if st.button("Auto-select"):
+            results, errors = [], []
+        
+            for ps in pipe_sizes:
+                dt_i = get_liquid_dt_for_size(ps)
+                if math.isfinite(dt_i):
+                    results.append({"size": ps, "dt": dt_i})
+                else:
+                    errors.append((ps, "Non-numeric ΔT"))
+        
+            if not results:
+                with st.expander("⚠️ Liquid selection debug details", expanded=True):
+                    for ps, msg in errors:
+                        st.write(f"❌ {ps}: {msg}")
+                st.error("No valid pipe size results. Check inputs and CSV rows.")
+            else:
+                # Keep sizes that satisfy the dt limit, pick the smallest OD (mm)
+                valid = [r for r in results if r["dt"] <= max_penalty]
+        
+                if valid:
+                    best = min(valid, key=lambda x: mm_map[x["size"]])
+                    st.session_state["_next_selected_size"] = best["size"]
+                    st.success(
+                        f"✅ Selected liquid pipe size: **{best['size']}**  \n"
+                        f"ΔT: {best['dt']:.3f} K (limit {max_penalty:.3f} K)"
+                    )
+                    st.rerun()
+                else:
+                    best_dt = min(r["dt"] for r in results if math.isfinite(r["dt"]))
+                    st.error(
+                        "❌ No pipe meets the ΔT limit.  \n"
+                        f"Best achievable ΔT = {best_dt:.3f} K (must be ≤ {max_penalty:.3f} K)  \n"
+                        "➡ Relax the Max Penalty or choose a different material/length/fittings."
+                    )
+        
+        st.subheader("Results")
+    
+        if velocity_m_s:
+            col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
+    
+            with col1:
+                st.metric("Refrigerant Velocity", f"{velocity_m_s:.2f}m/s")
+    
+            with col2:
+                st.metric("Liquid Density", f"{density:.1f}kg/m³")
+    
+            with col3:
+                st.metric("Pressure Drop", f"{dp_total_kPa:.2f}kPa")
+    
+            with col4:
+                st.metric("Temp Penalty", f"{dt:.2f}K")
+
+            with col5:
+                st.metric("Additional Subcooling Required", f"{addsub:.2f}K")
+
+            with col6:
+                st.metric("Evaporating Pressure", f"{evappres:.2f}bar(a)")
+
+            with col7:
+                st.metric("Condensing Pressure", f"{condpres:.2f}bar(a)")
+
+            # correcting default values between cond, max liq, and min liq between liquid calcs and dry suction calcs
+            
+            col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
+    
+            with col1:
+                st.metric("Mass Flow Rate", f"{mass_flow_kg_s:.5f}kg/s")
+    
+            with col2:
+                st.metric("Volumetric Flow Rate", f"{volflow:.5f}m³/s")
+    
+            with col3:
+                st.metric("Pipe PD", f"{dp_pipe_kPa:.2f}kPa")
+    
+            with col4:
+                st.metric("Fittings PD", f"{dp_fittings_kPa:.2f}kPa")
+
+            with col5:
+                st.metric("Valves PD", f"{dp_valves_kPa:.2f}kPa")
+
+            with col6:
+                st.metric("Velocity Pressure PD", f"{dp_plf_kPa:.2f}kPa")
+
+            with col7:
+                st.metric("Compression Ratio", f"{compratio:.2f}")
