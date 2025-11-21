@@ -4019,13 +4019,13 @@ elif tool_selection == "Manual Calculation":
         
         converter = PressureTemperatureConverter()
         evappres = converter.temp_to_pressure(refrigerant, T_evap)
-        postcirc = condpres - (dp_total_kPa / 100)
+        postcirc = evappres - (dp_total_kPa / 100)
 
         head = 9.80665 * risem * density / 1000
         
         dp_withhead = dp_total_kPa + head
 
-        postall = condpres - (dp_withhead / 100)
+        postall = evappres - (dp_withhead / 100)
 
         volflow = mass_flow_kg_s / density
         
