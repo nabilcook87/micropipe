@@ -3926,7 +3926,7 @@ elif tool_selection == "Manual Calculation":
         h_out = props.get_properties(refrigerant, T_evap)["enthalpy_vapor"]
         deltah = h_out - h_in
 
-        mass_flow_kg_s = (evap_capacity_kw / delta_h) * (1 + (liq_oq / 100)) if delta_h > 0 else 0.01
+        mass_flow_kg_s = (evap_capacity_kw / deltah) * (1 + (liq_oq / 100)) if deltah > 0 else 0.01
     
         if ID_mm is not None:
             ID_m = ID_mm / 1000.0
