@@ -4025,14 +4025,20 @@ elif tool_selection == "Manual Calculation":
         
         dp_withhead = dp_total_kPa + head
 
+        dp_withhead_bar = dp_withhead / 100
+
         postall = evappres - (dp_withhead / 100)
 
         volflow = mass_flow_kg_s / density
+
+        mf3600 = mass_flow_kg_s * 3600
+
+        vf3600 = volflow * 3600
         
         st.subheader("Results")
     
         if velocity_m_s:
-            col1, col2, col3, col4, col5 = st.columns(5)
+            col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
     
             with col1:
                 st.metric("Refrigerant Velocity", f"{velocity_m_s:.2f}m/s")
@@ -4047,11 +4053,17 @@ elif tool_selection == "Manual Calculation":
                 st.metric("Pressure Drop", f"{dp_total_kPa:.2f}kPa")
 
             with col5:
-                st.metric("Evaporating Pressure", f"{evappres:.2f}bar(a)")
+                st.metric("Liquid Pressure", f"{evappres:.2f}bar(a)")
+
+            with col6:
+                st.metric("System Pump Head", f"{dp_withhead_bar:.3f}bar")
+
+            with col7:
+                st.empty()
 
             # correcting default values between cond, max liq, and min liq between liquid calcs and dry suction calcs
             
-            col1, col2, col3, col4, col5 = st.columns(5)
+            col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
     
             with col1:
                 st.metric("Mass Flow Rate", f"{mass_flow_kg_s:.5f}kg/s")
@@ -4067,3 +4079,8 @@ elif tool_selection == "Manual Calculation":
 
             with col5:
                 st.metric("Velocity Pressure PD", f"{dp_plf_kPa:.2f}kPa")
+
+            with col6:
+                st.empty()
+            with col7:
+                st.empty()
