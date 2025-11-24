@@ -4072,7 +4072,7 @@ elif tool_selection == "Manual Calculation":
                 st.metric("Mass Flow Rate", f"{mf3600:.0f}kg/hr")
     
             with col3:
-                st.empty()
+                st.metric("Volumetric Flow Rate", f"{vf3600:.3f}m³/hr")
 
             with col4:
                 st.metric("Pipe PD", f"{dp_pipe_kPa:.2f}kPa")
