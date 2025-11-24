@@ -4052,7 +4052,7 @@ elif tool_selection == "Manual Calculation":
                 st.metric("Volumetric Flow Rate", f"{volflow:.5f}m³/s")
     
             with col4:
-                st.metric("Volumetric Flow Rate", f"{vf_lpm:.0f}litres/min")
+                st.metric("Volumetric Flow Rate", f"{vf_lpm:.2f}lpm")
 
             with col5:
                 st.metric("Pressure Drop", f"{dp_total_kPa:.2f}kPa")
