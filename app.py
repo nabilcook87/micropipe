@@ -3922,7 +3922,7 @@ elif tool_selection == "Manual Calculation":
     
         props = RefrigerantProperties()
 
-        h_in = props.get_properties(refrigerant, T_evap)["enthalpy_liquid"]
+        h_in = props.get_properties(refrigerant, T_evap)["enthalpy_liquid2"]
         h_out = props.get_properties(refrigerant, T_evap)["enthalpy_vapor"]
         deltah = h_out - h_in
 
@@ -3933,14 +3933,14 @@ elif tool_selection == "Manual Calculation":
 
             area_m2 = math.pi * (ID_m / 2) ** 2
 
-            density = RefrigerantProperties().get_properties(refrigerant, T_evap)["density_liquid"]
+            density = RefrigerantProperties().get_properties(refrigerant, T_evap)["density_liquid2"]
 
             velocity_m_s = mass_flow_kg_s / (area_m2 * density)
 
         else:
             velocity_m_s = None
 
-        viscosity = RefrigerantProperties().get_properties(refrigerant, T_evap)["viscosity_liquid3"]
+        viscosity = RefrigerantProperties().get_properties(refrigerant, T_evap)["viscosity_liquid"]
     
         reynolds = (density * velocity_m_s * ID_m) / (viscosity / 1000000)
     
