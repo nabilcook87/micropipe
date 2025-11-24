@@ -4034,6 +4034,8 @@ elif tool_selection == "Manual Calculation":
         mf3600 = mass_flow_kg_s * 3600
 
         vf3600 = volflow * 3600
+
+        vf_lpm = volflow * 60000
         
         st.subheader("Results")
     
@@ -4050,16 +4052,16 @@ elif tool_selection == "Manual Calculation":
                 st.metric("Volumetric Flow Rate", f"{volflow:.5f}m³/s")
     
             with col4:
-                st.metric("Pressure Drop", f"{dp_total_kPa:.2f}kPa")
+                st.metric("Volumetric Flow Rate", f"{vf_lpm:.0f}litres/min")
 
             with col5:
-                st.metric("Liquid Pressure", f"{evappres:.2f}bar(a)")
+                st.metric("Pressure Drop", f"{dp_total_kPa:.2f}kPa")
 
             with col6:
-                st.metric("System Pump Head", f"{dp_withhead_bar:.3f}bar")
+                st.metric("Liquid Pressure", f"{evappres:.2f}bar(a)")
 
             with col7:
-                st.empty()
+                st.metric("System Pump Head", f"{dp_withhead_bar:.3f}bar")
 
             # correcting default values between cond, max liq, and min liq between liquid calcs and dry suction calcs
             
