@@ -3940,7 +3940,7 @@ elif tool_selection == "Manual Calculation":
         else:
             velocity_m_s = None
 
-        viscosity = RefrigerantProperties().get_properties(refrigerant, T_evap)["viscosity_liquid"]
+        viscosity = RefrigerantProperties().get_properties(refrigerant, T_evap)["viscosity_liquid3"]
     
         reynolds = (density * velocity_m_s * ID_m) / (viscosity / 1000000)
     
