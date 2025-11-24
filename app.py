@@ -4018,7 +4018,7 @@ elif tool_selection == "Manual Calculation":
         dp_total_kPa = dp_pipe_kPa + dp_fittings_kPa + dp_valves_kPa + dp_plf_kPa
         
         converter = PressureTemperatureConverter()
-        evappres = converter.temp_to_pressure(refrigerant, T_evap)
+        evappres = converter.temp_to_pressure2(refrigerant, T_evap)
         postcirc = evappres - (dp_total_kPa / 100)
 
         head = 9.80665 * risem * density / 1000
