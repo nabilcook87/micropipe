@@ -3409,13 +3409,13 @@ elif tool_selection == "Manual Calculation":
         d_liq1 = props.get_properties(refrigerant, T_evap)["density_liquid"]
         d_vap1 = props.get_properties(refrigerant, T_evap)["density_vapor"]
 
-        v_liq1 = props.get_properties(refrigerant, T_evap)["viscosity_liquid"] / 1000000
+        v_liq1 = props.get_properties(refrigerant, T_evap)["viscosity_liquid3"] / 1000000
         v_vap1 = RefrigerantViscosities().get_viscosity(refrigerant, T_evap + 273.15, 0) / 1000000
 
         d_liq2 = props.get_properties(refrigerant, T_evap - max_penalty)["density_liquid"]
         d_vap2 = props.get_properties(refrigerant, T_evap - max_penalty)["density_vapor"]
 
-        v_liq2 = props.get_properties(refrigerant, T_evap - max_penalty)["viscosity_liquid"] / 1000000
+        v_liq2 = props.get_properties(refrigerant, T_evap - max_penalty)["viscosity_liquid3"] / 1000000
         v_vap2 = RefrigerantViscosities().get_viscosity(refrigerant, T_evap + 273.15 - max_penalty, 0) / 1000000
 
         d_liq = (d_liq1 + d_liq2) / 2
@@ -3575,11 +3575,11 @@ elif tool_selection == "Manual Calculation":
         
                 d_liq1 = props.get_properties(refrigerant, T_evap_local)["density_liquid"]
                 d_vap1 = props.get_properties(refrigerant, T_evap_local)["density_vapor"]
-                v_liq1 = props.get_properties(refrigerant, T_evap_local)["viscosity_liquid"] / 1_000_000
+                v_liq1 = props.get_properties(refrigerant, T_evap_local)["viscosity_liquid3"] / 1_000_000
                 v_vap1 = RefrigerantViscosities().get_viscosity(refrigerant, T_evap_local + 273.15, 0) / 1_000_000
                 d_liq2 = props.get_properties(refrigerant, T_evap_local - max_penalty)["density_liquid"]
                 d_vap2 = props.get_properties(refrigerant, T_evap_local - max_penalty)["density_vapor"]
-                v_liq2 = props.get_properties(refrigerant, T_evap_local - max_penalty)["viscosity_liquid"] / 1_000_000
+                v_liq2 = props.get_properties(refrigerant, T_evap_local - max_penalty)["viscosity_liquid3"] / 1_000_000
                 v_vap2 = RefrigerantViscosities().get_viscosity(refrigerant, T_evap_local + 273.15 - max_penalty, 0) / 1_000_000
         
                 d_liq = (d_liq1 + d_liq2) / 2
