@@ -4069,18 +4069,19 @@ elif tool_selection == "Manual Calculation":
                 st.metric("Mass Flow Rate", f"{mass_flow_kg_s:.5f}kg/s")
     
             with col2:
-                st.metric("Pipe PD", f"{dp_pipe_kPa:.2f}kPa")
+                st.metric("Mass Flow Rate", f"{mf3600:.0f}kg/hr")
     
             with col3:
-                st.metric("Fittings PD", f"{dp_fittings_kPa:.2f}kPa")
+                st.empty()
 
             with col4:
-                st.metric("Valves PD", f"{dp_valves_kPa:.2f}kPa")
+                st.metric("Pipe PD", f"{dp_pipe_kPa:.2f}kPa")
 
             with col5:
-                st.metric("Velocity Pressure PD", f"{dp_plf_kPa:.2f}kPa")
+                st.metric("Fittings PD", f"{dp_fittings_kPa:.2f}kPa")
 
             with col6:
-                st.empty()
+                st.metric("Valves PD", f"{dp_valves_kPa:.2f}kPa")
+                
             with col7:
-                st.empty()
+                st.metric("Velocity Pressure PD", f"{dp_plf_kPa:.2f}kPa")
