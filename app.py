@@ -3949,6 +3949,11 @@ elif tool_selection == "Manual Calculation":
             # if Streamlit kept the selection, use it
             default_index = pipe_sizes.index(ss.selected_size)
         
+        if "_next_selected_size" in ss:
+            if ss["_next_selected_size"] in pipe_sizes:
+                ss.selected_size = ss["_next_selected_size"]
+            del ss["_next_selected_size"]
+        
         with col1:
             selected_size = st.selectbox(
                 "Nominal Pipe Size (inch)",
