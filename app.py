@@ -4038,6 +4038,38 @@ elif tool_selection == "Manual Calculation":
         vf_lpm = volflow * 60000
 
         max_ppd_kpa = max_ppd * 100
+
+        # -------- Auto-select smallest pipe size meeting dp ≤ max_ppd_kpa --------
+        if st.button("Auto-select"):
+            results = []
+            errors = []
+        
+            for ps in pipe_sizes:
+                dp_i = get_pumped_dp_for_size(ps)
+                if math.isfinite(dp_i):
+                    results.append({"size": ps, "dp": dp_i})
+                else:
+                    errors.append((ps, "Non-numeric DP"))
+        
+            if not results:
+                st.error("No valid pipe results. Check CSV or input data.")
+            else:
+                valid = [r for r in results if r["dp"] <= max_ppd_kpa]
+        
+                if valid:
+                    best = min(valid, key=lambda x: mm_map[x["size"]])
+                    st.session_state["_next_selected_size"] = best["size"]
+                    st.success(
+                        f"✅ Selected pumped liquid pipe size: **{best['size']}**\n"
+                        f"Pressure Drop: {best['dp']:.2f} kPa (limit {max_ppd_kpa:.2f} kPa)"
+                    )
+                    st.rerun()
+                else:
+                    best_dp = min(r["dp"] for r in results)
+                    st.error(
+                        f"❌ No pipe meets the pressure-drop limit.\n"
+                        f"Best achievable: {best_dp:.2f} kPa (limit {max_ppd_kpa:.2f} kPa)."
+                    )
         
         st.subheader("Results")
     
