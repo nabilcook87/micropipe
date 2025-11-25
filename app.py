@@ -4036,6 +4036,8 @@ elif tool_selection == "Manual Calculation":
         vf3600 = volflow * 3600
 
         vf_lpm = volflow * 60000
+
+        max_ppd_kpa = max_ppd * 100
         
         st.subheader("Results")
     
