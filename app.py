@@ -3841,7 +3841,98 @@ elif tool_selection == "Manual Calculation":
                 return rows.iloc[0]
         
             return rows.iloc[0]
-    
+
+        # -------- helper: recompute dp_total_kPa for any pipe size --------
+        def get_pumped_dp_for_size(size_inch: str) -> float:
+            """
+            Returns dp_total_kPa for a given size using the EXACT SAME PHYSICS AND EQUATIONS
+            as the Pumped Liquid main calculation block.
+            """
+        
+            try:
+                row = _pipe_row_for_size(size_inch)
+                if row is None:
+                    return float("nan")
+        
+                # Extract diameter
+                ID_mm_local = float(row["ID_mm"])
+                ID_m_local = ID_mm_local / 1000.0
+                A_local = math.pi * (ID_m_local / 2)**2
+        
+                # SAME liquid density & viscosity
+                rho = RefrigerantProperties().get_properties(refrigerant, T_evap)["density_liquid2"]
+                visc = RefrigerantProperties().get_properties(refrigerant, T_evap)["viscosity_liquid"]
+        
+                # SAME mass flow
+                m_dot = (
+                    evap_capacity_kw / deltah * (1 + liq_oq / 100)
+                    if deltah > 0 else 0.01
+                )
+        
+                # Velocity
+                v = m_dot / (A_local * rho)
+        
+                # Reynolds
+                Re = (rho * v * ID_m_local) / (visc / 1_000_000)
+        
+                # Roughness
+                eps = 0.00004572 if selected_material in ["Steel SCH40", "Steel SCH80"] else 0.000001524
+        
+                # Friction factor identical method
+                if Re < 2000:
+                    f_local = 64.0 / Re
+                else:
+                    flo, fhi = 1e-5, 0.1
+                    tol, max_iter = 1e-5, 60
+        
+                    def bal(ff):
+                        s = math.sqrt(ff)
+                        lhs = 1.0 / s
+                        rhs = -2.0 * math.log10((eps / (3.7 * ID_m_local)) + 2.51 / (Re * s))
+                        return lhs, rhs
+        
+                    f_local = 0.5 * (flo + fhi)
+                    for _ in range(max_iter):
+                        f_try = 0.5 * (flo + fhi)
+                        lhs, rhs = bal(f_try)
+                        if abs(1 - lhs / rhs) < tol:
+                            f_local = f_try
+                            break
+        
+                        if (lhs - rhs) > 0:
+                            flo = f_try
+                        else:
+                            fhi = f_try
+        
+                # Dynamic pressure (kPa)
+                q_kPa_local = 0.5 * rho * v**2 / 1000.0
+        
+                # K-factors
+                try:
+                    K_SRB   = float(row["SRB"])
+                    K_LRB   = float(row["LRB"])
+                    K_BALL  = float(row["BALL"])
+                    K_GLOBE = float(row["GLOBE"])
+                except:
+                    return float("nan")
+        
+                # Bend factors identical to main block
+                B_SRB = SRB + 0.5 * _45 + 2*ubend + 3*ptrap
+                B_LRB = LRB + MAC
+        
+                # Pressure drops
+                dp_pipe_local = f_local * (L / ID_m_local) * q_kPa_local
+                dp_plf_local  = q_kPa_local * PLF
+                dp_fit_local  = q_kPa_local * (K_SRB * B_SRB + K_LRB * B_LRB)
+                dp_valv_local = q_kPa_local * (K_BALL * ball + K_GLOBE * globe)
+        
+                dp_total_local = dp_pipe_local + dp_fit_local + dp_valv_local + dp_plf_local
+        
+                return float(dp_total_local)
+        
+            except Exception:
+                return float("nan")
+        
         # choose default index
         def _closest_index(target_mm: float) -> int:
             mm_list = [mm_map[s] for s in pipe_sizes]
