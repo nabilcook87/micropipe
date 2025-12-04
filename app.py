@@ -648,7 +648,7 @@ elif tool_selection == "Manual Calculation":
     
         with col1:
             refrigerant = st.selectbox("Refrigerant", [
-                "R404A", "R134a", "R407F", "R744", "R410A",
+                "R404A", "R134a", "R407F", "R744", "R744 TC", "R410A",
                 "R407C", "R507A", "R448A", "R449A", "R22", "R32", "R454A", "R454C", "R455A", "R407A",
                 "R290", "R1270", "R600a", "R717", "R1234ze", "R1234yf", "R12", "R11", "R454B", "R450A", "R513A", "R23", "R508B", "R502"
             ])
@@ -858,26 +858,38 @@ elif tool_selection == "Manual Calculation":
         from utils.refrigerant_properties import RefrigerantProperties
         from utils.refrigerant_densities import RefrigerantDensities
         from utils.refrigerant_viscosities import RefrigerantViscosities
+        from utils.supercompliq_co2 import RefrigerantProps
         from utils.pipe_length_volume_calc import get_pipe_id_mm
         from utils.oil_return_checker import check_oil_return
     
         T_evap = evaporating_temp
         T_cond = maxliq_temp
+
+        if refrigerant == "R744 TC":
+        
+            props_sup = RefrigerantProps()
+            h_in = props.get_enthalpy_sup(80, -5)
+            h_inmin = props.get_enthalpy_sup(80, -5)
+            h_evap = props.get_properties("R744", T_evap)["enthalpy_vapor"]
+            h_10K = props.get_properties("R744", T_evap)["enthalpy_super"]
     
-        props = RefrigerantProperties()
-        h_in = props.get_properties(refrigerant, T_cond)["enthalpy_liquid2"]
-        #st.write("h_in:", h_in)
-        # for velocity
-        h_inmin = props.get_properties(refrigerant, minliq_temp)["enthalpy_liquid2"]
-        #st.write("h_inmin:", h_inmin)
-        h_inlet = props.get_properties(refrigerant, T_cond)["enthalpy_liquid"]
-        #st.write("h_inlet:", h_inlet)
-        h_inletmin = props.get_properties(refrigerant, minliq_temp)["enthalpy_liquid"]
-        #st.write("h_inletmin:", h_inletmin)
-        h_evap = props.get_properties(refrigerant, T_evap)["enthalpy_vapor"]
-        #st.write("h_evap:", h_evap)
-        h_10K = props.get_properties(refrigerant, T_evap)["enthalpy_super"]
-        #st.write("h_10K:", h_10K)
+        else:
+            
+            props = RefrigerantProperties()
+            h_in = props.get_properties(refrigerant, T_cond)["enthalpy_liquid2"]
+            #st.write("h_in:", h_in)
+            # for velocity
+            h_inmin = props.get_properties(refrigerant, minliq_temp)["enthalpy_liquid2"]
+            #st.write("h_inmin:", h_inmin)
+            h_inlet = props.get_properties(refrigerant, T_cond)["enthalpy_liquid"]
+            #st.write("h_inlet:", h_inlet)
+            h_inletmin = props.get_properties(refrigerant, minliq_temp)["enthalpy_liquid"]
+            #st.write("h_inletmin:", h_inletmin)
+            h_evap = props.get_properties(refrigerant, T_evap)["enthalpy_vapor"]
+            #st.write("h_evap:", h_evap)
+            h_10K = props.get_properties(refrigerant, T_evap)["enthalpy_super"]
+            #st.write("h_10K:", h_10K)
+        
         hdiff_10K = h_10K - h_evap
         #st.write("hdiff_10K:", hdiff_10K)
         hdiff_custom = hdiff_10K * min(max(superheat_K, 5), 30) / 10
