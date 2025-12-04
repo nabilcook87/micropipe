@@ -413,20 +413,32 @@ elif tool_selection == "Oil Return Checker":
         #st.write("ID_m:", ID_m)
         area_m2 = math.pi * (ID_m / 2) ** 2
         #st.write("area_m2:", area_m2)
-        density_super = RefrigerantDensities().get_density(refrigerant, T_evap - max_penalty + 273.15, superheat_K)
-        #st.write("density_super:", density_super)
-        density_super2a = RefrigerantDensities().get_density(refrigerant, T_evap + 273.15, ((superheat_K + 5) / 2))
-        #st.write("density_super2a:", density_super2a)
-        density_super2b = RefrigerantDensities().get_density(refrigerant, T_evap - max_penalty + 273.15, ((superheat_K + 5) / 2))
-        #st.write("density_super2b:", density_super2b)
-        density_super2 = (density_super2a + density_super2b) / 2
-        #st.write("density_super2:", density_super2)
-        density_super_foroil = RefrigerantDensities().get_density(refrigerant, T_evap + 273.15, min(max(superheat_K, 5), 30))
-        #st.write("density_super_foroil:", density_super_foroil)
-        density_sat = RefrigerantProperties().get_properties(refrigerant, T_evap)["density_vapor"]
-        #st.write("density_sat:", density_sat)
-        density_5K = RefrigerantDensities().get_density(refrigerant, T_evap + 273.15, 5)
-        #st.write("density_5K:", density_5K)
+
+        if refrigerant == "R744 TC":
+            density_super = RefrigerantDensities().get_density("R744", T_evap - max_penalty + 273.15, superheat_K)
+            density_super2a = RefrigerantDensities().get_density("R744", T_evap + 273.15, ((superheat_K + 5) / 2))
+            density_super2b = RefrigerantDensities().get_density("R744", T_evap - max_penalty + 273.15, ((superheat_K + 5) / 2))
+            density_super2 = (density_super2a + density_super2b) / 2
+            density_super_foroil = RefrigerantDensities().get_density("R744", T_evap + 273.15, min(max(superheat_K, 5), 30))
+            density_sat = RefrigerantProperties().get_properties("R744", T_evap)["density_vapor"]
+            density_5K = RefrigerantDensities().get_density("R744", T_evap + 273.15, 5)    
+    
+        else:
+            density_super = RefrigerantDensities().get_density(refrigerant, T_evap - max_penalty + 273.15, superheat_K)
+            #st.write("density_super:", density_super)
+            density_super2a = RefrigerantDensities().get_density(refrigerant, T_evap + 273.15, ((superheat_K + 5) / 2))
+            #st.write("density_super2a:", density_super2a)
+            density_super2b = RefrigerantDensities().get_density(refrigerant, T_evap - max_penalty + 273.15, ((superheat_K + 5) / 2))
+            #st.write("density_super2b:", density_super2b)
+            density_super2 = (density_super2a + density_super2b) / 2
+            #st.write("density_super2:", density_super2)
+            density_super_foroil = RefrigerantDensities().get_density(refrigerant, T_evap + 273.15, min(max(superheat_K, 5), 30))
+            #st.write("density_super_foroil:", density_super_foroil)
+            density_sat = RefrigerantProperties().get_properties(refrigerant, T_evap)["density_vapor"]
+            #st.write("density_sat:", density_sat)
+            density_5K = RefrigerantDensities().get_density(refrigerant, T_evap + 273.15, 5)
+            #st.write("density_5K:", density_5K)
+        
         density = (density_super + density_5K) / 2
         #st.write("density:", density)
         density_foroil = (density_super_foroil + density_sat) / 2
