@@ -1063,6 +1063,7 @@ elif tool_selection == "Manual Calculation":
             #st.write("MOR_correctliq:", MOR_correctliq)
             #st.write("evapoil:", evapoil)
             if refrigerant == "R744": MOR_correction = (0.000225755013421421 * MOR_correctliq) - 0.00280879370374927
+            elif refrigerant == "R744 TC": MOR_correction = (0.0000603336117708171 * h_in) - 0.0142318718120024
             elif refrigerant == "R407A": MOR_correction = (0.00000414431651323856 * (MOR_correctliq ** 2)) + (0.000381908525139781 * MOR_correctliq) - 0.0163450053041212
             elif refrigerant == "R449A": MOR_correction = (0.00000414431651323856 * (MOR_correctliq ** 2)) + (0.000381908525139781 * MOR_correctliq) - 0.0163450053041212
             elif refrigerant == "R448A": MOR_correction = (0.00000414431651323856 * (MOR_correctliq ** 2)) + (0.000381908525139781 * MOR_correctliq) - 0.0163450053041212
@@ -1078,6 +1079,7 @@ elif tool_selection == "Manual Calculation":
             #st.write("MOR_correction:", MOR_correction)
     
             if refrigerant == "R744": MOR_correctionmin = (0.000225755013421421 * MOR_correctliqmin) - 0.00280879370374927
+            elif refrigerant == "R744 TC": MOR_correctionmin = (0.0000603336117708171 * h_inmin) - 0.0142318718120024
             elif refrigerant == "R407A": MOR_correctionmin = (0.00000414431651323856 * (MOR_correctliqmin ** 2)) + (0.000381908525139781 * MOR_correctliqmin) - 0.0163450053041212
             elif refrigerant == "R449A": MOR_correctionmin = (0.00000414431651323856 * (MOR_correctliqmin ** 2)) + (0.000381908525139781 * MOR_correctliqmin) - 0.0163450053041212
             elif refrigerant == "R448A": MOR_correctionmin = (0.00000414431651323856 * (MOR_correctliqmin ** 2)) + (0.000381908525139781 * MOR_correctliqmin) - 0.0163450053041212
