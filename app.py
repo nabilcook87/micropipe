@@ -1350,14 +1350,26 @@ elif tool_selection == "Manual Calculation":
             # ---- Densities (same as page) ----
             dens = RefrigerantDensities()
             props = RefrigerantProperties()
+            props_sup = RefrigerantProps()
         
-            density_super = dens.get_density(refrigerant, T_evap - max_penalty + 273.15, superheat_K)
-            density_super2a = dens.get_density(refrigerant, T_evap + 273.15, ((superheat_K + 5) / 2))
-            density_super2b = dens.get_density(refrigerant, T_evap - max_penalty + 273.15, ((superheat_K + 5) / 2))
-            density_super2 = (density_super2a + density_super2b) / 2
-            density_super_foroil = dens.get_density(refrigerant, T_evap + 273.15, min(max(superheat_K, 5), 30))
-            density_sat = props.get_properties(refrigerant, T_evap)["density_vapor"]
-            density_5K = dens.get_density(refrigerant, T_evap + 273.15, 5)
+            if refrigerant == "R744 TC":
+                density_super = dens.get_density("R744", T_evap - max_penalty + 273.15, superheat_K)
+                density_super2a = dens.get_density("R744", T_evap + 273.15, ((superheat_K + 5) / 2))
+                density_super2b = dens.get_density("R744", T_evap - max_penalty + 273.15, ((superheat_K + 5) / 2))
+                density_super2 = (density_super2a + density_super2b) / 2
+                density_super_foroil = dens.get_density("R744", T_evap + 273.15, min(max(superheat_K, 5), 30))
+                density_sat = props.get_properties("R744", T_evap)["density_vapor"]
+                density_5K = dens.get_density("R744", T_evap + 273.15, 5)
+                
+            else:
+                density_super = dens.get_density(refrigerant, T_evap - max_penalty + 273.15, superheat_K)
+                density_super2a = dens.get_density(refrigerant, T_evap + 273.15, ((superheat_K + 5) / 2))
+                density_super2b = dens.get_density(refrigerant, T_evap - max_penalty + 273.15, ((superheat_K + 5) / 2))
+                density_super2 = (density_super2a + density_super2b) / 2
+                density_super_foroil = dens.get_density(refrigerant, T_evap + 273.15, min(max(superheat_K, 5), 30))
+                density_sat = props.get_properties(refrigerant, T_evap)["density_vapor"]
+                density_5K = dens.get_density(refrigerant, T_evap + 273.15, 5)
+                    
             density = (density_super + density_5K) / 2
             density_foroil = (density_super_foroil + density_sat) / 2
         
@@ -1368,16 +1380,24 @@ elif tool_selection == "Manual Calculation":
             try:
                 _ = mass_flow_kg_s  # noqa: F401
             except NameError:
-                h_in = props.get_properties(refrigerant, T_cond)["enthalpy_liquid2"]
-                h_inmin = props.get_properties(refrigerant, minliq_temp)["enthalpy_liquid2"]
-                h_evap = props.get_properties(refrigerant, T_evap)["enthalpy_vapor"]
-                h_10K = props.get_properties(refrigerant, T_evap)["enthalpy_super"]
+                if refrigerant == "R744 TC":
+                    h_in = props_sup.get_enthalpy_sup(80, -5)
+                    h_inmin = props_sup.get_enthalpy_sup(80, -5)
+                    h_inlet = h_in
+                    h_inletmin = h_inmin
+                    h_evap = props.get_properties("R744", T_evap)["enthalpy_vapor"]
+                    h_10K = props.get_properties("R744", T_evap)["enthalpy_super"]
+                else:
+                    h_in = props.get_properties(refrigerant, T_cond)["enthalpy_liquid2"]
+                    h_inmin = props.get_properties(refrigerant, minliq_temp)["enthalpy_liquid2"]
+                    h_inlet = props.get_properties(refrigerant, T_cond)["enthalpy_liquid"]
+                    h_inletmin = props.get_properties(refrigerant, minliq_temp)["enthalpy_liquid"]
+                    h_evap = props.get_properties(refrigerant, T_evap)["enthalpy_vapor"]
+                    h_10K = props.get_properties(refrigerant, T_evap)["enthalpy_super"]
                 hdiff_10K = h_10K - h_evap
                 hdiff_custom = hdiff_10K * min(max(superheat_K, 5), 30) / 10
                 h_super = h_evap + hdiff_custom
-                h_inlet = props.get_properties(refrigerant, T_cond)["enthalpy_liquid"]
-                h_inletmin = props.get_properties(refrigerant, minliq_temp)["enthalpy_liquid"]
-        
+                
                 delta_h = h_evap - h_in
                 delta_hmin = h_evap - h_inmin
                 h_foroil = (h_evap + h_super) / 2
@@ -1396,6 +1416,8 @@ elif tool_selection == "Manual Calculation":
             v2min = mass_flow_kg_smin / (area_m2_local * density_super2)
         
             if refrigerant == "R744":
+                velocity1_prop = 1
+            elif refrigerant == "R744 TC":
                 velocity1_prop = 1
             elif refrigerant == "R404A":
                 velocity1_prop = (0.0328330590542629 * superheat_K) - 1.47748765744183 if superheat_K > 45 else 0
@@ -1432,7 +1454,7 @@ elif tool_selection == "Manual Calculation":
                 "R12": 0.8735441986466, "R11": 0.864493203834913, "R454B": 0.869102255850291,
                 "R450A": 0.865387140496035, "R513A": 0.861251244627232, "R454A": 0.868161104592492,
                 "R455A": 0.865687329727713, "R454C": 0.866423016875524, "R32": 0.875213309852597,
-                "R23": 0.865673418568001, "R508B": 0.864305626845382,
+                "R23": 0.865673418568001, "R508B": 0.864305626845382, "R744 TC": 0.877950613678719,
             }
             jg_half = jg_map.get(refrigerant, 0.865)
         
@@ -1455,6 +1477,8 @@ elif tool_selection == "Manual Calculation":
             # First correction vs liquid temp
             if refrigerant == "R744":
                 MOR_correction = (0.000225755013421421 * MOR_correctliq) - 0.00280879370374927
+            elif refrigerant == "R744 TC":
+                MOR_correction = (0.0000603336117708171 * h_in) - 0.0142318718120024
             elif refrigerant in ["R407A", "R449A", "R448A", "R502"]:
                 MOR_correction = (0.00000414431651323856 * (MOR_correctliq ** 2)) + (0.000381908525139781 * MOR_correctliq) - 0.0163450053041212
             elif refrigerant == "R507A":
@@ -1476,6 +1500,8 @@ elif tool_selection == "Manual Calculation":
         
             if refrigerant == "R744":
                 MOR_correctionmin = (0.000225755013421421 * MOR_correctliqmin) - 0.00280879370374927
+            elif refrigerant == "R744 TC":
+                MOR_correctionmin = (0.0000603336117708171 * h_inmin) - 0.0142318718120024
             elif refrigerant in ["R407A", "R449A", "R448A", "R502"]:
                 MOR_correctionmin = (0.00000414431651323856 * (MOR_correctliqmin ** 2)) + (0.000381908525139781 * MOR_correctliqmin) - 0.0163450053041212
             elif refrigerant == "R507A":
@@ -1497,6 +1523,8 @@ elif tool_selection == "Manual Calculation":
         
             # Second correction vs evap temp
             if refrigerant == "R744":
+                MOR_correction2 = (-0.0000176412848988908 * (evapoil ** 2)) - (0.00164308248808803 * evapoil) - 0.0184308798286039
+            elif refrigerant == "R744 TC":
                 MOR_correction2 = (-0.0000176412848988908 * (evapoil ** 2)) - (0.00164308248808803 * evapoil) - 0.0184308798286039
             elif refrigerant == "R407A":
                 MOR_correction2 = (-0.000864076433837511 * evapoil) - 0.0145018190416687
@@ -1544,11 +1572,20 @@ elif tool_selection == "Manual Calculation":
                 density_recalc_local = density  # fallback
         
             visc = RefrigerantViscosities()
-            viscosity_super = visc.get_viscosity(refrigerant, T_evap - max_penalty + 273.15, superheat_K)
-            viscosity_super2a = visc.get_viscosity(refrigerant, T_evap + 273.15, ((superheat_K + 5) / 2))
-            viscosity_super2b = visc.get_viscosity(refrigerant, T_evap - max_penalty + 273.15, ((superheat_K + 5) / 2))
-            viscosity_super2 = (viscosity_super2a + viscosity_super2b) / 2
-            viscosity_5K = visc.get_viscosity(refrigerant, T_evap + 273.15, 5)
+            
+            if refrigerant == "R744 TC":
+                viscosity_super = visc.get_viscosity("R744", T_evap - max_penalty + 273.15, superheat_K)
+                viscosity_super2a = visc.get_viscosity("R744", T_evap + 273.15, ((superheat_K + 5) / 2))
+                viscosity_super2b = visc.get_viscosity("R744", T_evap - max_penalty + 273.15, ((superheat_K + 5) / 2))
+                viscosity_super2 = (viscosity_super2a + viscosity_super2b) / 2
+                viscosity_5K = visc.get_viscosity("R744", T_evap + 273.15, 5)
+
+            else:
+                viscosity_super = visc.get_viscosity(refrigerant, T_evap - max_penalty + 273.15, superheat_K)
+                viscosity_super2a = visc.get_viscosity(refrigerant, T_evap + 273.15, ((superheat_K + 5) / 2))
+                viscosity_super2b = visc.get_viscosity(refrigerant, T_evap - max_penalty + 273.15, ((superheat_K + 5) / 2))
+                viscosity_super2 = (viscosity_super2a + viscosity_super2b) / 2
+                viscosity_5K = visc.get_viscosity(refrigerant, T_evap + 273.15, 5)
             viscosity = (viscosity_super + viscosity_5K) / 2
             viscosity_final = (viscosity * velocity1_prop) + (viscosity_super2 * (1 - velocity1_prop))
         
@@ -1606,9 +1643,15 @@ elif tool_selection == "Manual Calculation":
             dp_total_kPa_local = dp_pipe_kPa_local + dp_fittings_kPa_local + dp_valves_kPa_local + dp_plf_kPa_local
         
             converter = PressureTemperatureConverter()
-            evappres_local = converter.temp_to_pressure(refrigerant, T_evap)
+            if refrigerant == "R744 TC":
+                evappres_local = converter.temp_to_pressure("R744", T_evap)
+            else:
+                evappres_local = converter.temp_to_pressure(refrigerant, T_evap)
             postcirc_local = evappres_local - (dp_total_kPa_local / 100)
-            postcirctemp_local = converter.pressure_to_temp(refrigerant, postcirc_local)
+            if refrigerant == "R744 TC":
+                postcirctemp_local = converter.pressure_to_temp("R744", postcirc_local)
+            else:
+                postcirctemp_local = converter.pressure_to_temp(refrigerant, postcirc_local)
             dt_local = T_evap - postcirctemp_local
         
             # ---- Numeric return (handle blank MOR) ----
