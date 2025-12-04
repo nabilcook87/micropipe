@@ -429,6 +429,7 @@ elif tool_selection == "Oil Return Checker":
         velocity_m_s2min = mass_flow_kg_smin / (area_m2 * density_super2)
         #st.write("velocity_m_s2min:", velocity_m_s2min)
         if refrigerant == "R744": velocity1_prop = 1
+        elif refrigerant == "R744 TC": velocity1_prop = 1
         elif refrigerant == "R404A":
             if superheat_K > 45: velocity1_prop = (0.0328330590542629 * superheat_K) - 1.47748765744183
             else: velocity1_prop = 0
@@ -470,6 +471,7 @@ elif tool_selection == "Oil Return Checker":
         elif refrigerant == "R134a": jg_half = 0.869986729796935
         elif refrigerant == "R407F": jg_half = 0.869042493641944
         elif refrigerant == "R744": jg_half = 0.877950613678719
+        elif refrigerant == "R744 TC": jg_half = 0.877950613678719
         elif refrigerant == "R407A": jg_half = 0.867374311574041
         elif refrigerant == "R410A": jg_half = 0.8904423325365
         elif refrigerant == "R407C": jg_half = 0.858592104849471
@@ -551,6 +553,7 @@ elif tool_selection == "Oil Return Checker":
         #st.write("MOR_correctionmin:", MOR_correctionmin)
 
         if refrigerant == "R744": MOR_correction2 = (-0.0000176412848988908 * (evapoil ** 2)) - (0.00164308248808803 * evapoil) - 0.0184308798286039
+        elif refrigerant == "R744 TC": MOR_correction2 = (-0.0000176412848988908 * (evapoil ** 2)) - (0.00164308248808803 * evapoil) - 0.0184308798286039
         elif refrigerant == "R407A": MOR_correction2 = (-0.000864076433837511 * evapoil) - 0.0145018190416687
         elif refrigerant == "R449A": MOR_correction2 = (-0.000835375233693285 * evapoil) - 0.0138846063856621
         elif refrigerant == "R448A": MOR_correction2 = (0.00000171366802431428 * (evapoil ** 2)) - (0.000865528727278154 * evapoil) - 0.0152961902042161
