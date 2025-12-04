@@ -931,13 +931,13 @@ elif tool_selection == "Manual Calculation":
             #st.write("area_m2:", area_m2)
             
             if refrigerant == "R744 TC":
-                density_super = RefrigerantDensities().get_density(R744, T_evap - max_penalty + 273.15, superheat_K)
-                density_super2a = RefrigerantDensities().get_density(R744, T_evap + 273.15, ((superheat_K + 5) / 2))
-                density_super2b = RefrigerantDensities().get_density(R744, T_evap - max_penalty + 273.15, ((superheat_K + 5) / 2))
+                density_super = RefrigerantDensities().get_density("R744", T_evap - max_penalty + 273.15, superheat_K)
+                density_super2a = RefrigerantDensities().get_density("R744", T_evap + 273.15, ((superheat_K + 5) / 2))
+                density_super2b = RefrigerantDensities().get_density("R744", T_evap - max_penalty + 273.15, ((superheat_K + 5) / 2))
                 density_super2 = (density_super2a + density_super2b) / 2
-                density_super_foroil = RefrigerantDensities().get_density(R744, T_evap + 273.15, min(max(superheat_K, 5), 30))
-                density_sat = RefrigerantProperties().get_properties(R744, T_evap)["density_vapor"]
-                density_5K = RefrigerantDensities().get_density(R744, T_evap + 273.15, 5)    
+                density_super_foroil = RefrigerantDensities().get_density("R744", T_evap + 273.15, min(max(superheat_K, 5), 30))
+                density_sat = RefrigerantProperties().get_properties("R744", T_evap)["density_vapor"]
+                density_5K = RefrigerantDensities().get_density("R744", T_evap + 273.15, 5)    
         
             else:
             
@@ -1153,12 +1153,12 @@ elif tool_selection == "Manual Calculation":
     
         if refrigerant == "R744 TC":
             
-            viscosity_super = RefrigerantViscosities().get_viscosity(R744, T_evap - max_penalty + 273.15, superheat_K)
-            viscosity_super2a = RefrigerantViscosities().get_viscosity(R744, T_evap + 273.15, ((superheat_K + 5) / 2))
-            viscosity_super2b = RefrigerantViscosities().get_viscosity(R744, T_evap - max_penalty + 273.15, ((superheat_K + 5) / 2))
+            viscosity_super = RefrigerantViscosities().get_viscosity("R744", T_evap - max_penalty + 273.15, superheat_K)
+            viscosity_super2a = RefrigerantViscosities().get_viscosity("R744", T_evap + 273.15, ((superheat_K + 5) / 2))
+            viscosity_super2b = RefrigerantViscosities().get_viscosity("R744", T_evap - max_penalty + 273.15, ((superheat_K + 5) / 2))
             viscosity_super2 = (viscosity_super2a + viscosity_super2b) / 2
-            viscosity_sat = RefrigerantViscosities().get_viscosity(R744, T_evap + 273.15, 0)
-            viscosity_5K = RefrigerantViscosities().get_viscosity(R744, T_evap + 273.15, 5)
+            viscosity_sat = RefrigerantViscosities().get_viscosity("R744", T_evap + 273.15, 0)
+            viscosity_5K = RefrigerantViscosities().get_viscosity("R744", T_evap + 273.15, 5)
 
         else:
 
