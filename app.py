@@ -865,17 +865,18 @@ elif tool_selection == "Manual Calculation":
         T_evap = evaporating_temp
         T_cond = maxliq_temp
 
+        props_sup = RefrigerantProps()
+        props = RefrigerantProperties()
+        
         if refrigerant == "R744 TC":
         
-            props_sup = RefrigerantProps()
-            h_in = props.get_enthalpy_sup(80, -5)
-            h_inmin = props.get_enthalpy_sup(80, -5)
+            h_in = props_sup.get_enthalpy_sup(80, -5)
+            h_inmin = props_sup.get_enthalpy_sup(80, -5)
             h_evap = props.get_properties("R744", T_evap)["enthalpy_vapor"]
             h_10K = props.get_properties("R744", T_evap)["enthalpy_super"]
     
         else:
             
-            props = RefrigerantProperties()
             h_in = props.get_properties(refrigerant, T_cond)["enthalpy_liquid2"]
             #st.write("h_in:", h_in)
             # for velocity
