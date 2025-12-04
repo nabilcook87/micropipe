@@ -353,20 +353,30 @@ elif tool_selection == "Oil Return Checker":
     props_sup = RefrigerantProps()
     props = RefrigerantProperties()
 
+    if refrigerant == "R744 TC":
     
-    h_in = props.get_properties(refrigerant, T_cond)["enthalpy_liquid2"]
-    #st.write("h_in:", h_in)
-    # for velocity
-    h_inmin = props.get_properties(refrigerant, minliq_temp)["enthalpy_liquid2"]
-    #st.write("h_inmin:", h_inmin)
-    h_inlet = props.get_properties(refrigerant, T_cond)["enthalpy_liquid"]
-    #st.write("h_inlet:", h_inlet)
-    h_inletmin = props.get_properties(refrigerant, minliq_temp)["enthalpy_liquid"]
-    #st.write("h_inletmin:", h_inletmin)
-    h_evap = props.get_properties(refrigerant, T_evap)["enthalpy_vapor"]
-    #st.write("h_evap:", h_evap)
-    h_10K = props.get_properties(refrigerant, T_evap)["enthalpy_super"]
-    #st.write("h_10K:", h_10K)
+        h_in = props_sup.get_enthalpy_sup(80, -5)
+        h_inmin = props_sup.get_enthalpy_sup(80, -5)
+        h_inlet = h_in
+        h_inletmin = h_inmin
+        h_evap = props.get_properties("R744", T_evap)["enthalpy_vapor"]
+        h_10K = props.get_properties("R744", T_evap)["enthalpy_super"]
+
+    else:
+        h_in = props.get_properties(refrigerant, T_cond)["enthalpy_liquid2"]
+        #st.write("h_in:", h_in)
+        # for velocity
+        h_inmin = props.get_properties(refrigerant, minliq_temp)["enthalpy_liquid2"]
+        #st.write("h_inmin:", h_inmin)
+        h_inlet = props.get_properties(refrigerant, T_cond)["enthalpy_liquid"]
+        #st.write("h_inlet:", h_inlet)
+        h_inletmin = props.get_properties(refrigerant, minliq_temp)["enthalpy_liquid"]
+        #st.write("h_inletmin:", h_inletmin)
+        h_evap = props.get_properties(refrigerant, T_evap)["enthalpy_vapor"]
+        #st.write("h_evap:", h_evap)
+        h_10K = props.get_properties(refrigerant, T_evap)["enthalpy_super"]
+        #st.write("h_10K:", h_10K)
+    
     hdiff_10K = h_10K - h_evap
     #st.write("hdiff_10K:", hdiff_10K)
     hdiff_custom = hdiff_10K * min(max(superheat_K, 5), 30) / 10
