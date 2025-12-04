@@ -350,6 +350,8 @@ elif tool_selection == "Oil Return Checker":
     T_evap = evaporating_temp
     T_cond = maxliq_temp
 
+    props_sup = RefrigerantProps()
+
     props = RefrigerantProperties()
     h_in = props.get_properties(refrigerant, T_cond)["enthalpy_liquid2"]
     #st.write("h_in:", h_in)
