@@ -158,7 +158,7 @@ elif tool_selection == "Oil Return Checker":
 
     with col1:
         refrigerant = st.selectbox("Refrigerant", [
-            "R404A", "R134a", "R407F", "R744", "R410A",
+            "R404A", "R134a", "R407F", "R744", "R744 TC", "R410A",
             "R407C", "R507A", "R448A", "R449A", "R22", "R32", "R454A", "R454C", "R455A", "R407A",
             "R290", "R1270", "R600a", "R717", "R1234ze", "R1234yf", "R12", "R11", "R454B", "R450A", "R513A", "R23", "R508B", "R502"
         ])
@@ -343,6 +343,7 @@ elif tool_selection == "Oil Return Checker":
     from utils.refrigerant_properties import RefrigerantProperties
     from utils.refrigerant_densities import RefrigerantDensities
     from utils.refrigerant_viscosities import RefrigerantViscosities
+    from utils.supercompliq_co2 import RefrigerantProps
     from utils.pipe_length_volume_calc import get_pipe_id_mm
     from utils.oil_return_checker import check_oil_return
 
