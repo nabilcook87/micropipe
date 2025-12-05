@@ -851,7 +851,7 @@ elif tool_selection == "Manual Calculation":
                 max_col1, max_col2 = st.columns(2)
             
                 with max_col1:
-                    ss.setdefault("gc_max_temp", 15.0)
+                    ss.setdefault("gc_max_temp", 38.0)
                     gc_max_temp = st.number_input(
                         "Max GC Out Temp (°C)",
                         min_value=-50.0, max_value=150.0,
@@ -859,7 +859,7 @@ elif tool_selection == "Manual Calculation":
                     )
             
                 with max_col2:
-                    ss.setdefault("gc_max_pres", 90.0)
+                    ss.setdefault("gc_max_pres", 93.7)
                     gc_max_pres = st.number_input(
                         "Max GC Out Pressure (bar)",
                         min_value=0.0, max_value=140.0,
@@ -870,7 +870,7 @@ elif tool_selection == "Manual Calculation":
                 min_col1, min_col2 = st.columns(2)
             
                 with min_col1:
-                    ss.setdefault("gc_min_temp", 10.0)
+                    ss.setdefault("gc_min_temp", 5.0)
                     gc_min_temp = st.number_input(
                         "Min GC Out Temp (°C)",
                         min_value=-50.0, max_value=150.0,
@@ -878,7 +878,7 @@ elif tool_selection == "Manual Calculation":
                     )
             
                 with min_col2:
-                    ss.setdefault("gc_min_pres", 60.0)
+                    ss.setdefault("gc_min_pres", 75.0)
                     gc_min_pres = st.number_input(
                         "Min GC Out Pressure (bar)",
                         min_value=0.0, max_value=140.0,
