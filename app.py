@@ -265,120 +265,150 @@ elif tool_selection == "Oil Return Checker":
     with col1:
         evap_capacity_kw = st.number_input("Evaporator Capacity (kW)", min_value=0.03, max_value=20000.0, value=10.0, step=1.0)
 
-        # --- Base ranges per refrigerant ---
-        if refrigerant in ("R23", "R508B"):
-            evap_min, evap_max, evap_default = -100.0, -20.0, -80.0
-            maxliq_min, maxliq_max, maxliq_default = -100.0, 10.0, -30.0
-            minliq_min, minliq_max, minliq_default = -100.0, 10.0, -40.0
-        elif refrigerant == "R744":
-            evap_min, evap_max, evap_default = -50.0, 20.0, -10.0
-            maxliq_min, maxliq_max, maxliq_default = -50.0, 30.0, 15.0
-            minliq_min, minliq_max, minliq_default = -50.0, 30.0, 10.0
-        else:
-            evap_min, evap_max, evap_default = -50.0, 30.0, -10.0
-            maxliq_min, maxliq_max, maxliq_default = -50.0, 60.0, 40.0
-            minliq_min, minliq_max, minliq_default = -50.0, 60.0, 20.0
-
-        # --- Init state (widget-backed) ---
-        ss = st.session_state
-        
-        if "last_refrigerant" not in ss or ss.last_refrigerant != refrigerant:
-            ss.maxliq_temp   = maxliq_default
-            ss.minliq_temp = minliq_default
-            ss.evap_temp   = evap_default
-            ss.last_refrigerant = refrigerant
-        
-        ss.setdefault("maxliq_temp",   maxliq_default)
-        ss.setdefault("minliq_temp", minliq_default)
-        ss.setdefault("evap_temp",   evap_default)
-
-        if "minliq_temp" in ss and "maxliq_temp" in ss:
-            ss.minliq_temp = min(ss.maxliq_temp, ss.minliq_temp)
-
-        if "minliq_temp" in ss and "maxliq_temp" in ss and "evap_temp" in ss:
-            ss.evap_temp = min(ss.maxliq_temp, ss.minliq_temp, ss.evap_temp)
-
-        # --- Callbacks implementing your downstream clamping logic ---
-        def on_change_maxliq():
-            # When cond changes: clamp minliq down to cond, then evap down to minliq
-            ss.minliq_temp = min(ss.minliq_temp, ss.maxliq_temp)
-            ss.evap_temp   = min(ss.evap_temp,   ss.minliq_temp)
-
-        def on_change_minliq():
-            # When minliq changes: clamp minliq down to cond, then evap down to minliq
-            ss.minliq_temp = min(ss.minliq_temp, ss.maxliq_temp)
-            ss.evap_temp   = min(ss.evap_temp,   ss.minliq_temp)
-
-        def on_change_evap():
-            # When evap changes: clamp evap down to minliq
-            ss.evap_temp   = min(ss.evap_temp,   ss.minliq_temp)
-
-        # --- Inputs with inclusive caps (≤), same order as your code ---
+    ss = st.session_state
+    
+    if refrigerant in ("R23", "R508B"):
+        evap_min, evap_max, evap_default = -100.0, -20.0, -80.0
+        hiT_min, hiT_max, hiT_default = -100.0, 10.0, -30.0
+        loT_min, loT_max, loT_default = -100.0, 10.0, -40.0
+    
+    elif refrigerant == "R744":
+        evap_min, evap_max, evap_default = -50.0, 20.0, -10.0
+        hiT_min, hiT_max, hiT_default = -50.0, 30.0, 15.0
+        loT_min, loT_max, loT_default = -50.0, 30.0, 10.0
+    
+    elif refrigerant == "R744 TC":
+        evap_min, evap_max, evap_default = -50.0, 20.0, -10.0
+        hiT_min, hiT_max, hiT_default = -50.0, 50.0, 38.0
+        loT_min, loT_max, loT_default = -50.0, 50.0, 5.0
+    
+    else:
+        evap_min, evap_max, evap_default = -50.0, 30.0, -10.0
+        hiT_min, hiT_max, hiT_default = -50.0, 60.0, 40.0
+        loT_min, loT_max, loT_default = -50.0, 60.0, 20.0
+    
+    if "last_refrigerant" not in ss or ss.last_refrigerant != refrigerant:
+    
         if refrigerant == "R744 TC":
-            # --- Split Max conditions into half-width boxes ---
-            max_col1, max_col2 = st.columns(2)
-        
-            with max_col1:
-                ss.setdefault("gc_max_temp", 38.0)
-                gc_max_temp = st.number_input(
-                    "Max GC Out Temp (°C)",
-                    min_value=-50.0, max_value=50.0,
-                    value=ss.gc_max_temp, step=1.0, key="gc_max_temp"
-                )
-        
-            with max_col2:
-                ss.setdefault("gc_max_pres", 93.7)
-                gc_max_pres = st.number_input(
-                    "Max GC Out Pressure (bar)",
-                    min_value=73.8, max_value=150.0,
-                    value=ss.gc_max_pres, step=1.0, key="gc_max_pres"
-                )
-        
-            # --- Split Min conditions into half-width boxes ---
-            min_col1, min_col2 = st.columns(2)
-        
-            with min_col1:
-                ss.setdefault("gc_min_temp", 5.0)
-                gc_min_temp = st.number_input(
-                    "Min GC Out Temp (°C)",
-                    min_value=-50.0, max_value=50.0,
-                    value=ss.gc_min_temp, step=1.0, key="gc_min_temp"
-                )
-        
-            with min_col2:
-                ss.setdefault("gc_min_pres", 75.0)
-                gc_min_pres = st.number_input(
-                    "Min GC Out Pressure (bar)",
-                    min_value=73.8, max_value=150.0,
-                    value=ss.gc_min_pres, step=1.0, key="gc_min_pres"
-                )
-        
-            # These assignments replace the old "maxliq_temp" and "minliq_temp"
-            maxliq_temp = gc_max_temp
-            minliq_temp = gc_min_temp
-        
+            ss.gc_max_temp = hiT_default
+            ss.gc_min_temp = loT_default
+            ss.gc_max_pres = 93.7
+            ss.gc_min_pres = 75.0
+    
         else:
-            # --- Original inputs for normal refrigerants ---
-            maxliq_temp = st.number_input(
-                "Max Liquid Temperature (°C)",
-                min_value=maxliq_min, max_value=maxliq_max,
-                value=ss.maxliq_temp, step=1.0, key="maxliq_temp",
-                on_change=on_change_maxliq,
+            ss.maxliq_temp = hiT_default
+            ss.minliq_temp = loT_default
+    
+        ss.evap_temp = evap_default
+        ss.last_refrigerant = refrigerant
+    
+    if refrigerant == "R744 TC":
+        ss.setdefault("gc_max_temp", hiT_default)
+        ss.setdefault("gc_min_temp", loT_default)
+        ss.setdefault("gc_max_pres", 93.7)
+        ss.setdefault("gc_min_pres", 75.0)
+    else:
+        ss.setdefault("maxliq_temp", hiT_default)
+        ss.setdefault("minliq_temp", loT_default)
+    
+    ss.setdefault("evap_temp", evap_default)
+    
+    if refrigerant == "R744 TC":
+        ss.gc_min_temp = min(ss.gc_min_temp, ss.gc_max_temp)
+        ss.evap_temp = min(ss.evap_temp, ss.gc_min_temp, evap_max)
+    else:
+        ss.minliq_temp = min(ss.minliq_temp, ss.maxliq_temp)
+        ss.evap_temp = min(ss.evap_temp, ss.minliq_temp, evap_max)
+    
+    def on_change_max():
+        if refrigerant == "R744 TC":
+            ss.gc_min_temp = min(ss.gc_min_temp, ss.gc_max_temp)
+            ss.evap_temp = min(ss.evap_temp, ss.gc_min_temp)
+        else:
+            ss.minliq_temp = min(ss.minliq_temp, ss.maxliq_temp)
+            ss.evap_temp = min(ss.evap_temp, ss.minliq_temp)
+    
+    def on_change_min():
+        on_change_max()
+    
+    def on_change_evap():
+        if refrigerant == "R744 TC":
+            ss.evap_temp = min(ss.evap_temp, ss.gc_min_temp)
+        else:
+            ss.evap_temp = min(ss.evap_temp, ss.minliq_temp)
+    
+    if refrigerant == "R744 TC":
+    
+        c1, c2 = st.columns(2)
+        with c1:
+            gc_max_temp = st.number_input(
+                "Max GC Out Temp (°C)",
+                min_value=hiT_min, max_value=hiT_max,
+                value=ss.gc_max_temp,
+                step=1.0,
+                key="gc_max_temp",
+                on_change=on_change_max,
             )
-        
-            minliq_temp = st.number_input(
-                "Min Liquid Temperature (°C)",
-                min_value=minliq_min, max_value=min(maxliq_temp, minliq_max),
-                value=ss.minliq_temp, step=1.0, key="minliq_temp",
-                on_change=on_change_minliq,
+        with c2:
+            gc_max_pres = st.number_input(
+                "Max GC Out Pressure (bar)",
+                min_value=73.8, max_value=150.0,
+                value=ss.gc_max_pres,
+                step=0.1,
+                key="gc_max_pres",
             )
-
-        evaporating_temp = st.number_input(
-            "Evaporating Temperature (°C)",
-            min_value=evap_min, max_value=min(minliq_temp, evap_max),
-            value=ss.evap_temp, step=1.0, key="evap_temp",
-            on_change=on_change_evap,
+    
+        d1, d2 = st.columns(2)
+        with d1:
+            gc_min_temp = st.number_input(
+                "Min GC Out Temp (°C)",
+                min_value=loT_min, max_value=min(gc_max_temp, loT_max),
+                value=ss.gc_min_temp,
+                step=1.0,
+                key="gc_min_temp",
+                on_change=on_change_min,
+            )
+        with d2:
+            gc_min_pres = st.number_input(
+                "Min GC Out Pressure (bar)",
+                min_value=73.8, max_value=150.0,
+                value=ss.gc_min_pres,
+                step=0.1,
+                key="gc_min_pres",
+            )
+    
+        maxliq_temp = gc_max_temp
+        minliq_temp = gc_min_temp
+    
+    else:
+        maxliq_temp = st.number_input(
+            "Max Liquid Temperature (°C)",
+            min_value=hiT_min, max_value=hiT_max,
+            value=ss.maxliq_temp,
+            step=1.0,
+            key="maxliq_temp",
+            on_change=on_change_max,
         )
+    
+        minliq_temp = st.number_input(
+            "Min Liquid Temperature (°C)",
+            min_value=loT_min,
+            max_value=min(maxliq_temp, loT_max),
+            value=ss.minliq_temp,
+            step=1.0,
+            key="minliq_temp",
+            on_change=on_change_min,
+        )
+    
+    evaporating_temp = st.number_input(
+        "Evaporating Temperature (°C)",
+        min_value=evap_min,
+        max_value=min(minliq_temp, evap_max),
+        value=ss.evap_temp,
+        step=1.0,
+        key="evap_temp",
+        on_change=on_change_evap,
+    )
 
     with col2:
         superheat_K = st.number_input("Superheat (K)", min_value=0.0, max_value=60.0, value=5.0, step=1.0)
@@ -842,120 +872,150 @@ elif tool_selection == "Manual Calculation":
         with col1:
             evap_capacity_kw = st.number_input("Evaporator Capacity (kW)", min_value=0.03, max_value=20000.0, value=10.0, step=1.0)
     
-            # --- Base ranges per refrigerant ---
-            if refrigerant in ("R23", "R508B"):
-                evap_min, evap_max, evap_default = -100.0, -20.0, -80.0
-                maxliq_min, maxliq_max, maxliq_default = -100.0, 10.0, -30.0
-                minliq_min, minliq_max, minliq_default = -100.0, 10.0, -40.0
-            elif refrigerant == "R744":
-                evap_min, evap_max, evap_default = -50.0, 20.0, -10.0
-                maxliq_min, maxliq_max, maxliq_default = -50.0, 30.0, 15.0
-                minliq_min, minliq_max, minliq_default = -50.0, 30.0, 10.0
-            else:
-                evap_min, evap_max, evap_default = -50.0, 30.0, -10.0
-                maxliq_min, maxliq_max, maxliq_default = -50.0, 60.0, 40.0
-                minliq_min, minliq_max, minliq_default = -50.0, 60.0, 20.0
-    
-            # --- Init state (widget-backed) ---
-            ss = st.session_state
-    
-            if "last_refrigerant" not in ss or ss.last_refrigerant != refrigerant:
-                ss.maxliq_temp   = maxliq_default
-                ss.minliq_temp = minliq_default
-                ss.evap_temp   = evap_default
-                ss.last_refrigerant = refrigerant
-            
-            ss.setdefault("maxliq_temp",   maxliq_default)
-            ss.setdefault("minliq_temp", minliq_default)
-            ss.setdefault("evap_temp",   evap_default)
-
-            if "minliq_temp" in ss and "maxliq_temp" in ss:
-                ss.minliq_temp = min(ss.maxliq_temp, ss.minliq_temp)
-
-            if "minliq_temp" in ss and "maxliq_temp" in ss and "evap_temp" in ss:
-                ss.evap_temp = min(ss.maxliq_temp, ss.minliq_temp, ss.evap_temp)
-    
-            # --- Callbacks implementing your downstream clamping logic ---
-            def on_change_maxliq():
-                # When cond changes: clamp minliq down to cond, then evap down to minliq
-                ss.minliq_temp = min(ss.minliq_temp, ss.maxliq_temp)
-                ss.evap_temp   = min(ss.evap_temp,   ss.minliq_temp)
-    
-            def on_change_minliq():
-                # When minliq changes: clamp minliq down to cond, then evap down to minliq
-                ss.minliq_temp = min(ss.minliq_temp, ss.maxliq_temp)
-                ss.evap_temp   = min(ss.evap_temp,   ss.minliq_temp)
-    
-            def on_change_evap():
-                # When evap changes: clamp evap down to minliq
-                ss.evap_temp   = min(ss.evap_temp,   ss.minliq_temp)
-    
-            # --- Inputs with inclusive caps (≤), same order as your code ---
+        ss = st.session_state
+        
+        if refrigerant in ("R23", "R508B"):
+            evap_min, evap_max, evap_default = -100.0, -20.0, -80.0
+            hiT_min, hiT_max, hiT_default = -100.0, 10.0, -30.0
+            loT_min, loT_max, loT_default = -100.0, 10.0, -40.0
+        
+        elif refrigerant == "R744":
+            evap_min, evap_max, evap_default = -50.0, 20.0, -10.0
+            hiT_min, hiT_max, hiT_default = -50.0, 30.0, 15.0
+            loT_min, loT_max, loT_default = -50.0, 30.0, 10.0
+        
+        elif refrigerant == "R744 TC":
+            evap_min, evap_max, evap_default = -50.0, 20.0, -10.0
+            hiT_min, hiT_max, hiT_default = -50.0, 50.0, 38.0
+            loT_min, loT_max, loT_default = -50.0, 50.0, 5.0
+        
+        else:
+            evap_min, evap_max, evap_default = -50.0, 30.0, -10.0
+            hiT_min, hiT_max, hiT_default = -50.0, 60.0, 40.0
+            loT_min, loT_max, loT_default = -50.0, 60.0, 20.0
+        
+        if "last_refrigerant" not in ss or ss.last_refrigerant != refrigerant:
+        
             if refrigerant == "R744 TC":
-                # --- Split Max conditions into half-width boxes ---
-                max_col1, max_col2 = st.columns(2)
-            
-                with max_col1:
-                    ss.setdefault("gc_max_temp", 38.0)
-                    gc_max_temp = st.number_input(
-                        "Max GC Out Temp (°C)",
-                        min_value=-50.0, max_value=50.0,
-                        value=ss.gc_max_temp, step=1.0, key="gc_max_temp"
-                    )
-            
-                with max_col2:
-                    ss.setdefault("gc_max_pres", 93.7)
-                    gc_max_pres = st.number_input(
-                        "Max GC Out Pressure (bar)",
-                        min_value=73.8, max_value=150.0,
-                        value=ss.gc_max_pres, step=1.0, key="gc_max_pres"
-                    )
-            
-                # --- Split Min conditions into half-width boxes ---
-                min_col1, min_col2 = st.columns(2)
-            
-                with min_col1:
-                    ss.setdefault("gc_min_temp", 5.0)
-                    gc_min_temp = st.number_input(
-                        "Min GC Out Temp (°C)",
-                        min_value=-50.0, max_value=50.0,
-                        value=ss.gc_min_temp, step=1.0, key="gc_min_temp"
-                    )
-            
-                with min_col2:
-                    ss.setdefault("gc_min_pres", 75.0)
-                    gc_min_pres = st.number_input(
-                        "Min GC Out Pressure (bar)",
-                        min_value=73.8, max_value=150.0,
-                        value=ss.gc_min_pres, step=1.0, key="gc_min_pres"
-                    )
-            
-                # These assignments replace the old "maxliq_temp" and "minliq_temp"
-                maxliq_temp = gc_max_temp
-                minliq_temp = gc_min_temp
-            
+                ss.gc_max_temp = hiT_default
+                ss.gc_min_temp = loT_default
+                ss.gc_max_pres = 93.7
+                ss.gc_min_pres = 75.0
+        
             else:
-                # --- Original inputs for normal refrigerants ---
-                maxliq_temp = st.number_input(
-                    "Max Liquid Temperature (°C)",
-                    min_value=maxliq_min, max_value=maxliq_max,
-                    value=ss.maxliq_temp, step=1.0, key="maxliq_temp",
-                    on_change=on_change_maxliq,
+                ss.maxliq_temp = hiT_default
+                ss.minliq_temp = loT_default
+        
+            ss.evap_temp = evap_default
+            ss.last_refrigerant = refrigerant
+        
+        if refrigerant == "R744 TC":
+            ss.setdefault("gc_max_temp", hiT_default)
+            ss.setdefault("gc_min_temp", loT_default)
+            ss.setdefault("gc_max_pres", 93.7)
+            ss.setdefault("gc_min_pres", 75.0)
+        else:
+            ss.setdefault("maxliq_temp", hiT_default)
+            ss.setdefault("minliq_temp", loT_default)
+        
+        ss.setdefault("evap_temp", evap_default)
+        
+        if refrigerant == "R744 TC":
+            ss.gc_min_temp = min(ss.gc_min_temp, ss.gc_max_temp)
+            ss.evap_temp = min(ss.evap_temp, ss.gc_min_temp, evap_max)
+        else:
+            ss.minliq_temp = min(ss.minliq_temp, ss.maxliq_temp)
+            ss.evap_temp = min(ss.evap_temp, ss.minliq_temp, evap_max)
+        
+        def on_change_max():
+            if refrigerant == "R744 TC":
+                ss.gc_min_temp = min(ss.gc_min_temp, ss.gc_max_temp)
+                ss.evap_temp = min(ss.evap_temp, ss.gc_min_temp)
+            else:
+                ss.minliq_temp = min(ss.minliq_temp, ss.maxliq_temp)
+                ss.evap_temp = min(ss.evap_temp, ss.minliq_temp)
+        
+        def on_change_min():
+            on_change_max()
+        
+        def on_change_evap():
+            if refrigerant == "R744 TC":
+                ss.evap_temp = min(ss.evap_temp, ss.gc_min_temp)
+            else:
+                ss.evap_temp = min(ss.evap_temp, ss.minliq_temp)
+        
+        if refrigerant == "R744 TC":
+        
+            c1, c2 = st.columns(2)
+            with c1:
+                gc_max_temp = st.number_input(
+                    "Max GC Out Temp (°C)",
+                    min_value=hiT_min, max_value=hiT_max,
+                    value=ss.gc_max_temp,
+                    step=1.0,
+                    key="gc_max_temp",
+                    on_change=on_change_max,
                 )
-            
-                minliq_temp = st.number_input(
-                    "Min Liquid Temperature (°C)",
-                    min_value=minliq_min, max_value=min(maxliq_temp, minliq_max),
-                    value=ss.minliq_temp, step=1.0, key="minliq_temp",
-                    on_change=on_change_minliq,
+            with c2:
+                gc_max_pres = st.number_input(
+                    "Max GC Out Pressure (bar)",
+                    min_value=73.8, max_value=150.0,
+                    value=ss.gc_max_pres,
+                    step=0.1,
+                    key="gc_max_pres",
                 )
-
-            evaporating_temp = st.number_input(
-                "Evaporating Temperature (°C)",
-                min_value=evap_min, max_value=min(minliq_temp, evap_max),
-                value=ss.evap_temp, step=1.0, key="evap_temp",
-                on_change=on_change_evap,
+        
+            d1, d2 = st.columns(2)
+            with d1:
+                gc_min_temp = st.number_input(
+                    "Min GC Out Temp (°C)",
+                    min_value=loT_min, max_value=min(gc_max_temp, loT_max),
+                    value=ss.gc_min_temp,
+                    step=1.0,
+                    key="gc_min_temp",
+                    on_change=on_change_min,
+                )
+            with d2:
+                gc_min_pres = st.number_input(
+                    "Min GC Out Pressure (bar)",
+                    min_value=73.8, max_value=150.0,
+                    value=ss.gc_min_pres,
+                    step=0.1,
+                    key="gc_min_pres",
+                )
+        
+            maxliq_temp = gc_max_temp
+            minliq_temp = gc_min_temp
+        
+        else:
+            maxliq_temp = st.number_input(
+                "Max Liquid Temperature (°C)",
+                min_value=hiT_min, max_value=hiT_max,
+                value=ss.maxliq_temp,
+                step=1.0,
+                key="maxliq_temp",
+                on_change=on_change_max,
             )
+        
+            minliq_temp = st.number_input(
+                "Min Liquid Temperature (°C)",
+                min_value=loT_min,
+                max_value=min(maxliq_temp, loT_max),
+                value=ss.minliq_temp,
+                step=1.0,
+                key="minliq_temp",
+                on_change=on_change_min,
+            )
+        
+        evaporating_temp = st.number_input(
+            "Evaporating Temperature (°C)",
+            min_value=evap_min,
+            max_value=min(minliq_temp, evap_max),
+            value=ss.evap_temp,
+            step=1.0,
+            key="evap_temp",
+            on_change=on_change_evap,
+        )
     
         with col2:
             superheat_K = st.number_input("Superheat (K)", min_value=0.0, max_value=60.0, value=5.0, step=1.0)
