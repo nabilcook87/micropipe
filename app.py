@@ -994,10 +994,10 @@ elif tool_selection == "Manual Calculation":
             h_in = props_sup.get_enthalpy_sup(gc_max_pres, maxliq_temp)
             if gc_min_pres >= 73.8: 
                 h_inmin = props_sup.get_enthalpy_sup(gc_min_pres, minliq_temp)
-            elif gc_min_pres <= :
-                h_inmin = 
+            elif gc_min_pres <= 72.13:
+                h_inmin = props.get_properties("R744", minliq_temp)["enthalpy_liquid2"]
             else:
-                
+                st.error("This pressure range (72.13–73.8 bar) is not allowed. Please choose another value.")
             h_inlet = h_in
             h_inletmin = h_inmin
             h_evap = props.get_properties("R744", T_evap)["enthalpy_vapor"]
