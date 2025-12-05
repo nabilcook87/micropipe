@@ -356,7 +356,7 @@ elif tool_selection == "Oil Return Checker":
                     "Max GC Out Pressure (bar)",
                     min_value=73.8, max_value=150.0,
                     value=ss.gc_max_pres,
-                    step=0.1,
+                    step=1.0,
                     key="gc_max_pres",
                 )
     
@@ -375,7 +375,7 @@ elif tool_selection == "Oil Return Checker":
                     "Min GC Out Pressure (bar)",
                     min_value=73.8, max_value=150.0,
                     value=ss.gc_min_pres,
-                    step=0.1,
+                    step=1.0,
                     key="gc_min_pres",
                 )
     
