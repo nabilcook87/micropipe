@@ -946,8 +946,8 @@ elif tool_selection == "Manual Calculation":
         
         if refrigerant == "R744 TC":
         
-            h_in = props_sup.get_enthalpy_sup(80, -5)
-            h_inmin = props_sup.get_enthalpy_sup(80, -5)
+            h_in = props_sup.get_enthalpy_sup(gc_max_pres, maxliq_temp)
+            h_inmin = props_sup.get_enthalpy_sup(gc_min_pres, minliq_temp)
             h_inlet = h_in
             h_inletmin = h_inmin
             h_evap = props.get_properties("R744", T_evap)["enthalpy_vapor"]
