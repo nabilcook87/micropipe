@@ -322,7 +322,7 @@ elif tool_selection == "Oil Return Checker":
                 ss.setdefault("gc_max_temp", 38.0)
                 gc_max_temp = st.number_input(
                     "Max GC Out Temp (°C)",
-                    min_value=-50.0, max_value=150.0,
+                    min_value=-50.0, max_value=50.0,
                     value=ss.gc_max_temp, step=1.0, key="gc_max_temp"
                 )
         
@@ -330,7 +330,7 @@ elif tool_selection == "Oil Return Checker":
                 ss.setdefault("gc_max_pres", 93.7)
                 gc_max_pres = st.number_input(
                     "Max GC Out Pressure (bar)",
-                    min_value=0.0, max_value=140.0,
+                    min_value=73.8, max_value=150.0,
                     value=ss.gc_max_pres, step=1.0, key="gc_max_pres"
                 )
         
@@ -341,7 +341,7 @@ elif tool_selection == "Oil Return Checker":
                 ss.setdefault("gc_min_temp", 5.0)
                 gc_min_temp = st.number_input(
                     "Min GC Out Temp (°C)",
-                    min_value=-50.0, max_value=150.0,
+                    min_value=-50.0, max_value=50.0,
                     value=ss.gc_min_temp, step=1.0, key="gc_min_temp"
                 )
         
@@ -349,7 +349,7 @@ elif tool_selection == "Oil Return Checker":
                 ss.setdefault("gc_min_pres", 75.0)
                 gc_min_pres = st.number_input(
                     "Min GC Out Pressure (bar)",
-                    min_value=0.0, max_value=140.0,
+                    min_value=73.8, max_value=150.0,
                     value=ss.gc_min_pres, step=1.0, key="gc_min_pres"
                 )
         
@@ -899,7 +899,7 @@ elif tool_selection == "Manual Calculation":
                     ss.setdefault("gc_max_temp", 38.0)
                     gc_max_temp = st.number_input(
                         "Max GC Out Temp (°C)",
-                        min_value=-50.0, max_value=150.0,
+                        min_value=-50.0, max_value=50.0,
                         value=ss.gc_max_temp, step=1.0, key="gc_max_temp"
                     )
             
@@ -907,7 +907,7 @@ elif tool_selection == "Manual Calculation":
                     ss.setdefault("gc_max_pres", 93.7)
                     gc_max_pres = st.number_input(
                         "Max GC Out Pressure (bar)",
-                        min_value=0.0, max_value=140.0,
+                        min_value=73.8, max_value=150.0,
                         value=ss.gc_max_pres, step=1.0, key="gc_max_pres"
                     )
             
@@ -918,7 +918,7 @@ elif tool_selection == "Manual Calculation":
                     ss.setdefault("gc_min_temp", 5.0)
                     gc_min_temp = st.number_input(
                         "Min GC Out Temp (°C)",
-                        min_value=-50.0, max_value=150.0,
+                        min_value=-50.0, max_value=50.0,
                         value=ss.gc_min_temp, step=1.0, key="gc_min_temp"
                     )
             
@@ -926,7 +926,7 @@ elif tool_selection == "Manual Calculation":
                     ss.setdefault("gc_min_pres", 75.0)
                     gc_min_pres = st.number_input(
                         "Min GC Out Pressure (bar)",
-                        min_value=0.0, max_value=140.0,
+                        min_value=73.8, max_value=150.0,
                         value=ss.gc_min_pres, step=1.0, key="gc_min_pres"
                     )
             
