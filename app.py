@@ -349,7 +349,7 @@ elif tool_selection == "Oil Return Checker":
                 ss.setdefault("gc_min_pres", 75.0)
                 gc_min_pres = st.number_input(
                     "Min GC Out Pressure (bar)",
-                    min_value=73.8, max_value=150.0,
+                    min_value=40.0, max_value=150.0,
                     value=ss.gc_min_pres, step=1.0, key="gc_min_pres"
                 )
         
@@ -926,7 +926,7 @@ elif tool_selection == "Manual Calculation":
                     ss.setdefault("gc_min_pres", 75.0)
                     gc_min_pres = st.number_input(
                         "Min GC Out Pressure (bar)",
-                        min_value=73.8, max_value=150.0,
+                        min_value=40.0, max_value=150.0,
                         value=ss.gc_min_pres, step=1.0, key="gc_min_pres"
                     )
             
@@ -990,9 +990,14 @@ elif tool_selection == "Manual Calculation":
         props = RefrigerantProperties()
         
         if refrigerant == "R744 TC":
-        
+            
             h_in = props_sup.get_enthalpy_sup(gc_max_pres, maxliq_temp)
-            h_inmin = props_sup.get_enthalpy_sup(gc_min_pres, minliq_temp)
+            if gc_min_pres >= 73.8: 
+                h_inmin = props_sup.get_enthalpy_sup(gc_min_pres, minliq_temp)
+            elif gc_min_pres <= :
+                h_inmin = 
+            else:
+                
             h_inlet = h_in
             h_inletmin = h_inmin
             h_evap = props.get_properties("R744", T_evap)["enthalpy_vapor"]
