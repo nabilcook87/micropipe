@@ -1009,15 +1009,16 @@ elif tool_selection == "Manual Calculation":
                     on_change=on_change_min,
                 )
         
-        evaporating_temp = st.number_input(
-            "Evaporating Temperature (°C)",
-            min_value=evap_min,
-            max_value=min(minliq_temp, evap_max),
-            value=ss.evap_temp,
-            step=1.0,
-            key="evap_temp",
-            on_change=on_change_evap,
-        )
+        with col1:
+            evaporating_temp = st.number_input(
+                "Evaporating Temperature (°C)",
+                min_value=evap_min,
+                max_value=min(minliq_temp, evap_max),
+                value=ss.evap_temp,
+                step=1.0,
+                key="evap_temp",
+                on_change=on_change_evap,
+            )
     
         with col2:
             superheat_K = st.number_input("Superheat (K)", min_value=0.0, max_value=60.0, value=5.0, step=1.0)
