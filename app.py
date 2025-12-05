@@ -337,78 +337,81 @@ elif tool_selection == "Oil Return Checker":
         else:
             ss.evap_temp = min(ss.evap_temp, ss.minliq_temp)
     
-    if refrigerant == "R744 TC":
+    with col1:
     
-        c1, c2 = st.columns(2)
-        with c1:
-            gc_max_temp = st.number_input(
-                "Max GC Out Temp (°C)",
+        if refrigerant == "R744 TC":
+    
+            c1, c2 = st.columns(2)
+            with c1:
+                gc_max_temp = st.number_input(
+                    "Max GC Out Temp (°C)",
+                    min_value=hiT_min, max_value=hiT_max,
+                    value=ss.gc_max_temp,
+                    step=1.0,
+                    key="gc_max_temp",
+                    on_change=on_change_max,
+                )
+            with c2:
+                gc_max_pres = st.number_input(
+                    "Max GC Out Pressure (bar)",
+                    min_value=73.8, max_value=150.0,
+                    value=ss.gc_max_pres,
+                    step=0.1,
+                    key="gc_max_pres",
+                )
+    
+            d1, d2 = st.columns(2)
+            with d1:
+                gc_min_temp = st.number_input(
+                    "Min GC Out Temp (°C)",
+                    min_value=loT_min, max_value=min(gc_max_temp, loT_max),
+                    value=ss.gc_min_temp,
+                    step=1.0,
+                    key="gc_min_temp",
+                    on_change=on_change_min,
+                )
+            with d2:
+                gc_min_pres = st.number_input(
+                    "Min GC Out Pressure (bar)",
+                    min_value=73.8, max_value=150.0,
+                    value=ss.gc_min_pres,
+                    step=0.1,
+                    key="gc_min_pres",
+                )
+    
+            maxliq_temp = gc_max_temp
+            minliq_temp = gc_min_temp
+    
+        else:
+            maxliq_temp = st.number_input(
+                "Max Liquid Temperature (°C)",
                 min_value=hiT_min, max_value=hiT_max,
-                value=ss.gc_max_temp,
+                value=ss.maxliq_temp,
                 step=1.0,
-                key="gc_max_temp",
+                key="maxliq_temp",
                 on_change=on_change_max,
             )
-        with c2:
-            gc_max_pres = st.number_input(
-                "Max GC Out Pressure (bar)",
-                min_value=73.8, max_value=150.0,
-                value=ss.gc_max_pres,
-                step=0.1,
-                key="gc_max_pres",
-            )
     
-        d1, d2 = st.columns(2)
-        with d1:
-            gc_min_temp = st.number_input(
-                "Min GC Out Temp (°C)",
-                min_value=loT_min, max_value=min(gc_max_temp, loT_max),
-                value=ss.gc_min_temp,
+            minliq_temp = st.number_input(
+                "Min Liquid Temperature (°C)",
+                min_value=loT_min,
+                max_value=min(maxliq_temp, loT_max),
+                value=ss.minliq_temp,
                 step=1.0,
-                key="gc_min_temp",
+                key="minliq_temp",
                 on_change=on_change_min,
             )
-        with d2:
-            gc_min_pres = st.number_input(
-                "Min GC Out Pressure (bar)",
-                min_value=73.8, max_value=150.0,
-                value=ss.gc_min_pres,
-                step=0.1,
-                key="gc_min_pres",
-            )
     
-        maxliq_temp = gc_max_temp
-        minliq_temp = gc_min_temp
-    
-    else:
-        maxliq_temp = st.number_input(
-            "Max Liquid Temperature (°C)",
-            min_value=hiT_min, max_value=hiT_max,
-            value=ss.maxliq_temp,
+    with col1:
+        evaporating_temp = st.number_input(
+            "Evaporating Temperature (°C)",
+            min_value=evap_min,
+            max_value=min(minliq_temp, evap_max),
+            value=ss.evap_temp,
             step=1.0,
-            key="maxliq_temp",
-            on_change=on_change_max,
+            key="evap_temp",
+            on_change=on_change_evap,
         )
-    
-        minliq_temp = st.number_input(
-            "Min Liquid Temperature (°C)",
-            min_value=loT_min,
-            max_value=min(maxliq_temp, loT_max),
-            value=ss.minliq_temp,
-            step=1.0,
-            key="minliq_temp",
-            on_change=on_change_min,
-        )
-    
-    evaporating_temp = st.number_input(
-        "Evaporating Temperature (°C)",
-        min_value=evap_min,
-        max_value=min(minliq_temp, evap_max),
-        value=ss.evap_temp,
-        step=1.0,
-        key="evap_temp",
-        on_change=on_change_evap,
-    )
 
     with col2:
         superheat_K = st.number_input("Superheat (K)", min_value=0.0, max_value=60.0, value=5.0, step=1.0)
