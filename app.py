@@ -314,19 +314,64 @@ elif tool_selection == "Oil Return Checker":
             ss.evap_temp   = min(ss.evap_temp,   ss.minliq_temp)
 
         # --- Inputs with inclusive caps (≤), same order as your code ---
-        maxliq_temp = st.number_input(
-            "Max Liquid Temperature (°C)",
-            min_value=maxliq_min, max_value=maxliq_max,
-            value=ss.maxliq_temp, step=1.0, key="maxliq_temp",
-            on_change=on_change_maxliq,
-        )
-
-        minliq_temp = st.number_input(
-            "Min Liquid Temperature (°C)",
-            min_value=minliq_min, max_value=min(maxliq_temp, minliq_max),
-            value=ss.minliq_temp, step=1.0, key="minliq_temp",
-            on_change=on_change_minliq,
-        )
+        if refrigerant == "R744 TC":
+            # --- Split Max conditions into half-width boxes ---
+            max_col1, max_col2 = st.columns(2)
+        
+            with max_col1:
+                ss.setdefault("gc_max_temp", 38.0)
+                gc_max_temp = st.number_input(
+                    "Max GC Out Temp (°C)",
+                    min_value=-50.0, max_value=150.0,
+                    value=ss.gc_max_temp, step=1.0, key="gc_max_temp"
+                )
+        
+            with max_col2:
+                ss.setdefault("gc_max_pres", 93.7)
+                gc_max_pres = st.number_input(
+                    "Max GC Out Pressure (bar)",
+                    min_value=0.0, max_value=140.0,
+                    value=ss.gc_max_pres, step=1.0, key="gc_max_pres"
+                )
+        
+            # --- Split Min conditions into half-width boxes ---
+            min_col1, min_col2 = st.columns(2)
+        
+            with min_col1:
+                ss.setdefault("gc_min_temp", 5.0)
+                gc_min_temp = st.number_input(
+                    "Min GC Out Temp (°C)",
+                    min_value=-50.0, max_value=150.0,
+                    value=ss.gc_min_temp, step=1.0, key="gc_min_temp"
+                )
+        
+            with min_col2:
+                ss.setdefault("gc_min_pres", 75.0)
+                gc_min_pres = st.number_input(
+                    "Min GC Out Pressure (bar)",
+                    min_value=0.0, max_value=140.0,
+                    value=ss.gc_min_pres, step=1.0, key="gc_min_pres"
+                )
+        
+            # These assignments replace the old "maxliq_temp" and "minliq_temp"
+            maxliq_temp = gc_max_temp
+            minliq_temp = gc_min_temp
+        
+        else:
+            # --- Original inputs for normal refrigerants ---
+            maxliq_temp = st.number_input(
+                "Max Liquid Temperature (°C)",
+                min_value=maxliq_min, max_value=maxliq_max,
+                value=ss.maxliq_temp, step=1.0, key="maxliq_temp",
+                on_change=on_change_maxliq,
+            )
+        
+            minliq_temp = st.number_input(
+                "Min Liquid Temperature (°C)",
+                min_value=minliq_min, max_value=min(maxliq_temp, minliq_max),
+                value=ss.minliq_temp, step=1.0, key="minliq_temp",
+                on_change=on_change_minliq,
+            )
 
         evaporating_temp = st.number_input(
             "Evaporating Temperature (°C)",
@@ -355,8 +400,8 @@ elif tool_selection == "Oil Return Checker":
 
     if refrigerant == "R744 TC":
     
-        h_in = props_sup.get_enthalpy_sup(80, -5)
-        h_inmin = props_sup.get_enthalpy_sup(80, -5)
+        h_in = props_sup.get_enthalpy_sup(gc_max_pres, maxliq_temp)
+        h_inmin = props_sup.get_enthalpy_sup(gc_min_pres, minliq_temp)
         h_inlet = h_in
         h_inletmin = h_inmin
         h_evap = props.get_properties("R744", T_evap)["enthalpy_vapor"]
