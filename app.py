@@ -1887,7 +1887,7 @@ elif tool_selection == "Manual Calculation":
     
         with col1:
             refrigerant = st.selectbox("Refrigerant", [
-                "R404A", "R134a", "R407F", "R744", "R410A",
+                "R404A", "R134a", "R407F", "R744", "R744 TC", "R410A",
                 "R407C", "R507A", "R448A", "R449A", "R22", "R32", "R454A", "R454C", "R455A", "R407A",
                 "R290", "R1270", "R600a", "R717", "R1234ze", "R1234yf", "R12", "R11", "R454B", "R450A", "R513A", "R23", "R508B", "R502"
             ])
@@ -2083,7 +2083,10 @@ elif tool_selection == "Manual Calculation":
     
         with col2:
             risem = st.number_input("Liquid Line Rise (m)", min_value=0.0, max_value=30.0, value=0.0, step=1.0)
-            max_penalty = st.number_input("Max Penalty (K)", min_value=0.0, max_value=6.0, value=1.0, step=0.1)
+            if refrigerant == "R744 TC":
+                max_lineloss = st.number_input("Max Pressure Drop (kPa)", min_value=0.0, max_value=250.0, value=40.0, step=5.0)
+            else:
+                max_penalty = st.number_input("Max Penalty (K)", min_value=0.0, max_value=6.0, value=1.0, step=0.1)
     
         with col3:
             L = st.number_input("Pipe Length (m)", min_value=0.1, max_value=300.0, value=10.0, step=1.0)
@@ -2109,6 +2112,7 @@ elif tool_selection == "Manual Calculation":
         T_cond = condensing_temp
     
         props = RefrigerantProperties()
+        props_sup = RefrigerantProps()
         
         h_in = props.get_properties(refrigerant, T_liq)["enthalpy_liquid2"]
 
