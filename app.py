@@ -2105,6 +2105,7 @@ elif tool_selection == "Manual Calculation":
         from utils.refrigerant_properties import RefrigerantProperties
         from utils.refrigerant_densities import RefrigerantDensities
         from utils.refrigerant_viscosities import RefrigerantViscosities
+        from utils.supercompliq_co2 import RefrigerantProps
         from utils.pipe_length_volume_calc import get_pipe_id_mm
     
         T_evap = evaporating_temp
