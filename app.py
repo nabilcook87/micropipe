@@ -2060,14 +2060,14 @@ elif tool_selection == "Manual Calculation":
             if refrigerant == "R744 TC":     
                 ss.setdefault("gc_max_temp", 38.0)
                 gc_max_temp = st.number_input(
-                    "Max GC Out Temp (°C)",
+                    "GC Out Temp (°C)",
                     min_value=-50.0, max_value=50.0,
                     value=ss.gc_max_temp, step=1.0, key="gc_max_temp"
                 )
         
                 ss.setdefault("gc_max_pres", 93.7)
                 gc_max_pres = st.number_input(
-                    "Max GC Out Pressure (bar)",
+                    "GC Out Pressure (bar)",
                     min_value=73.8, max_value=150.0,
                     value=ss.gc_max_pres, step=1.0, key="gc_max_pres"
                 )
