@@ -2055,7 +2055,10 @@ elif tool_selection == "Manual Calculation":
     
             def on_change_evap():
                 # When evap changes: clamp evap down to maxliq
-                ss.evap_temp   = min(ss.evap_temp,   ss.maxliq_temp)
+                if refrigerant == "R744 TC":
+                    ss.evap_temp   = min(ss.evap_temp,   maxliq_temp)
+                else:
+                    ss.evap_temp   = min(ss.evap_temp,   ss.maxliq_temp)
     
             if refrigerant == "R744 TC":     
                 ss.setdefault("gc_max_temp", 38.0)
@@ -2697,7 +2700,10 @@ elif tool_selection == "Manual Calculation":
     
             def on_change_evap():
                 # When evap changes: clamp evap down to maxliq
-                ss.evap_temp   = min(ss.evap_temp,   ss.maxliq_temp)
+                if refrigerant == "R744 TC":
+                    ss.evap_temp   = min(ss.evap_temp,   maxliq_temp)
+                else:
+                    ss.evap_temp   = min(ss.evap_temp,   ss.maxliq_temp)
 
             if refrigerant == "R744 TC":
                 ss.setdefault("gc_max_temp", 38.0)
