@@ -135,4 +135,93 @@ class RefrigerantProps:
             raise ValueError(
                 f"Property '{prop}' not found. Available: {sorted(self._props_available)}"
             )
+
         return self.data[prop]
+
+    def get_temperature_from_property(
+        self,
+        prop: Literal["entropy", "enthalpy"],
+        pressure_bar_a: float,
+        target_value: float,
+        *,
+        clip: bool = False,
+    ) -> float:
+        """
+        Invert the 2D log-linear surface to obtain temperature from the given property value
+        (entropy or enthalpy) at a specific pressure.
+
+        Parameters
+        ----------
+        prop : "entropy" or "enthalpy"
+            The property to invert.
+        pressure_bar_a : float
+            Pressure in bar(a).
+        target_value : float
+            Target property value (same units as the table).
+        clip : bool
+            If True, clamp pressure and temperature range; otherwise raise if out of range.
+
+        Returns
+        -------
+        float
+            Temperature in °C corresponding to the target property at the given pressure.
+        """
+        if prop not in {"entropy", "enthalpy"}:
+            raise ValueError("Only 'entropy' or 'enthalpy' can be inverted to temperature.")
+
+        table = self._get_property_table(prop)
+        temps = np.asarray(table["temperature"], dtype=np.float64)
+        pressure_keys = sorted((k for k in table.keys() if k != "temperature"), key=lambda s: float(s))
+        pressures = np.asarray([float(k) for k in pressure_keys], dtype=np.float64)
+        data_matrix = np.vstack([np.asarray(table[k], dtype=np.float64) for k in pressure_keys])
+
+        if np.any(data_matrix <= 0.0):
+            raise ValueError(f"Non-positive values in '{prop}' table; cannot log-transform.")
+
+        log_data = np.log(data_matrix)
+        target_log = float(np.log(target_value))
+
+        # Handle pressure range
+        y = float(pressure_bar_a)
+        y_min, y_max = pressures[0], pressures[-1]
+        if clip:
+            y = float(np.clip(y, y_min, y_max))
+        elif not (y_min <= y <= y_max):
+            raise ValueError(f"Pressure {y} bar(a) outside range [{y_min}, {y_max}].")
+
+        # --- Find bracketing pressures for 2D interpolation ---
+        j = int(np.searchsorted(pressures, y))
+        j0 = max(j - 1, 0)
+        j1 = min(j, len(pressures) - 1)
+
+        def inverse_interp_logZ_to_T(log_row, target_log):
+            """
+            Invert one 1D curve log(property) vs temperature → get temperature.
+            Assumes monotonic log(property) along temperature.
+            """
+            xp = np.asarray(log_row, dtype=np.float64)
+            fp = np.asarray(temps, dtype=np.float64)
+            if xp[0] > xp[-1]:  # ensure ascending xp for np.interp
+                xp = xp[::-1]
+                fp = fp[::-1]
+            return float(np.interp(target_log, xp, fp))
+
+        # Invert along temperature for the two bracketing pressure rows
+        T0 = inverse_interp_logZ_to_T(log_data[j0, :], target_log)
+        if j0 == j1:
+            return T0
+        T1 = inverse_interp_logZ_to_T(log_data[j1, :], target_log)
+
+        # Linear interpolation across pressure
+        p0, p1 = pressures[j0], pressures[j1]
+        t = (y - p0) / (p1 - p0) if p1 != p0 else 0.0
+        return float((1.0 - t) * T0 + t * T1)
+
+    # Convenience wrappers
+    def get_temperature_from_entropy(self, pressure_bar_a: float, entropy: float, **kw) -> float:
+        """Return temperature (°C) for given pressure and entropy."""
+        return self.get_temperature_from_property("entropy", pressure_bar_a, entropy, **kw)
+
+    def get_temperature_from_enthalpy(self, pressure_bar_a: float, enthalpy: float, **kw) -> float:
+        """Return temperature (°C) for given pressure and enthalpy."""
+        return self.get_temperature_from_property("enthalpy", pressure_bar_a, enthalpy, **kw)
