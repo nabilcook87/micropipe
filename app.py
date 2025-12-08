@@ -2127,9 +2127,14 @@ elif tool_selection == "Manual Calculation":
         from utils.supercompliq_co2 import RefrigerantProps
         from utils.pipe_length_volume_calc import get_pipe_id_mm
     
-        T_evap = evaporating_temp
-        T_liq = maxliq_temp
-        T_cond = condensing_temp
+        if refrigerant == "R744 TC":
+            T_evap = evaporating_temp
+            T_liq = maxliq_temp
+        
+        else:
+            T_evap = evaporating_temp
+            T_liq = maxliq_temp
+            T_cond = condensing_temp
     
         props = RefrigerantProperties()
         props_sup = RefrigerantProps()
