@@ -2393,39 +2393,74 @@ elif tool_selection == "Manual Calculation":
                 return float("nan")
         
         if st.button("Auto-select"):
-            results, errors = [], []
-        
-            for ps in pipe_sizes:
-                dt_i = get_liquid_dt_for_size(ps)
-                if math.isfinite(dt_i):
-                    results.append({"size": ps, "dt": dt_i})
+            if refrigerant == "R744 TC":
+                results, errors = [], []
+            
+                for ps in pipe_sizes:
+                    dt_i = get_liquid_dt_for_size(ps)
+                    if math.isfinite(dt_i):
+                        results.append({"size": ps, "dt": dt_i})
+                    else:
+                        errors.append((ps, "Non-numeric ΔT"))
+            
+                if not results:
+                    with st.expander("⚠️ Liquid selection debug details", expanded=True):
+                        for ps, msg in errors:
+                            st.write(f"❌ {ps}: {msg}")
+                    st.error("No valid pipe size results. Check inputs and CSV rows.")
                 else:
-                    errors.append((ps, "Non-numeric ΔT"))
-        
-            if not results:
-                with st.expander("⚠️ Liquid selection debug details", expanded=True):
-                    for ps, msg in errors:
-                        st.write(f"❌ {ps}: {msg}")
-                st.error("No valid pipe size results. Check inputs and CSV rows.")
+                    # Keep sizes that satisfy the dt limit, pick the smallest OD (mm)
+                    valid = [r for r in results if r["dt"] <= max_lineloss]
+            
+                    if valid:
+                        best = min(valid, key=lambda x: mm_map[x["size"]])
+                        st.session_state["_next_selected_size"] = best["size"]
+                        st.success(
+                            f"✅ Selected liquid pipe size: **{best['size']}**  \n"
+                            f"ΔT: {best['dt']:.2f} kPa (limit {max_lineloss:.2f} kPa)"
+                        )
+                        st.rerun()
+                    else:
+                        best_dt = min(r["dt"] for r in results if math.isfinite(r["dt"]))
+                        st.error(
+                            "❌ No pipe meets the PD limit.  \n"
+                            f"Best achievable PD = {best_dt:.2f} kPa (must be ≤ {max_lineloss:.2f} kPa)  \n"
+                            "➡ Relax the Max PD or choose a different material/length/fittings."
+                        )
             else:
-                # Keep sizes that satisfy the dt limit, pick the smallest OD (mm)
-                valid = [r for r in results if r["dt"] <= max_penalty]
-        
-                if valid:
-                    best = min(valid, key=lambda x: mm_map[x["size"]])
-                    st.session_state["_next_selected_size"] = best["size"]
-                    st.success(
-                        f"✅ Selected liquid pipe size: **{best['size']}**  \n"
-                        f"ΔT: {best['dt']:.3f} K (limit {max_penalty:.3f} K)"
-                    )
-                    st.rerun()
+                results, errors = [], []
+            
+                for ps in pipe_sizes:
+                    dt_i = get_liquid_dt_for_size(ps)
+                    if math.isfinite(dt_i):
+                        results.append({"size": ps, "dt": dt_i})
+                    else:
+                        errors.append((ps, "Non-numeric ΔT"))
+            
+                if not results:
+                    with st.expander("⚠️ Liquid selection debug details", expanded=True):
+                        for ps, msg in errors:
+                            st.write(f"❌ {ps}: {msg}")
+                    st.error("No valid pipe size results. Check inputs and CSV rows.")
                 else:
-                    best_dt = min(r["dt"] for r in results if math.isfinite(r["dt"]))
-                    st.error(
-                        "❌ No pipe meets the ΔT limit.  \n"
-                        f"Best achievable ΔT = {best_dt:.3f} K (must be ≤ {max_penalty:.3f} K)  \n"
-                        "➡ Relax the Max Penalty or choose a different material/length/fittings."
-                    )
+                    # Keep sizes that satisfy the dt limit, pick the smallest OD (mm)
+                    valid = [r for r in results if r["dt"] <= max_penalty]
+            
+                    if valid:
+                        best = min(valid, key=lambda x: mm_map[x["size"]])
+                        st.session_state["_next_selected_size"] = best["size"]
+                        st.success(
+                            f"✅ Selected liquid pipe size: **{best['size']}**  \n"
+                            f"ΔT: {best['dt']:.3f} K (limit {max_penalty:.3f} K)"
+                        )
+                        st.rerun()
+                    else:
+                        best_dt = min(r["dt"] for r in results if math.isfinite(r["dt"]))
+                        st.error(
+                            "❌ No pipe meets the ΔT limit.  \n"
+                            f"Best achievable ΔT = {best_dt:.3f} K (must be ≤ {max_penalty:.3f} K)  \n"
+                            "➡ Relax the Max Penalty or choose a different material/length/fittings."
+                        )
         
         st.subheader("Results")
     
