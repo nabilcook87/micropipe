@@ -329,7 +329,7 @@ elif tool_selection == "Oil Return Checker":
             with max_col2:
                 ss.setdefault("gc_max_pres", 93.7)
                 gc_max_pres = st.number_input(
-                    "Max GC Out Pressure (bar)",
+                    "Max GC Out Pressure (bar(a))",
                     min_value=73.8, max_value=150.0,
                     value=ss.gc_max_pres, step=1.0, key="gc_max_pres"
                 )
@@ -348,7 +348,7 @@ elif tool_selection == "Oil Return Checker":
             with min_col2:
                 ss.setdefault("gc_min_pres", 75.0)
                 gc_min_pres = st.number_input(
-                    "Min GC Out Pressure (bar)",
+                    "Min GC Out Pressure (bar(a))",
                     min_value=40.0, max_value=150.0,
                     value=ss.gc_min_pres, step=1.0, key="gc_min_pres"
                 )
