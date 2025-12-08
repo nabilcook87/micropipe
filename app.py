@@ -357,7 +357,7 @@ elif tool_selection == "Oil Return Checker":
             maxliq_temp = gc_max_temp
             minliq_temp = gc_min_temp
 
-            ss.evap_temp = min(ss.evap_temp, minliq_temp)
+            ss.evap_temp = min(ss.evap_temp, minliq_temp, maxliq_temp)
         
         else:
             # --- Original inputs for normal refrigerants ---
@@ -942,7 +942,7 @@ elif tool_selection == "Manual Calculation":
                 maxliq_temp = gc_max_temp
                 minliq_temp = gc_min_temp
 
-                ss.evap_temp = min(ss.evap_temp, minliq_temp)
+                ss.evap_temp = min(ss.evap_temp, minliq_temp, maxliq_temp)
             
             else:
                 # --- Original inputs for normal refrigerants ---
