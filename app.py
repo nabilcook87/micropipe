@@ -2057,20 +2057,39 @@ elif tool_selection == "Manual Calculation":
                 # When evap changes: clamp evap down to maxliq
                 ss.evap_temp   = min(ss.evap_temp,   ss.maxliq_temp)
     
-            # --- Inputs with inclusive caps (≤), same order as your code ---
-            condensing_temp = st.number_input(
-                "Condensing Temperature (°C)",
-                min_value=cond_min, max_value=cond_max,
-                value=ss.cond_temp, step=1.0, key="cond_temp",
-                on_change=on_change_cond,
-            )
-    
-            maxliq_temp = st.number_input(
-                "Liquid Temperature (°C)",
-                min_value=maxliq_min, max_value=min(condensing_temp, maxliq_max),
-                value=ss.maxliq_temp, step=1.0, key="maxliq_temp",
-                on_change=on_change_maxliq,
-            )
+            if refrigerant == "R744 TC":     
+                ss.setdefault("gc_max_temp", 38.0)
+                gc_max_temp = st.number_input(
+                    "Max GC Out Temp (°C)",
+                    min_value=-50.0, max_value=50.0,
+                    value=ss.gc_max_temp, step=1.0, key="gc_max_temp"
+                )
+        
+                ss.setdefault("gc_max_pres", 93.7)
+                gc_max_pres = st.number_input(
+                    "Max GC Out Pressure (bar)",
+                    min_value=73.8, max_value=150.0,
+                    value=ss.gc_max_pres, step=1.0, key="gc_max_pres"
+                )
+            
+                maxliq_temp = gc_max_temp
+
+                ss.evap_temp = min(ss.evap_temp, maxliq_temp)
+            
+            else:        
+                condensing_temp = st.number_input(
+                    "Condensing Temperature (°C)",
+                    min_value=cond_min, max_value=cond_max,
+                    value=ss.cond_temp, step=1.0, key="cond_temp",
+                    on_change=on_change_cond,
+                )
+        
+                maxliq_temp = st.number_input(
+                    "Liquid Temperature (°C)",
+                    min_value=maxliq_min, max_value=min(condensing_temp, maxliq_max),
+                    value=ss.maxliq_temp, step=1.0, key="maxliq_temp",
+                    on_change=on_change_maxliq,
+                )
 
         with col2:
             
