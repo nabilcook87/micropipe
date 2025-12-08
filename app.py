@@ -3073,7 +3073,10 @@ elif tool_selection == "Manual Calculation":
                 st.metric("Pressure Drop", f"{dp_total_kPa:.2f}kPa")
     
             with col4:
-                st.metric("Temp Penalty", f"{dt:.2f}K")
+                if refrigerant == "R744 TC":
+                    st.metric("Temp Penalty", "")
+                else:
+                    st.metric("Temp Penalty", f"{dt:.2f}K")
 
             with col5:
                 st.metric("Discharge Temperature", f"{dis_t:.2f}°C")
