@@ -2772,10 +2772,13 @@ elif tool_selection == "Manual Calculation":
     
         props = RefrigerantProperties()
         props_sup = RefrigerantProps()
-        
-        h_in = props.get_properties(refrigerant, T_liq)["enthalpy_liquid2"]
 
-        h_evap = props.get_properties(refrigerant, T_evap)["enthalpy_vapor"]
+        if refrigerant == "R744 TC":
+            h_in = props_sup.get_enthalpy_sup(gc_max_pres, maxliq_temp)
+            h_evap = props.get_properties("R744", T_evap)["enthalpy_vapor"]
+        else:
+            h_in = props.get_properties(refrigerant, T_liq)["enthalpy_liquid2"]
+            h_evap = props.get_properties(refrigerant, T_evap)["enthalpy_vapor"]
         
         delta_h = h_evap - h_in
 
