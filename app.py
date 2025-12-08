@@ -2139,9 +2139,13 @@ elif tool_selection == "Manual Calculation":
         props = RefrigerantProperties()
         props_sup = RefrigerantProps()
         
-        h_in = props.get_properties(refrigerant, T_liq)["enthalpy_liquid2"]
-
-        h_evap = props.get_properties(refrigerant, T_evap)["enthalpy_vapor"]
+        if refrigerant == "R744 TC":
+            h_in = props_sup.get_enthalpy_sup(gc_max_pres, maxliq_temp)
+            h_evap = props.get_properties("R744", T_evap)["enthalpy_vapor"]
+    
+        else:
+            h_in = props.get_properties(refrigerant, T_liq)["enthalpy_liquid2"]
+            h_evap = props.get_properties(refrigerant, T_evap)["enthalpy_vapor"]
         
         delta_h = h_evap - h_in
 
@@ -2152,14 +2156,20 @@ elif tool_selection == "Manual Calculation":
 
             area_m2 = math.pi * (ID_m / 2) ** 2
 
-            density = RefrigerantProperties().get_properties(refrigerant, T_liq)["density_liquid2"]
+            if refrigerant == "R744 TC":
+                density = props_sup.get_density_sup(gc_max_pres, maxliq_temp)
+            else:
+                density = RefrigerantProperties().get_properties(refrigerant, T_liq)["density_liquid2"]
 
             velocity_m_s = mass_flow_kg_s / (area_m2 * density)
 
         else:
             velocity_m_s = None
 
-        viscosity = RefrigerantProperties().get_properties(refrigerant, T_liq)["viscosity_liquid"]
+        if refrigerant == "R744 TC":
+            viscosity = props_sup.get_viscosity_sup(gc_max_pres, maxliq_temp)
+        else:
+            viscosity = RefrigerantProperties().get_properties(refrigerant, T_liq)["viscosity_liquid"]
     
         reynolds = (density * velocity_m_s * ID_m) / (viscosity / 1000000)
     
