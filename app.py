@@ -2249,27 +2249,34 @@ elif tool_selection == "Manual Calculation":
         
         dp_total_kPa = dp_pipe_kPa + dp_fittings_kPa + dp_valves_kPa + dp_plf_kPa
         
-        converter = PressureTemperatureConverter()
-        condpres = converter.temp_to_pressure(refrigerant, T_cond)
-        postcirc = condpres - (dp_total_kPa / 100)
-        postcirctemp = converter.pressure_to_temp(refrigerant, postcirc)
+        if refrigerant == "R744 TC":
+            condpres = gc_max_pres
+            evappres = converter.temp_to_pressure("R744", T_evap)
+            dt = ""
+            addsub = ""
         
-        dt = T_cond - postcirctemp
-
-        head = 9.80665 * risem * density / 1000
-        
-        dp_withhead = dp_total_kPa + head
-
-        postall = condpres - (dp_withhead / 100)
-        postalltemp = converter.pressure_to_temp(refrigerant, postall)
-        
-        tall = T_cond - postalltemp
-
-        exsub = T_cond - T_liq
-
-        addsub = max(tall - exsub, 0)
-
-        evappres = converter.temp_to_pressure(refrigerant, T_evap)
+        else:
+            converter = PressureTemperatureConverter()
+            condpres = converter.temp_to_pressure(refrigerant, T_cond)
+            postcirc = condpres - (dp_total_kPa / 100)
+            postcirctemp = converter.pressure_to_temp(refrigerant, postcirc)
+            
+            dt = T_cond - postcirctemp
+    
+            head = 9.80665 * risem * density / 1000
+            
+            dp_withhead = dp_total_kPa + head
+    
+            postall = condpres - (dp_withhead / 100)
+            postalltemp = converter.pressure_to_temp(refrigerant, postall)
+            
+            tall = T_cond - postalltemp
+    
+            exsub = T_cond - T_liq
+    
+            addsub = max(tall - exsub, 0)
+    
+            evappres = converter.temp_to_pressure(refrigerant, T_evap)
 
         volflow = mass_flow_kg_s / density
 
