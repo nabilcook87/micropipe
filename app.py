@@ -2311,9 +2311,13 @@ elif tool_selection == "Manual Calculation":
                 area_m2_local = math.pi * (ID_m_local / 2) ** 2
         
                 # Properties at liquid temperature (size-independent)
-                density_liq = RefrigerantProperties().get_properties(refrigerant, T_liq)["density_liquid2"]
-                visc_liq = RefrigerantProperties().get_properties(refrigerant, T_liq)["viscosity_liquid"]
-        
+                if refrigerant == "R744 TC":
+                    density_liq = props_sup.get_density_sup(gc_max_pres, maxliq_temp)
+                    visc_liq = props_sup.get_viscosity_sup(gc_max_pres, maxliq_temp)
+                else:
+                    density_liq = RefrigerantProperties().get_properties(refrigerant, T_liq)["density_liquid2"]
+                    visc_liq = RefrigerantProperties().get_properties(refrigerant, T_liq)["viscosity_liquid"]
+                
                 # Mass flow already computed outside (size-independent)
                 v_local = mass_flow_kg_s / (area_m2_local * density_liq)
         
@@ -2375,11 +2379,14 @@ elif tool_selection == "Manual Calculation":
                 dp_total_kPa_local = dp_pipe_kPa_local + dp_fittings_kPa_local + dp_valves_kPa_local + dp_plf_kPa_local
         
                 # Convert DP to post-circ temperature and get ΔT
-                conv = PressureTemperatureConverter()
-                condpres_local = conv.temp_to_pressure(refrigerant, T_cond)
-                postcirc_local = condpres_local - (dp_total_kPa_local / 100.0)  # kPa -> bar: /100
-                postcirctemp_local = conv.pressure_to_temp(refrigerant, postcirc_local)
-                dt_local = T_cond - postcirctemp_local
+                if refrigerant == "R744 TC":
+                    dt_local = dp_total_kPa_local
+                else:
+                    conv = PressureTemperatureConverter()
+                    condpres_local = conv.temp_to_pressure(refrigerant, T_cond)
+                    postcirc_local = condpres_local - (dp_total_kPa_local / 100.0)  # kPa -> bar: /100
+                    postcirctemp_local = conv.pressure_to_temp(refrigerant, postcirc_local)
+                    dt_local = T_cond - postcirctemp_local
         
                 return float(dt_local)
             except Exception:
