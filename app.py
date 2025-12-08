@@ -2250,6 +2250,7 @@ elif tool_selection == "Manual Calculation":
         dp_total_kPa = dp_pipe_kPa + dp_fittings_kPa + dp_valves_kPa + dp_plf_kPa
         
         if refrigerant == "R744 TC":
+            converter = PressureTemperatureConverter()
             condpres = gc_max_pres
             evappres = converter.temp_to_pressure("R744", T_evap)
             dt = ""
