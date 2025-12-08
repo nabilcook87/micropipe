@@ -2791,8 +2791,8 @@ elif tool_selection == "Manual Calculation":
 
             if refrigerant == "R744 TC":
                 suc_ent = RefrigerantEntropies().get_entropy("R744", T_evap + 273.15, superheat_K)
-                isen_sup = 
-                isen_enth = 
+                isen_sup = props_sup.get_temperature_from_entropy(gc_max_pres, suc_ent)
+                isen_enth = props_sup.get_enthalpy_sup(gc_max_pres, isen_sup)
                 suc_enth = RefrigerantEnthalpies().get_enthalpy("R744", T_evap + 273.15, superheat_K)
             else:
                 suc_ent = RefrigerantEntropies().get_entropy(refrigerant, T_evap + 273.15, superheat_K)
@@ -2807,12 +2807,11 @@ elif tool_selection == "Manual Calculation":
             dis_enth = suc_enth + enth_change
 
             if refrigerant == "R744 TC":
-                dis_sup = 
+                dis_t = props_sup.get_temperature_from_enthalpy(gc_max_pres, dis_enth)
             else:
                 dis_sup = RefrigerantEnthalpies().get_superheat_from_enthalpy(refrigerant, T_cond + 273.15, dis_enth)
-
-            dis_t = T_cond + dis_sup
-
+                dis_t = T_cond + dis_sup
+            
             if refrigerant == "R744 TC":
                 dis_dens = props_sup.get_density_sup(gc_max_pres, dis_t)
                 dis_visc = props_sup.get_viscosity_sup(gc_max_pres, dis_t)
@@ -2897,7 +2896,7 @@ elif tool_selection == "Manual Calculation":
         )
         
         dp_total_kPa = dp_pipe_kPa + dp_fittings_kPa + dp_valves_kPa + dp_plf_kPa
-
+        
         converter = PressureTemperatureConverter()
         condpres = converter.temp_to_pressure(refrigerant, T_cond)
         postcirc = condpres - (dp_total_kPa / 100)
