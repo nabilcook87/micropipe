@@ -2897,14 +2897,18 @@ elif tool_selection == "Manual Calculation":
         
         dp_total_kPa = dp_pipe_kPa + dp_fittings_kPa + dp_valves_kPa + dp_plf_kPa
         
-        converter = PressureTemperatureConverter()
-        condpres = converter.temp_to_pressure(refrigerant, T_cond)
-        postcirc = condpres - (dp_total_kPa / 100)
-        postcirctemp = converter.pressure_to_temp(refrigerant, postcirc)
+        if refrigerant == "R744 TC":
+            converter = PressureTemperatureConverter()
+            condpres = gc_max_pres
+            evappres = converter.temp_to_pressure("R744", T_evap)
         
-        dt = T_cond - postcirctemp
-
-        evappres = converter.temp_to_pressure(refrigerant, T_evap)
+        else:
+            converter = PressureTemperatureConverter()
+            condpres = converter.temp_to_pressure(refrigerant, T_cond)
+            postcirc = condpres - (dp_total_kPa / 100)
+            postcirctemp = converter.pressure_to_temp(refrigerant, postcirc)
+            dt = T_cond - postcirctemp
+            evappres = converter.temp_to_pressure(refrigerant, T_evap)
 
         volflow = mass_flow_kg_s / dis_dens
 
