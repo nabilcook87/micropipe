@@ -2253,8 +2253,6 @@ elif tool_selection == "Manual Calculation":
             converter = PressureTemperatureConverter()
             condpres = gc_max_pres
             evappres = converter.temp_to_pressure("R744", T_evap)
-            dt = ""
-            addsub = ""
         
         else:
             converter = PressureTemperatureConverter()
@@ -2437,10 +2435,16 @@ elif tool_selection == "Manual Calculation":
                 st.metric("Pressure Drop", f"{dp_total_kPa:.2f}kPa")
     
             with col4:
-                st.metric("Temp Penalty", f"{dt:.2f}K")
+                if refrigerant == "R744 TC":
+                    st.metric("Temp Penalty", "")
+                else:
+                    st.metric("Temp Penalty", f"{dt:.2f}K")
 
             with col5:
-                st.metric("Additional Subcooling Required", f"{addsub:.2f}K")
+                if refrigerant == "R744 TC":
+                    st.metric("Additional Subcooling Required", "")
+                else:
+                    st.metric("Additional Subcooling Required", f"{addsub:.2f}K")
 
             with col6:
                 st.metric("Evaporating Pressure", f"{evappres:.2f}bar(a)")
