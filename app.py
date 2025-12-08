@@ -2101,7 +2101,10 @@ elif tool_selection == "Manual Calculation":
             )
     
         with col2:
-            risem = st.number_input("Liquid Line Rise (m)", min_value=0.0, max_value=30.0, value=0.0, step=1.0)
+            if refrigerant == "R744 TC":
+                risem = st.number_input("Liquid Line Rise (m)", min_value=0.0, max_value=30.0, value=0.0, step=1.0, disabled=True)
+            else:
+                risem = st.number_input("Liquid Line Rise (m)", min_value=0.0, max_value=30.0, value=0.0, step=1.0)
             if refrigerant == "R744 TC":
                 max_lineloss = st.number_input("Max Pressure Drop (kPa)", min_value=0.0, max_value=250.0, value=40.0, step=5.0)
             else:
