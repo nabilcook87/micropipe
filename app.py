@@ -2527,12 +2527,13 @@ elif tool_selection == "Manual Calculation":
         from utils.pipe_length_volume_calc import get_pipe_id_mm
         from utils.refrigerant_entropies import RefrigerantEntropies
         from utils.refrigerant_enthalpies import RefrigerantEnthalpies
+        from utils.supercompliq_co2 import RefrigerantProps
 
         col1, col2, col3, col4 = st.columns(4)
     
         with col1:
             refrigerant = st.selectbox("Refrigerant", [
-                "R404A", "R134a", "R407F", "R744", "R410A",
+                "R404A", "R134a", "R407F", "R744", "R744 TC", "R410A",
                 "R407C", "R507A", "R448A", "R449A", "R22", "R32", "R454A", "R454C", "R455A", "R407A",
                 "R290", "R1270", "R600a", "R717", "R1234ze", "R1234yf", "R12", "R11", "R454B", "R450A", "R513A", "R23", "R508B", "R502"
             ])
@@ -2744,6 +2745,7 @@ elif tool_selection == "Manual Calculation":
         T_cond = condensing_temp
     
         props = RefrigerantProperties()
+        props_sup = RefrigerantProps()
         
         h_in = props.get_properties(refrigerant, T_liq)["enthalpy_liquid2"]
 
