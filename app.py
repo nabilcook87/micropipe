@@ -2698,21 +2698,23 @@ elif tool_selection == "Manual Calculation":
             def on_change_evap():
                 # When evap changes: clamp evap down to maxliq
                 ss.evap_temp   = min(ss.evap_temp,   ss.maxliq_temp)
-    
-            # --- Inputs with inclusive caps (≤), same order as your code ---
-            condensing_temp = st.number_input(
-                "Condensing Temperature (°C)",
-                min_value=cond_min, max_value=cond_max,
-                value=ss.cond_temp, step=1.0, key="cond_temp",
-                on_change=on_change_cond,
-            )
-    
-            maxliq_temp = st.number_input(
-                "Liquid Temperature (°C)",
-                min_value=maxliq_min, max_value=min(condensing_temp, maxliq_max),
-                value=ss.maxliq_temp, step=1.0, key="maxliq_temp",
-                on_change=on_change_maxliq,
-            )
+
+
+            
+            else:
+                condensing_temp = st.number_input(
+                    "Condensing Temperature (°C)",
+                    min_value=cond_min, max_value=cond_max,
+                    value=ss.cond_temp, step=1.0, key="cond_temp",
+                    on_change=on_change_cond,
+                )
+        
+                maxliq_temp = st.number_input(
+                    "Liquid Temperature (°C)",
+                    min_value=maxliq_min, max_value=min(condensing_temp, maxliq_max),
+                    value=ss.maxliq_temp, step=1.0, key="maxliq_temp",
+                    on_change=on_change_maxliq,
+                )
 
             evaporating_temp = st.number_input(
                 "Evaporating Temperature (°C)",
@@ -2724,7 +2726,10 @@ elif tool_selection == "Manual Calculation":
         with col2:
             isen = st.number_input("Isentropic Efficiency (%)", min_value=50.0, max_value=90.0, value=75.0, step=5.0)
             superheat_K = st.number_input("Superheat (K)", min_value=0.0, max_value=60.0, value=5.0, step=1.0)
-            max_penalty = st.number_input("Max Penalty (K)", min_value=0.0, max_value=6.0, value=1.0, step=0.1)
+            if refrigerant == "R744 TC":
+                max_linelosss = st.number_input("Max Pressure Drop (kPa)", min_value=0.0, max_value=250.0, value=15.0, step=1.0)
+            else:
+                max_penalty = st.number_input("Max Penalty (K)", min_value=0.0, max_value=6.0, value=1.0, step=0.1)
     
         with col3:
             L = st.number_input("Pipe Length (m)", min_value=0.1, max_value=300.0, value=10.0, step=1.0)
@@ -2740,9 +2745,13 @@ elif tool_selection == "Manual Calculation":
             globe = st.number_input("Globe Valves", min_value=0, max_value=20, value=0, step=1)
             PLF = st.number_input("Pressure Loss Factors", min_value=0.0, max_value=20.0, value=0.0, step=0.1)
 
-        T_evap = evaporating_temp
-        T_liq = maxliq_temp
-        T_cond = condensing_temp
+        if refrigerant == "R744 TC":
+            T_evap = evaporating_temp
+            T_liq = maxliq_temp
+        else:
+            T_evap = evaporating_temp
+            T_liq = maxliq_temp
+            T_cond = condensing_temp
     
         props = RefrigerantProperties()
         props_sup = RefrigerantProps()
