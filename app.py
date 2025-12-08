@@ -2109,7 +2109,7 @@ elif tool_selection == "Manual Calculation":
             else:
                 risem = st.number_input("Liquid Line Rise (m)", min_value=0.0, max_value=30.0, value=0.0, step=1.0)
             if refrigerant == "R744 TC":
-                max_lineloss = st.number_input("Max Pressure Drop (kPa)", min_value=0.0, max_value=250.0, value=40.0, step=5.0)
+                max_lineloss = st.number_input("Max Pressure Drop (kPa)", min_value=0.0, max_value=250.0, value=15.0, step=1.0)
             else:
                 max_penalty = st.number_input("Max Penalty (K)", min_value=0.0, max_value=6.0, value=1.0, step=0.1)
     
@@ -2750,7 +2750,7 @@ elif tool_selection == "Manual Calculation":
             isen = st.number_input("Isentropic Efficiency (%)", min_value=50.0, max_value=90.0, value=75.0, step=5.0)
             superheat_K = st.number_input("Superheat (K)", min_value=0.0, max_value=60.0, value=5.0, step=1.0)
             if refrigerant == "R744 TC":
-                max_linelosss = st.number_input("Max Pressure Drop (kPa)", min_value=0.0, max_value=250.0, value=15.0, step=1.0)
+                max_linelosss = st.number_input("Max Pressure Drop (kPa)", min_value=0.0, max_value=250.0, value=40.0, step=5.0)
             else:
                 max_penalty = st.number_input("Max Penalty (K)", min_value=0.0, max_value=6.0, value=1.0, step=0.1)
     
