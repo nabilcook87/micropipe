@@ -136,11 +136,11 @@ elif tool_selection == "Pressure ↔ Temperature Converter":
     else:
         if mode == "Pressure ➞ Temperature":
             pressure_bar = st.number_input("Saturation Pressure (bar)", value=5.0)
-            temp_C = converter.pressure_to_temp(refrigerant, pressure_bar)
+            temp_C = converter.pressure2_to_temp(refrigerant, pressure_bar)
             st.write(f"**Saturation Temperature:** {temp_C:.2f} °C")
         else:
             temp_C = st.number_input("Saturation Temperature (°C)", value=0.0)
-            pressure_bar = converter.temp_to_pressure(refrigerant, temp_C)
+            pressure_bar = converter.temp_to_pressure2(refrigerant, temp_C)
             st.write(f"**Saturation Pressure:** {pressure_bar:.2f} bar")
 
 elif tool_selection == "Pressure Drop ↔ Temperature Penalty":
