@@ -117,12 +117,14 @@ elif tool_selection == "Pressure ↔ Temperature Converter":
         "R290", "R1270", "R600a", "R717", "R1234ze", "R1234yf", "R12", "R11", "R454B", "R450A", "R513A", "R23", "R508B", "R502"
     ])
     
-    col1, col2 = st.columns(2)
+    col1, col2, col3 = st.columns(3)
 
     with col1:
         mode = st.radio("Convert:", ["Pressure ➞ Temperature", "Temperature ➞ Pressure"])
     with col2:
         reference = st.radio("Temperature Reference:", ["Dew Point", "Bubble Point"])
+    with col3:
+        absgauge = st.radio("Pressure Reference:", ["Absolute", "Gauge"])
         
     if reference == "Dew Point":
         if mode == "Pressure ➞ Temperature":
@@ -154,11 +156,13 @@ elif tool_selection == "Pressure Drop ↔ Temperature Penalty":
     ])
     T_sat = st.number_input("Saturation Temperature (°C)", value=-10.0)
     
-    col1, col2 = st.columns(2)
+    col1, col2, col3 = st.columns(3)
     with col1:
         direction = st.radio("Convert:", ["ΔP ➞ ΔT", "ΔT ➞ ΔP"])
     with col2:
         reference = st.radio("Temperature Reference:", ["Dew Point", "Bubble Point"])
+    with col3:
+        absgauge = st.radio("Pressure Reference:", ["Absolute", "Gauge"])
         
     if reference == "Dew Point":
         if direction == "ΔP ➞ ΔT":
