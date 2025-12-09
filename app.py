@@ -153,16 +153,31 @@ elif tool_selection == "Pressure Drop ↔ Temperature Penalty":
         "R290", "R1270", "R600a", "R717", "R1234ze", "R1234yf", "R12", "R11", "R454B", "R450A", "R513A", "R23", "R508B", "R502"
     ])
     T_sat = st.number_input("Saturation Temperature (°C)", value=-10.0)
-    direction = st.radio("Convert:", ["ΔP ➞ ΔT", "ΔT ➞ ΔP"])
-
-    if direction == "ΔP ➞ ΔT":
-        delta_p_kpa = st.number_input("Pressure Drop (kPa)", value=20.0)
-        delta_T = converter.pressure_drop_to_temp_penalty(refrigerant, T_sat, delta_p_kpa)
-        st.write(f"**Temperature Penalty:** {delta_T:.3f} K")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        direction = st.radio("Convert:", ["ΔP ➞ ΔT", "ΔT ➞ ΔP"])
+    with col2:
+        reference = st.radio("Temperature Reference:", ["Dew Point", "Bubble Point"])
+        
+    if reference == "Dew Point":
+        if direction == "ΔP ➞ ΔT":
+            delta_p_kpa = st.number_input("Pressure Drop (kPa)", value=20.0)
+            delta_T = converter.pressure_drop_to_temp_penalty(refrigerant, T_sat, delta_p_kpa)
+            st.write(f"**Temperature Penalty:** {delta_T:.3f} K")
+        else:
+            delta_T = st.number_input("Temperature Penalty (K)", value=0.5)
+            delta_p_kpa = converter.temp_penalty_to_pressure_drop(refrigerant, T_sat, delta_T)
+            st.write(f"**Equivalent Pressure Drop:** {delta_p_kpa:.2f} kPa")
     else:
-        delta_T = st.number_input("Temperature Penalty (K)", value=0.5)
-        delta_p_kpa = converter.temp_penalty_to_pressure_drop(refrigerant, T_sat, delta_T)
-        st.write(f"**Equivalent Pressure Drop:** {delta_p_kpa:.2f} kPa")
+        if direction == "ΔP ➞ ΔT":
+            delta_p_kpa = st.number_input("Pressure Drop (kPa)", value=20.0)
+            delta_T = converter.pressure2_drop_to_temp_penalty(refrigerant, T_sat, delta_p_kpa)
+            st.write(f"**Temperature Penalty:** {delta_T:.3f} K")
+        else:
+            delta_T = st.number_input("Temperature Penalty (K)", value=0.5)
+            delta_p_kpa = converter.temp_penalty_to_pressure2_drop(refrigerant, T_sat, delta_T)
+            st.write(f"**Equivalent Pressure Drop:** {delta_p_kpa:.2f} kPa")
 
 elif tool_selection == "System Pressure Checker":
     system_pressure_checker_ui()
