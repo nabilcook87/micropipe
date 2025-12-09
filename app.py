@@ -2954,18 +2954,33 @@ elif tool_selection == "Manual Calculation":
                 area_m2     = math.pi * (ID_m_local / 2) ** 2
         
                 # 1) Isentropic chain – size independent, but we recompute to be safe
-                suc_ent    = RefrigerantEntropies().get_entropy(refrigerant, T_evap + 273.15, superheat_K)
-                isen_sup   = RefrigerantEntropies().get_superheat_from_entropy(refrigerant, T_cond + 273.15, suc_ent)
-                isen_enth  = RefrigerantEnthalpies().get_enthalpy(refrigerant, T_cond + 273.15, isen_sup)
-                suc_enth   = RefrigerantEnthalpies().get_enthalpy(refrigerant, T_evap + 273.15, superheat_K)
+                if refrigerant == "R744 TC":
+                    suc_ent    = RefrigerantEntropies().get_entropy("R744", T_evap + 273.15, superheat_K)
+                    isen_sup   = props_sup.get_temperature_from_entropy(gc_max_pres, suc_ent)
+                    isen_enth  = props_sup.get_enthalpy_sup(gc_max_pres, isen_sup)
+                    suc_enth   = RefrigerantEnthalpies().get_enthalpy("R744", T_evap + 273.15, superheat_K)
+                else:
+                    suc_ent    = RefrigerantEntropies().get_entropy(refrigerant, T_evap + 273.15, superheat_K)
+                    isen_sup   = RefrigerantEntropies().get_superheat_from_entropy(refrigerant, T_cond + 273.15, suc_ent)
+                    isen_enth  = RefrigerantEnthalpies().get_enthalpy(refrigerant, T_cond + 273.15, isen_sup)
+                    suc_enth   = RefrigerantEnthalpies().get_enthalpy(refrigerant, T_evap + 273.15, superheat_K)
+                
                 isen_change = isen_enth - suc_enth
                 enth_change = isen_change / (isen / 100.0)
                 dis_enth    = suc_enth + enth_change
-                dis_sup     = RefrigerantEnthalpies().get_superheat_from_enthalpy(refrigerant, T_cond + 273.15, dis_enth)
+                
+                if refrigerant == "R744 TC":
+                    dis_t = props_sup.get_temperature_from_enthalpy(gc_max_pres, dis_enth)
+                else:
+                    dis_sup     = RefrigerantEnthalpies().get_superheat_from_enthalpy(refrigerant, T_cond + 273.15, dis_enth)
         
                 # Discharge properties at (T_cond, dis_sup)
-                dis_dens = RefrigerantDensities().get_density(refrigerant, T_cond + 273.15, dis_sup)
-                dis_visc = RefrigerantViscosities().get_viscosity(refrigerant, T_cond + 273.15, dis_sup)
+                if refrigerant == "R744 TC":
+                    dis_dens = props_sup.get_density_sup(gc_max_pres, dis_t)
+                    dis_visc = props_sup.get_viscosity_sup(gc_max_pres, dis_t)
+                else:
+                    dis_dens = RefrigerantDensities().get_density(refrigerant, T_cond + 273.15, dis_sup)
+                    dis_visc = RefrigerantViscosities().get_viscosity(refrigerant, T_cond + 273.15, dis_sup)
         
                 # Mass flow is size-independent (already computed in main code)
                 v = mass_flow_kg_s / (area_m2 * dis_dens)
@@ -3021,11 +3036,14 @@ elif tool_selection == "Manual Calculation":
                 dp_total_kPa_local = dp_pipe_kPa + dp_fit_kPa + dp_val_kPa + dp_plf_kPa
         
                 # 5) Convert Δp → ΔT at condenser side
-                conv = PressureTemperatureConverter()
-                condpres_local   = conv.temp_to_pressure(refrigerant, T_cond)
-                postcirc_local   = condpres_local - (dp_total_kPa_local / 100.0)  # kPa→bar
-                postcirctemp_loc = conv.pressure_to_temp(refrigerant, postcirc_local)
-                dt_local         = T_cond - postcirctemp_loc
+                if refrigerant == "R744 TC":
+                    dt_local = dp_total_kPa_local
+                else:
+                    conv = PressureTemperatureConverter()
+                    condpres_local   = conv.temp_to_pressure(refrigerant, T_cond)
+                    postcirc_local   = condpres_local - (dp_total_kPa_local / 100.0)  # kPa→bar
+                    postcirctemp_loc = conv.pressure_to_temp(refrigerant, postcirc_local)
+                    dt_local         = T_cond - postcirctemp_loc
         
                 return float(dt_local)
         
