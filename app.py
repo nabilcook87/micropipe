@@ -137,8 +137,12 @@ elif tool_selection == "Pressure ↔ Temperature Converter":
             st.write(f"**Saturation Temperature:** {temp_C:.2f} °C")
         else:
             temp_C = st.number_input("Saturation Temperature (°C)", value=0.0)
-            pressure_bar = converter.temp_to_pressure(refrigerant, temp_C)
-            st.write(f"**Saturation Pressure:** {pressure_bar:.2f} bar")
+            if absgauge == "Absolute":
+                pressure_bar = converter.temp_to_pressure(refrigerant, temp_C)
+                st.write(f"**Saturation Pressure:** {pressure_bar:.2f} bar(a)")
+            else:
+                pressure_bar = converter.temp_to_pressure(refrigerant, temp_C) - 1.01325
+                st.write(f"**Saturation Pressure:** {pressure_bar:.2f} bar(g)")
     else:
         if mode == "Pressure ➞ Temperature":
             if absgauge == "Absolute":
@@ -150,8 +154,12 @@ elif tool_selection == "Pressure ↔ Temperature Converter":
             st.write(f"**Saturation Temperature:** {temp_C:.2f} °C")
         else:
             temp_C = st.number_input("Saturation Temperature (°C)", value=0.0)
-            pressure_bar = converter.temp_to_pressure2(refrigerant, temp_C)
-            st.write(f"**Saturation Pressure:** {pressure_bar:.2f} bar")
+            if absgauge == "Absolute":
+                pressure_bar = converter.temp_to_pressure2(refrigerant, temp_C)
+                st.write(f"**Saturation Pressure:** {pressure_bar:.2f} bar(a)")
+            else:
+                pressure_bar = converter.temp_to_pressure2(refrigerant, temp_C) - 1.01325
+                st.write(f"**Saturation Pressure:** {pressure_bar:.2f} bar(g)")
 
 elif tool_selection == "Pressure Drop ↔ Temperature Penalty":
     st.subheader("Pressure Drop ⇄ Temperature Penalty Tool")
