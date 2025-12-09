@@ -128,8 +128,12 @@ elif tool_selection == "Pressure ↔ Temperature Converter":
         
     if reference == "Dew Point":
         if mode == "Pressure ➞ Temperature":
-            pressure_bar = st.number_input("Saturation Pressure (bar)", value=5.0)
-            temp_C = converter.pressure_to_temp(refrigerant, pressure_bar)
+            if absgauge == "Absolute":
+                pressure_bar = st.number_input("Saturation Pressure (bar(a))", value=5.0)
+                temp_C = converter.pressure_to_temp(refrigerant, pressure_bar)
+            else:
+                pressure_bar = st.number_input("Saturation Pressure (bar(g))", value=5.0)
+                temp_C = converter.pressure_to_temp(refrigerant, pressure_bar + 1.01325)
             st.write(f"**Saturation Temperature:** {temp_C:.2f} °C")
         else:
             temp_C = st.number_input("Saturation Temperature (°C)", value=0.0)
@@ -137,8 +141,12 @@ elif tool_selection == "Pressure ↔ Temperature Converter":
             st.write(f"**Saturation Pressure:** {pressure_bar:.2f} bar")
     else:
         if mode == "Pressure ➞ Temperature":
-            pressure_bar = st.number_input("Saturation Pressure (bar)", value=5.0)
-            temp_C = converter.pressure2_to_temp(refrigerant, pressure_bar)
+            if absgauge == "Absolute":
+                pressure_bar = st.number_input("Saturation Pressure (bar(a))", value=5.0)
+                temp_C = converter.pressure2_to_temp(refrigerant, pressure_bar)
+            else:
+                pressure_bar = st.number_input("Saturation Pressure (bar(g))", value=5.0)
+                temp_C = converter.pressure2_to_temp(refrigerant, pressure_bar + 1.01325)
             st.write(f"**Saturation Temperature:** {temp_C:.2f} °C")
         else:
             temp_C = st.number_input("Saturation Temperature (°C)", value=0.0)
