@@ -123,15 +123,25 @@ elif tool_selection == "Pressure ↔ Temperature Converter":
         mode = st.radio("Convert:", ["Pressure ➞ Temperature", "Temperature ➞ Pressure"])
     with col2:
         reference = st.radio("Temperature Reference:", ["Dew Point", "Bubble Point"])
-
-    if mode == "Pressure ➞ Temperature":
-        pressure_bar = st.number_input("Saturation Pressure (bar)", value=5.0)
-        temp_C = converter.pressure_to_temp(refrigerant, pressure_bar)
-        st.write(f"**Saturation Temperature:** {temp_C:.2f} °C")
+        
+    if reference == "Dew Point":
+        if mode == "Pressure ➞ Temperature":
+            pressure_bar = st.number_input("Saturation Pressure (bar)", value=5.0)
+            temp_C = converter.pressure_to_temp(refrigerant, pressure_bar)
+            st.write(f"**Saturation Temperature:** {temp_C:.2f} °C")
+        else:
+            temp_C = st.number_input("Saturation Temperature (°C)", value=0.0)
+            pressure_bar = converter.temp_to_pressure(refrigerant, temp_C)
+            st.write(f"**Saturation Pressure:** {pressure_bar:.2f} bar")
     else:
-        temp_C = st.number_input("Saturation Temperature (°C)", value=0.0)
-        pressure_bar = converter.temp_to_pressure(refrigerant, temp_C)
-        st.write(f"**Saturation Pressure:** {pressure_bar:.2f} bar")
+        if mode == "Pressure ➞ Temperature":
+            pressure_bar = st.number_input("Saturation Pressure (bar)", value=5.0)
+            temp_C = converter.pressure_to_temp(refrigerant, pressure_bar)
+            st.write(f"**Saturation Temperature:** {temp_C:.2f} °C")
+        else:
+            temp_C = st.number_input("Saturation Temperature (°C)", value=0.0)
+            pressure_bar = converter.temp_to_pressure(refrigerant, temp_C)
+            st.write(f"**Saturation Pressure:** {pressure_bar:.2f} bar")
 
 elif tool_selection == "Pressure Drop ↔ Temperature Penalty":
     st.subheader("Pressure Drop ⇄ Temperature Penalty Tool")
