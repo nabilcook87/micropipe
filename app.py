@@ -116,7 +116,13 @@ elif tool_selection == "Pressure ↔ Temperature Converter":
         "R407C", "R507A", "R448A", "R449A", "R22", "R32", "R454A", "R454C", "R455A", "R407A",
         "R290", "R1270", "R600a", "R717", "R1234ze", "R1234yf", "R12", "R11", "R454B", "R450A", "R513A", "R23", "R508B", "R502"
     ])
-    mode = st.radio("Convert:", ["Pressure ➞ Temperature", "Temperature ➞ Pressure"])
+    
+    col1, col2 = st.columns(2)
+
+    with col1:
+        mode = st.radio("Convert:", ["Pressure ➞ Temperature", "Temperature ➞ Pressure"])
+    with col2:
+        reference = st.radio("Temperature Reference:", ["Dew Point", "Bubble Point"])
 
     if mode == "Pressure ➞ Temperature":
         pressure_bar = st.number_input("Saturation Pressure (bar)", value=5.0)
