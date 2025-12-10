@@ -1822,98 +1822,103 @@ elif tool_selection == "Manual Calculation":
                 mor_num = float(MORfinal_local)
         
             return mor_num, float(dt_local)
-        
-        # ------------------------------------------------------------
-        # NEW BUTTON: Low ΔT Pipe Size  (Pressure-drop-only selection)
-        # ------------------------------------------------------------
-        if st.button("Horizontal"):
-            results, errors = [], []
-        
-            # --- Compute ΔT for all pipe sizes ---
-            for ps in pipe_sizes:
-                try:
-                    MOR_i, dt_i = get_pipe_results(ps)
-                    if math.isfinite(dt_i):
-                        results.append({"size": ps, "dt": dt_i})
-                    else:
-                        errors.append((ps, "Non-numeric ΔT"))
-                except Exception as e:
-                    errors.append((ps, str(e)))
-        
-            # --- No valid results? ---
-            if not results:
-                with st.expander("⚠️ Pipe selection debug details", expanded=True):
-                    for ps, msg in errors:
-                        st.write(f"❌ {ps}: {msg}")
-                st.error("No valid pipe sizes found. Check inputs and CSV rows.")
+
+        col1, col2, col3 = st.columns(3)
+
+        with col1:
+            st.subheader("Auto-select")
+        with col2:
+            # ------------------------------------------------------------
+            # NEW BUTTON: Low ΔT Pipe Size  (Pressure-drop-only selection)
+            # ------------------------------------------------------------
+            if st.button("Horizontal"):
+                results, errors = [], []
             
-            else:
-                # --- Only apply ΔT limit ---
-                valid = [r for r in results if r["dt"] <= max_penalty]
-        
-                if valid:
-                    # Pick smallest diameter meeting dt ≤ limit
-                    best = min(valid, key=lambda x: mm_map[x["size"]])
-        
-                    st.session_state["_next_selected_size"] = best["size"]
-        
-                    st.success(
-                        f"✅ Selected low-ΔT pipe size: **{best['size']}**  \n"
-                        f"ΔT: {best['dt']:.3f} K (limit {max_penalty:.3f} K)"
-                    )
-        
-                    st.rerun()
-        
+                # --- Compute ΔT for all pipe sizes ---
+                for ps in pipe_sizes:
+                    try:
+                        MOR_i, dt_i = get_pipe_results(ps)
+                        if math.isfinite(dt_i):
+                            results.append({"size": ps, "dt": dt_i})
+                        else:
+                            errors.append((ps, "Non-numeric ΔT"))
+                    except Exception as e:
+                        errors.append((ps, str(e)))
+            
+                # --- No valid results? ---
+                if not results:
+                    with st.expander("⚠️ Pipe selection debug details", expanded=True):
+                        for ps, msg in errors:
+                            st.write(f"❌ {ps}: {msg}")
+                    st.error("No valid pipe sizes found. Check inputs and CSV rows.")
+                
                 else:
-                    # Show minimum achievable dt
-                    best_dt = min(r["dt"] for r in results)
-                    st.error(
-                        f"❌ No pipe satisfies the ΔT limit.\n"
-                        f"Best achievable ΔT is **{best_dt:.3f} K**, "
-                        f"but limit = **{max_penalty:.3f} K**."
-                    )
-        
-        if st.button("Single Riser"):
-            results, errors = [], []
-        
-            # --- Run the calculations ---
-            for ps in pipe_sizes:
-                try:
-                    MOR_i, dt_i = get_pipe_results(ps)
-                    if math.isfinite(MOR_i) and math.isfinite(dt_i):
-                        results.append({"size": ps, "MORfinal": MOR_i, "dt": dt_i})
+                    # --- Only apply ΔT limit ---
+                    valid = [r for r in results if r["dt"] <= max_penalty]
+            
+                    if valid:
+                        # Pick smallest diameter meeting dt ≤ limit
+                        best = min(valid, key=lambda x: mm_map[x["size"]])
+            
+                        st.session_state["_next_selected_size"] = best["size"]
+            
+                        st.success(
+                            f"✅ Selected low-ΔT pipe size: **{best['size']}**  \n"
+                            f"ΔT: {best['dt']:.3f} K (limit {max_penalty:.3f} K)"
+                        )
+            
+                        st.rerun()
+            
                     else:
-                        errors.append((ps, "Non-numeric MOR or ΔT"))
-                except Exception as e:
-                    errors.append((ps, str(e)))
-        
-            # --- Handle results ---
-            if not results:
-                with st.expander("⚠️ Pipe selection debug details", expanded=True):
-                    for ps, msg in errors:
-                        st.write(f"❌ {ps}: {msg}")
-                st.error("No valid pipe size results. Check inputs and CSV rows.")
-        
-            else:
-                valid = [r for r in results if (r["MORfinal"] <= required_oil_duty_pct) and (r["dt"] <= max_penalty)]
-        
-                if valid:
-                    best = min(valid, key=lambda x: mm_map[x["size"]])
-                    st.session_state["_next_selected_size"] = best["size"]
-        
-                    st.success(
-                        f"✅ Selected optimal pipe size: **{best['size']}**  \n"
-                        f"MOR: {best['MORfinal']:.1f}% | ΔT: {best['dt']:.2f} K"
-                    )
-        
-                    # ✅ Trigger a rerun AFTER displaying success
-                    st.rerun()
-        
+                        # Show minimum achievable dt
+                        best_dt = min(r["dt"] for r in results)
+                        st.error(
+                            f"❌ No pipe satisfies the ΔT limit.\n"
+                            f"Best achievable ΔT is **{best_dt:.3f} K**, "
+                            f"but limit = **{max_penalty:.3f} K**."
+                        )
+        with col3:        
+            if st.button("Single Riser"):
+                results, errors = [], []
+            
+                # --- Run the calculations ---
+                for ps in pipe_sizes:
+                    try:
+                        MOR_i, dt_i = get_pipe_results(ps)
+                        if math.isfinite(MOR_i) and math.isfinite(dt_i):
+                            results.append({"size": ps, "MORfinal": MOR_i, "dt": dt_i})
+                        else:
+                            errors.append((ps, "Non-numeric MOR or ΔT"))
+                    except Exception as e:
+                        errors.append((ps, str(e)))
+            
+                # --- Handle results ---
+                if not results:
+                    with st.expander("⚠️ Pipe selection debug details", expanded=True):
+                        for ps, msg in errors:
+                            st.write(f"❌ {ps}: {msg}")
+                    st.error("No valid pipe size results. Check inputs and CSV rows.")
+            
                 else:
-                    st.error(
-                        "❌ No pipe meets both limits simultaneously.  \n"
-                        "➡ Please relax one or more input limits."
-                    )
+                    valid = [r for r in results if (r["MORfinal"] <= required_oil_duty_pct) and (r["dt"] <= max_penalty)]
+            
+                    if valid:
+                        best = min(valid, key=lambda x: mm_map[x["size"]])
+                        st.session_state["_next_selected_size"] = best["size"]
+            
+                        st.success(
+                            f"✅ Selected optimal pipe size: **{best['size']}**  \n"
+                            f"MOR: {best['MORfinal']:.1f}% | ΔT: {best['dt']:.2f} K"
+                        )
+            
+                        # ✅ Trigger a rerun AFTER displaying success
+                        st.rerun()
+            
+                    else:
+                        st.error(
+                            "❌ No pipe meets both limits simultaneously.  \n"
+                            "➡ Please relax one or more input limits."
+                        )
         
         st.subheader("Results")
     
