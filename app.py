@@ -773,7 +773,7 @@ elif tool_selection == "Oil Return Checker":
 elif tool_selection == "Manual Calculation":
     st.subheader("Manual Calculation")
     
-    mode = st.radio("", ["Dry Suction", "Liquid", "Discharge", "Drain", "Pumped Liquid", "Wet Suction"], index=1, horizontal=True, label_visibility="collapsed")
+    mode = st.radio("", ["Dry Suction", "Liquid", "Discharge", "Drain", "Pumped Liquid", "Wet Suction"], index=0, horizontal=True, label_visibility="collapsed")
     
     if mode == "Dry Suction":
         
@@ -1826,7 +1826,7 @@ elif tool_selection == "Manual Calculation":
         col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
 
         with col1:
-            st.subheader("Auto-select")
+            st.subheader("Auto-select", label_visibility="collapsed")
         with col2:
             # ------------------------------------------------------------
             # NEW BUTTON: Low ΔT Pipe Size  (Pressure-drop-only selection)
