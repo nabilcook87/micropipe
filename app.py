@@ -1823,6 +1823,56 @@ elif tool_selection == "Manual Calculation":
         
             return mor_num, float(dt_local)
         
+        # ------------------------------------------------------------
+        # NEW BUTTON: Low ΔT Pipe Size  (Pressure-drop-only selection)
+        # ------------------------------------------------------------
+        if st.button("Horizontal"):
+            results, errors = [], []
+        
+            # --- Compute ΔT for all pipe sizes ---
+            for ps in pipe_sizes:
+                try:
+                    MOR_i, dt_i = get_pipe_results(ps)
+                    if math.isfinite(dt_i):
+                        results.append({"size": ps, "dt": dt_i})
+                    else:
+                        errors.append((ps, "Non-numeric ΔT"))
+                except Exception as e:
+                    errors.append((ps, str(e)))
+        
+            # --- No valid results? ---
+            if not results:
+                with st.expander("⚠️ Pipe selection debug details", expanded=True):
+                    for ps, msg in errors:
+                        st.write(f"❌ {ps}: {msg}")
+                st.error("No valid pipe sizes found. Check inputs and CSV rows.")
+            
+            else:
+                # --- Only apply ΔT limit ---
+                valid = [r for r in results if r["dt"] <= max_penalty]
+        
+                if valid:
+                    # Pick smallest diameter meeting dt ≤ limit
+                    best = min(valid, key=lambda x: mm_map[x["size"]])
+        
+                    st.session_state["_next_selected_size"] = best["size"]
+        
+                    st.success(
+                        f"✅ Selected low-ΔT pipe size: **{best['size']}**  \n"
+                        f"ΔT: {best['dt']:.3f} K (limit {max_penalty:.3f} K)"
+                    )
+        
+                    st.rerun()
+        
+                else:
+                    # Show minimum achievable dt
+                    best_dt = min(r["dt"] for r in results)
+                    st.error(
+                        f"❌ No pipe satisfies the ΔT limit.\n"
+                        f"Best achievable ΔT is **{best_dt:.3f} K**, "
+                        f"but limit = **{max_penalty:.3f} K**."
+                    )
+        
         if st.button("Single Riser"):
             results, errors = [], []
         
