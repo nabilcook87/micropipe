@@ -2411,6 +2411,9 @@ elif tool_selection == "Manual Calculation":
         
                         st.session_state["small_riser_size"] = default_small
                         small_size = default_small
+
+                        st.session_state["double_riser_mode"] = True
+                        st.rerun()
         
                         # STEP 2: compute double-riser PD with VB-style 2.63936 split
                         dr_res = compute_double_riser_pd(
