@@ -873,27 +873,27 @@ elif tool_selection == "Manual Calculation":
                 index=default_index,
                 key="selected_size",
             )
-
-            # If we are in a double-riser context, offer a small riser size
-            # list of sizes strictly smaller than the large riser
-            if "small_riser_size" in st.session_state:
+        
+            # ---------------------------------------------------
+            # SMALL RISER SELECTBOX GOES HERE (and nowhere else)
+            # ---------------------------------------------------
+            if st.session_state.get("double_riser_mode", False):
+        
+                # all sizes smaller than selected_size
                 smaller_sizes = [
-                    s for s in pipe_sizes
-                    if mm_map[s] < mm_map[selected_size]
+                    s for s in pipe_sizes if mm_map[s] < mm_map[selected_size]
                 ]
-                if smaller_sizes:
-                    # ensure stored value is valid
-                    if st.session_state["small_riser_size"] not in smaller_sizes:
-                        # default to the next size down
-                        try:
-                            idx_LR = pipe_sizes.index(selected_size)
-                            if idx_LR > 0 and pipe_sizes[idx_LR-1] in smaller_sizes:
-                                st.session_state["small_riser_size"] = pipe_sizes[idx_LR-1]
-                            else:
-                                st.session_state["small_riser_size"] = smaller_sizes[-1]
-                        except Exception:
-                            st.session_state["small_riser_size"] = smaller_sizes[-1]
-
+        
+                if not smaller_sizes:
+                    st.info("No smaller pipe sizes available for double riser.")
+                else:
+                    # ensure small_riser_size exists and is valid
+                    if "small_riser_size" not in st.session_state:
+                        st.session_state["small_riser_size"] = smaller_sizes[-1]
+                    elif st.session_state["small_riser_size"] not in smaller_sizes:
+                        st.session_state["small_riser_size"] = smaller_sizes[-1]
+        
+                    # IMPORTANT: Do NOT assign to session_state — only call the widget
                     st.selectbox(
                         "Small Riser Size (inch)",
                         smaller_sizes,
@@ -2285,6 +2285,7 @@ elif tool_selection == "Manual Calculation":
         
         with col2:
             if st.button("Horizontal"):
+                st.session_state["double_riser_mode"] = False
                 results, errors = [], []
         
                 for ps in pipe_sizes:
@@ -2322,6 +2323,7 @@ elif tool_selection == "Manual Calculation":
         
         with col3:
             if st.button("Single Riser"):
+                st.session_state["double_riser_mode"] = False
                 results, errors = [], []
         
                 for ps in pipe_sizes:
