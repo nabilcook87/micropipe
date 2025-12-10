@@ -1823,7 +1823,7 @@ elif tool_selection == "Manual Calculation":
         
             return mor_num, float(dt_local)
 
-        col1, col2, col3 = st.columns(3)
+        col1, col2, col3 = st.columns(3, gap=None)
 
         with col1:
             st.subheader("Auto-select")
