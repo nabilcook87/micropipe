@@ -1823,7 +1823,7 @@ elif tool_selection == "Manual Calculation":
         
             return mor_num, float(dt_local)
 
-        col1, col2, col3 = st.columns(3, gap=None)
+        col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
 
         with col1:
             st.subheader("Auto-select")
@@ -1919,6 +1919,15 @@ elif tool_selection == "Manual Calculation":
                             "❌ No pipe meets both limits simultaneously.  \n"
                             "➡ Please relax one or more input limits."
                         )
+        
+        with col4:
+            st.empty()
+        with col5:
+            st.empty()
+        with col6:
+            st.empty()
+        with col7:
+            st.empty()
         
         st.subheader("Results")
     
