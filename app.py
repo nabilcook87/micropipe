@@ -900,8 +900,6 @@ elif tool_selection == "Manual Calculation":
                         index=smaller_sizes.index(st.session_state["small_riser_size"]),
                         key="small_riser_size",
                     )
-                else:
-                    st.info("No smaller pipe sizes available for a double riser.")
 
         ss.prev_pipe_mm = float(mm_map.get(selected_size, float("nan")))
         
