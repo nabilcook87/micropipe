@@ -858,7 +858,6 @@ elif tool_selection == "Manual Calculation":
         default_index = 0
         if override_val and override_val in pipe_sizes:
             default_index = pipe_sizes.index(override_val)
-        elif override_val is None:
         elif material_changed and "prev_pipe_mm" in ss:
             default_index = _closest_index(ss.prev_pipe_mm)
         elif selected_material == "Copper ACR" and ("1-1/8" in pipe_sizes or '1-1/8"' in pipe_sizes):
