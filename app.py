@@ -28,16 +28,6 @@ div[data-testid="stMetricDelta"] > div {
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown("""
-<style>
-/* Make ONLY error boxes full width even inside columns */
-div[data-testid="stNotification"] {
-    width: 100% !important;
-    max-width: 100% !important;
-}
-</style>
-""", unsafe_allow_html=True)
-
 st.set_page_config(page_title="Micropipe - Refrigeration Pipe Sizing", layout="wide")
 st.title("MicroPipe")
 
