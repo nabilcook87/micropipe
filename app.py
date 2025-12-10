@@ -1823,7 +1823,7 @@ elif tool_selection == "Manual Calculation":
         
             return mor_num, float(dt_local)
         
-        if st.button("Auto-select"):
+        if st.button("Single Riser"):
             results, errors = [], []
         
             # --- Run the calculations ---
