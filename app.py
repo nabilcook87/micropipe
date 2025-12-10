@@ -2196,17 +2196,32 @@ elif tool_selection == "Manual Calculation":
                 controlling = "SR"
                 ctrl = SR_res
 
-            # branch MOR calculations
+            # --- compute oil mass split the same way gas splits ---
+            LR_mass_foroil      = mass_flow_foroil     * (LR_mass     / total_mass_flow_kg_s)
+            LR_mass_foroil_min  = mass_flow_foroilmin * (LR_mass_min / total_mass_flow_kg_smin)
+            
+            SR_mass_foroil      = mass_flow_foroil     * (SR_mass     / total_mass_flow_kg_s)
+            SR_mass_foroil_min  = mass_flow_foroilmin * (SR_mass_min / total_mass_flow_kg_smin)
+            
+            # --- compute MOR for each branch ---
             MOR_LR, vel_LR = compute_branch_MOR(
-                large_size_inch, LR_ID_m, LR_area_m2,
-                LR_mass, LR_mass_min,
-                LR_mass_foroil, LR_mass_foroil_min,
+                large_size_inch,
+                ID_LR_m,
+                math.pi * (ID_LR_m / 2)**2,
+                LR_mass,
+                LR_mass_min,
+                LR_mass_foroil,
+                LR_mass_foroil_min,
             )
             
             MOR_SR, vel_SR = compute_branch_MOR(
-                small_size_inch, SR_ID_m, SR_area_m2,
-                SR_mass, SR_mass_min,
-                SR_mass_foroil, SR_mass_foroil_min,
+                small_size_inch,
+                ID_SR_m,
+                math.pi * (ID_SR_m / 2)**2,
+                SR_mass,
+                SR_mass_min,
+                SR_mass_foroil,
+                SR_mass_foroil_min,
             )
         
             out = dict(ctrl)  # copy
