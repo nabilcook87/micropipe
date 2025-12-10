@@ -894,7 +894,7 @@ elif tool_selection == "Manual Calculation":
                         except Exception:
                             st.session_state["small_riser_size"] = smaller_sizes[-1]
 
-                    st.session_state["small_riser_size"] = st.selectbox(
+                    st.selectbox(
                         "Small Riser Size (inch)",
                         smaller_sizes,
                         index=smaller_sizes.index(st.session_state["small_riser_size"]),
