@@ -865,14 +865,6 @@ elif tool_selection == "Manual Calculation":
             default_index = pipe_sizes.index(want)
         elif "selected_size" in ss and ss.selected_size in pipe_sizes:
             default_index = pipe_sizes.index(ss.selected_size)
-        
-        with col1:
-            selected_size = st.selectbox(
-                "Nominal Pipe Size (inch)",
-                pipe_sizes,
-                index=default_index,
-                key="selected_size",
-            )
 
         with col1:
             selected_size = st.selectbox(
