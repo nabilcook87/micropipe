@@ -2395,6 +2395,22 @@ elif tool_selection == "Manual Calculation":
                                 f"ΔT: **{dr_res['dt']:.3f} K**, "
                                 f"Total PD: **{dr_res['dp_total_kPa']:.2f} kPa**"
                             )
+
+                            if dr_res["MOR_pass"]:
+                                st.success(
+                                    f"✅ Oil return OK\n"
+                                    f"Large riser MOR = {dr_res['MOR_LR']:.1f}%\n"
+                                    f"Small riser MOR = {dr_res['MOR_SR']:.1f}%"
+                                )
+                            else:
+                                st.error(
+                                    f"❌ Oil return insufficient\n"
+                                    f"Large riser MOR = {dr_res['MOR_LR']:.1f}% "
+                                    f"({'OK' if dr_res['MOR_LR_pass'] else 'FAIL'})\n"
+                                    f"Small riser MOR = {dr_res['MOR_SR']:.1f}% "
+                                    f"({'OK' if dr_res['MOR_SR_pass'] else 'FAIL'})"
+                                )
+                            
                             # overwrite the global PD/DT display with double-riser result
                             dp_pipe_kPa = dr_res["dp_pipe_kPa"]
                             dp_fittings_kPa = dr_res["dp_fittings_kPa"]
