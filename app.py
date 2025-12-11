@@ -294,6 +294,17 @@ elif tool_selection == "Oil Return Checker":
             key="selected_size",
         )
 
+    with col1:
+        enable_dr = st.checkbox("Use Double Riser")
+    
+    if enable_dr:
+        small_riser = st.selectbox("Small Riser Size (inch)", pipe_sizes, key="small_riser")
+        large_riser = st.selectbox(
+            "Large Riser Size (inch)",
+            [s for s in pipe_sizes if mm_map[s] >= mm_map[small_riser]],
+            key="large_riser",
+        )
+
     # remember the selected size in mm for next material change
     ss.prev_pipe_mm = float(mm_map.get(selected_size, float("nan")))
 
@@ -1487,7 +1498,8 @@ elif tool_selection == "Manual Calculation":
             return rows.iloc[0]
         
         
-        def get_pipe_results(size_inch):
+        def get_pipe_results(size_inch, override_mass_flow=None):
+            mf = override_mass_flow if override_mass_flow is not None else mass_flow_kg_s
             """
             Reproduce MORfinal and dt for a given pipe size (exact same logic path as your main block).
             Returns (MORfinal_value or NaN, dt_value) as floats.
@@ -1571,9 +1583,9 @@ elif tool_selection == "Manual Calculation":
                 mass_flow_foroilmin = evap_capacity_kw / delta_h_foroilmin if delta_h_foroilmin > 0 else 0.01
         
             # ---- Velocities (same mixing and refrigerant-dependent velocity1_prop) ----
-            v1 = mass_flow_kg_s / (area_m2_local * density)
+            v1 = mf / (area_m2_local * density)
             v1min = mass_flow_kg_smin / (area_m2_local * density)
-            v2 = mass_flow_kg_s / (area_m2_local * density_super2)
+            v2 = mf / (area_m2_local * density_super2)
             v2min = mass_flow_kg_smin / (area_m2_local * density_super2)
         
             if refrigerant == "R744":
@@ -1622,7 +1634,8 @@ elif tool_selection == "Manual Calculation":
             # ---- MOR (same as page) ----
             MinMassFlux = (jg_half ** 2) * ((density_foroil * 9.81 * ID_m_local * (oil_density - density_foroil)) ** 0.5)
             MinMassFlow = MinMassFlux * area_m2_local
-            MOR_pre = (MinMassFlow / mass_flow_foroil) * 100
+            flow_for_MOR = mf if override_mass_flow is not None else mass_flow_foroil
+            MOR_pre = (MinMassFlow / flow_for_MOR) * 100
             MOR_premin = (MinMassFlow / mass_flow_foroilmin) * 100
         
             # Special corrections
@@ -1728,7 +1741,7 @@ elif tool_selection == "Manual Calculation":
             # ---- density/viscosity for Reynolds (same path) ----
             # use the same density_recalc definition (note: uses velocity_m_s, not final)
             if velocity_m_s > 0:
-                density_recalc_local = mass_flow_kg_s / (velocity_m_s * area_m2_local)
+                density_recalc_local = mf / (velocity_m_s * area_m2_local)
             else:
                 density_recalc_local = density  # fallback
         
@@ -1822,6 +1835,17 @@ elif tool_selection == "Manual Calculation":
                 mor_num = float(MORfinal_local)
         
             return mor_num, float(dt_local)
+
+        def split_flow_VB(Ds_mm, Dl_mm, total_mass, exponent=2.63936):
+            Ds = Ds_mm / 1000
+            Dl = Dl_mm / 1000
+            LRCap = total_mass / (1 + (Ds / Dl)**exponent)
+            SRCap = total_mass - LRCap
+            return LRCap, SRCap
+
+        def evaluate_riser(size_inch, mass_flow, get_pipe_results):
+            MOR, dt = get_pipe_results(size_inch, override_mass_flow=mass_flow)
+            return MOR, dt
 
         def select_double_riser_with_MOR(
             pipe_sizes,
@@ -2045,34 +2069,49 @@ elif tool_selection == "Manual Calculation":
 
         with col4:
             if st.button("Double Riser"):
-                results, errors = [], []
                 try:
-                    # We reuse get_pipe_results for each size so we mirror densities,
-                    # viscosities, velocities and MOR calcs exactly.
-                    def _gp(size_inch):
-                        return get_pipe_results(size_inch)
+                    Ds_mm = mm_map[small_riser]
+                    Dl_mm = mm_map[large_riser]
         
-                    large_size, small_size = select_double_riser_with_MOR(
-                        pipe_sizes=pipe_sizes,
-                        mm_map=mm_map,
-                        get_pipe_results_func=_gp,
-                        total_mass_flow_foroil=mass_flow_foroil,   # your existing variable
-                        required_oil_duty_pct=required_oil_duty_pct,
+                    # VB flow split
+                    mass_large, mass_small = split_flow_VB(Ds_mm, Dl_mm, mass_flow_foroil)
+        
+                    # MOR low load (small only)
+                    MOR_small_low, dt_small_low = evaluate_riser(
+                        small_riser, mass_flow_foroilmin, get_pipe_results
                     )
         
-                    # You can decide whether to lock UI to small or large here.
-                    # Most people want to display the **small riser** as the nominal size:
-                    st.session_state["_next_selected_size"] = small_size
-        
-                    st.success(
-                        f"✅ Double Riser Selected:\n"
-                        f"Primary (Large) riser: **{large_size}**\n"
-                        f"Secondary (Small) riser: **{small_size}**"
+                    # MOR full load
+                    MOR_small_full, dt_small_full = evaluate_riser(
+                        small_riser, mass_small, get_pipe_results
                     )
-                    st.rerun()
+                    MOR_large_full, dt_large_full = evaluate_riser(
+                        large_riser, mass_large, get_pipe_results
+                    )
+        
+                    small_fails = MOR_small_full > required_oil_duty_pct
+                    large_fails = MOR_large_full > required_oil_duty_pct
+        
+                    if small_fails and large_fails:
+                        st.error("❌ Double riser pair fails oil return (VB Error 1).")
+                    else:
+                        st.success("✔ Double riser configuration is valid.")
+                        st.session_state["double_riser_large"] = large_riser
+                        st.session_state["double_riser_small"] = small_riser
+                        st.session_state["double_riser_results"] = {
+                            "mass_large": mass_large,
+                            "mass_small": mass_small,
+                            "MOR_small_low": MOR_small_low,
+                            "MOR_small_full": MOR_small_full,
+                            "MOR_large_full": MOR_large_full,
+                            "dt_small_low": dt_small_low,
+                            "dt_small_full": dt_small_full,
+                            "dt_large_full": dt_large_full,
+                        }
+                        st.rerun()
         
                 except Exception as e:
-                    st.error(f"Double riser selection failed: {e}")
+                    st.error(str(e))
         
         with spacer:
             st.empty()
