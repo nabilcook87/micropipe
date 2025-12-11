@@ -1985,17 +1985,13 @@ elif tool_selection == "Manual Calculation":
         
             st.subheader("Double Riser Balanced Result")
         
-            sA, sB, sC, sD = st.columns(4)
-            with sA:
-                st.metric("Total Mass Flow", f"{dr.M_total:.4f} kg/s")
+            sB, sC, sD = st.columns(4)
             with sB:
                 st.metric("Balanced PD", f"{dr.DP_kPa:.3f} kPa")
             with sC:
                 st.metric("ΔT Penalty", f"{dr.DT_K:.3f} K")
             with sD:
                 st.metric("System Worst MOR", f"{MOR_system_worst:.2f}%")
-        
-            st.markdown(f"## Small Riser — **{manual_small}**")
         
             c1, c2, c3, c4, c5, c6 = st.columns(6)
             with c1: st.metric("Mass Flow", f"{dr.M_small:.4f} kg/s")
@@ -2010,8 +2006,6 @@ elif tool_selection == "Manual Calculation":
                 st.metric("MOR (Full Flow)", f"{MOR_full_flow:.2f}%")
             with m2:
                 st.metric("MOR (Small Branch)", f"{MOR_small:.2f}%")
-        
-            st.markdown(f"## Large Riser — **{manual_large}**")
         
             C1, C2, C3, C4, C5, C6 = st.columns(6)
             with C1: st.metric("Mass Flow", f"{dr.M_large:.4f} kg/s")
