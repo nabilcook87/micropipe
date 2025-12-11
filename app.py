@@ -1959,45 +1959,30 @@ elif tool_selection == "Manual Calculation":
                 key="manual_large"
             )
         
-        
         if st.button("Double Riser (Manual Pair)"):
-        
+            # Balance the pair at full load
             dr = balance_double_riser(manual_small, manual_large, M_total, ctx)
-            rs = dr.small_result
-            rl = dr.large_result
+            rs = dr.small_result  # PipeResult for small riser
+            rl = dr.large_result  # PipeResult for large riser
+
+            small_ID_m = rs.ID_m
+            small_area = rs.area_m2
         
-            # ---------------------------------------------------------
-            # STEP 1 — Compute MinMassFlow USING SMALL RISER ONLY
-            # ---------------------------------------------------------
-            small_ID_m = rs.ID_mm / 1000
-            small_area = math.pi * (small_ID_m / 2) ** 2
-        
-            density_foroil_small = rs.density_for_oil
+            density_foroil_small = rs.density_foroil
             oil_density_small = rs.oil_density
             jg_small = rs.jg_half
         
             MinMassFlux_small = (jg_small ** 2) * (
                 (density_foroil_small * 9.81 * small_ID_m * (oil_density_small - density_foroil_small)) ** 0.5
             )
-        
             MinMassFlow_small = MinMassFlux_small * small_area
+
+            MOR_full_flow = (MinMassFlow_small / dr.M_total) * 100.0
         
-            # ---------------------------------------------------------
-            # STEP 2 — Two MOR values (different denominators only)
-            # ---------------------------------------------------------
+            MOR_small = (MinMassFlow_small / dr.M_small) * 100.0
         
-            # 1) Full-flow MOR (denominator = total evaporator mass flow)
-            MOR_full_flow = (MinMassFlow_small / M_total) * 100
-        
-            # 2) Small-riser MOR (denominator = mass flow through small branch)
-            MOR_small = (MinMassFlow_small / rs.mass_flow_kg_s) * 100
-        
-            # System worst
             MOR_system_worst = max(MOR_full_flow, MOR_small)
         
-            # ---------------------------------------------------------
-            # UI OUTPUT BELOW
-            # ---------------------------------------------------------
             st.subheader("Double Riser Balanced Result")
         
             sA, sB, sC, sD = st.columns(4)
@@ -2010,11 +1995,10 @@ elif tool_selection == "Manual Calculation":
             with sD:
                 st.metric("System Worst MOR", f"{MOR_system_worst:.2f}%")
         
-            # ---------------------- SMALL RISER ----------------------
             st.markdown(f"## Small Riser — **{manual_small}**")
         
             c1, c2, c3, c4, c5, c6 = st.columns(6)
-            with c1: st.metric("Mass Flow", f"{rs.mass_flow_kg_s:.4f} kg/s")
+            with c1: st.metric("Mass Flow", f"{dr.M_small:.4f} kg/s")
             with c2: st.metric("Velocity", f"{rs.velocity_m_s:.2f} m/s")
             with c3: st.metric("Density", f"{rs.density:.1f} kg/m³")
             with c4: st.metric("Reynolds", f"{rs.reynolds:,.0f}")
@@ -2027,22 +2011,16 @@ elif tool_selection == "Manual Calculation":
             with m2:
                 st.metric("MOR (Small Branch)", f"{MOR_small:.2f}%")
         
-            # ---------------------- LARGE RISER ----------------------
             st.markdown(f"## Large Riser — **{manual_large}**")
         
             C1, C2, C3, C4, C5, C6 = st.columns(6)
-            with C1: st.metric("Mass Flow", f"{rl.mass_flow_kg_s:.4f} kg/s")
+            with C1: st.metric("Mass Flow", f"{dr.M_large:.4f} kg/s")
             with C2: st.metric("Velocity", f"{rl.velocity_m_s:.2f} m/s")
             with C3: st.metric("Density", f"{rl.density:.1f} kg/m³")
             with C4: st.metric("Reynolds", f"{rl.reynolds:,.0f}")
             with C5: st.metric("PD", f"{rl.DP_kPa:.3f} kPa")
             with C6: st.metric("ΔT", f"{rl.DT_K:.3f} K")
         
-            # NO MOR DISPLAY FOR LARGE RISER
-        
-            # ---------------------------------------------------------
-            # Acceptance
-            # ---------------------------------------------------------
             st.markdown("### **Oil Return Acceptance**")
         
             if MOR_system_worst <= required_oil_duty_pct:
