@@ -1490,14 +1490,15 @@ elif tool_selection == "Manual Calculation":
         from double_riser import RiserContext, balance_double_riser
         
         ctx = RiserContext(
+            # Required thermodynamic fields
             refrigerant=refrigerant,
             T_evap=T_evap,
             T_cond=T_cond,
             minliq_temp=minliq_temp,
             superheat_K=superheat_K,
             max_penalty_K=max_penalty,
-            gc_max_pres=gc_max_pres if refrigerant == "R744 TC" else None,
-            gc_min_pres=gc_min_pres if refrigerant == "R744 TC" else None,
+        
+            # Required geometry and fittings
             L=L,
             SRB=SRB,
             LRB=LRB,
@@ -1508,9 +1509,15 @@ elif tool_selection == "Manual Calculation":
             ball=ball,
             globe=globe,
             PLF=PLF,
+        
+            # Required data access
             selected_material=selected_material,
             pipe_row_for_size=_pipe_row_for_size,
-        )     
+        
+            # Optional fields (MUST come last)
+            gc_max_pres=gc_max_pres if refrigerant == "R744 TC" else None,
+            gc_min_pres=gc_min_pres if refrigerant == "R744 TC" else None,
+        ) 
         
         def get_pipe_results(size_inch):
             """
@@ -1959,32 +1966,11 @@ elif tool_selection == "Manual Calculation":
         
         if st.button("Double Riser (Manual Pair)"):
         
-            # Build context object (same as your single-riser)
-            ctx = RiserContext(
-                refrigerant=refrigerant,
-                T_evap=T_evap,
-                maxliq_temp=maxliq_temp,
-                minliq_temp=minliq_temp,
-                superheat_K=superheat_K,
-                max_penalty_K=max_penalty,
-                L=L,
-                SRB=SRB,
-                LRB=LRB,
-                bends_45=_45,
-                MAC=MAC,
-                ptrap=ptrap,
-                ubend=ubend,
-                ball=ball,
-                globe=globe,
-                PLF=PLF,
-                selected_material=selected_material,
-                pipe_row_for_size=_pipe_row_for_size,
-                # Add any additional parameters your MOR/DP engine needs
-            )
-        
+            # Use the existing ctx (no second constructor)
             dr = balance_double_riser(manual_small, manual_large, M_total, ctx)
         
-            st.write(f"### Double Riser Result")
+            st.write("### Double Riser Result")
+        
             st.write(f"**Small riser {manual_small}:**")
             st.write(f"- Mass flow: {dr.M_small:.4f} kg/s")
             st.write(f"- MOR: {dr.MOR_small:.2f}%")
