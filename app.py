@@ -2600,7 +2600,10 @@ elif tool_selection == "Manual Calculation":
                     else:
                         MORfinal = ""
         
-                    st.rerun()
+                    st.session_state["double_riser_mode"] = True
+                    st.session_state["double_riser_result"] = best_res
+                    st.session_state["_next_selected_size"] = large_size
+                    st.session_state["_next_small_riser_size"] = small_size
                 
         with spacer:
             st.empty()
@@ -2616,6 +2619,23 @@ elif tool_selection == "Manual Calculation":
         
         if double_riser_message:
             st.success(double_riser_message)
+
+        # default: single-riser numbers already computed above
+
+        if st.session_state.get("double_riser_mode") and "double_riser_result" in st.session_state:
+            dr = st.session_state["double_riser_result"]
+            dp_pipe_kPa     = dr["dp_pipe_kPa"]
+            dp_fittings_kPa = dr["dp_fittings_kPa"]
+            dp_valves_kPa   = dr["dp_valves_kPa"]
+            dp_plf_kPa      = dr["dp_plf_kPa"]
+            dp_total_kPa    = dr["dp_total_kPa"]
+            dt              = dr["dt"]
+            velocity_m_sfinal = dr["velocity_m_sfinal"]
+            density_recalc    = dr["density_recalc"]
+            if math.isfinite(dr["MOR_LR"]) and math.isfinite(dr["MOR_SR"]):
+                MORfinal = max(dr["MOR_LR"], dr["MOR_SR"])
+            else:
+                MORfinal = ""
         
         st.subheader("Results")
     
