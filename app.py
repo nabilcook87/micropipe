@@ -2169,6 +2169,8 @@ elif tool_selection == "Manual Calculation":
         if error_message:
             st.error(error_message)
         
+        st.write("DEBUG MOR_small_low type:", type(dr["MOR_small_low"]), "value:", dr["MOR_small_low"])
+        
         st.subheader("Results")
     
         if velocity_m_sfinal:
@@ -2254,8 +2256,6 @@ elif tool_selection == "Manual Calculation":
             st.write(f"Small Riser ΔT (Low Load): {dr['dt_small_low']:.2f} K")
             st.write(f"Small Riser ΔT (Full Load): {dr['dt_small_full']:.2f} K")
             st.write(f"Large Riser ΔT (Full Load): {dr['dt_large_full']:.2f} K")
-
-        st.write("DEBUG MOR_small_low type:", type(dr["MOR_small_low"]), "value:", dr["MOR_small_low"])
     
     if mode == "Liquid":
         
