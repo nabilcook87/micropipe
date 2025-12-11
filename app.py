@@ -1526,7 +1526,16 @@ elif tool_selection == "Manual Calculation":
             return rows.iloc[0]
         
         
-        def get_pipe_results(size_inch, override_mass_flow=None):
+        def get_pipe_results(size_inch,
+                     base_mf,
+                     base_mf_min,
+                     base_mf_oil,
+                     base_mf_oil_min,
+                     override_mass_flow=None):
+            mass_flow_kg_s       = base_mf
+            mass_flow_kg_smin    = base_mf_min
+            mass_flow_foroil     = base_mf_oil
+            mass_flow_foroilmin  = base_mf_oil_min
             mf = override_mass_flow if override_mass_flow is not None else mass_flow_kg_s
             """
             Reproduce MORfinal and dt for a given pipe size (exact same logic path as your main block).
@@ -2025,7 +2034,13 @@ elif tool_selection == "Manual Calculation":
         
                 for ps in pipe_sizes:
                     try:
-                        MOR_i, dt_i = get_pipe_results(ps)
+                        MOR_i, dt_i = get_pipe_results(
+                            ps,
+                            mass_flow_kg_s,
+                            mass_flow_kg_smin,
+                            mass_flow_foroil,
+                            mass_flow_foroilmin
+                        )
                         if math.isfinite(dt_i):
                             results.append({"size": ps, "dt": dt_i})
                         else:
@@ -2062,7 +2077,13 @@ elif tool_selection == "Manual Calculation":
         
                 for ps in pipe_sizes:
                     try:
-                        MOR_i, dt_i = get_pipe_results(ps)
+                        MOR_i, dt_i = get_pipe_results(
+                            ps,
+                            mass_flow_kg_s,
+                            mass_flow_kg_smin,
+                            mass_flow_foroil,
+                            mass_flow_foroilmin
+                        )
                         if math.isfinite(MOR_i) and math.isfinite(dt_i):
                             results.append({"size": ps, "MORfinal": MOR_i, "dt": dt_i})
                         else:
@@ -2096,48 +2117,48 @@ elif tool_selection == "Manual Calculation":
                         )
 
         with col4:
-            if use_double_riser and st.button("Double Riser"):
-                try:
-                    Ds_mm = mm_map[dr_small]
-                    Dl_mm = mm_map[dr_large]
-            
-                    # VB flow split (full load)
-                    mass_large, mass_small = split_flow_VB(Ds_mm, Dl_mm, mass_flow_foroil)
-            
-                    # Evaluate each riser using your patched get_pipe_results()
-                    # Low load = small riser only
-                    MOR_small_low, dt_small_low = get_pipe_results(dr_small, override_mass_flow=mass_flow_foroilmin)
-            
-                    # Full load = split load
-                    MOR_small_full, dt_small_full = get_pipe_results(dr_small, override_mass_flow=mass_small)
-                    MOR_large_full, dt_large_full = get_pipe_results(dr_large, override_mass_flow=mass_large)
-            
-                    # VB accept/reject rule
-                    small_fails = MOR_small_full > required_oil_duty_pct
-                    large_fails = MOR_large_full > required_oil_duty_pct
-            
-                    if small_fails and large_fails:
-                        st.error("❌ Double riser pair fails oil return at full load (VB Error 1).")
-                    else:
-                        st.success("✔ Double riser configuration is valid.")
-            
-                        # Store results so the Results section can show them
-                        st.session_state["dr_results"] = {
-                            "small": dr_small,
-                            "large": dr_large,
-                            "mass_small": mass_small,
-                            "mass_large": mass_large,
-                            "MOR_small_low": MOR_small_low,
-                            "MOR_small_full": MOR_small_full,
-                            "MOR_large_full": MOR_large_full,
-                            "dt_small_low": dt_small_low,
-                            "dt_small_full": dt_small_full,
-                            "dt_large_full": dt_large_full,
-                        }
-                        st.rerun()
-            
-                except Exception as e:
-                    st.error(f"Double riser calculation failed: {e}")
+            if st.button("Double Riser"):
+        
+                if small_riser is None or large_riser is None:
+                    st.error("Select both small and large riser sizes.")
+                    st.stop()
+        
+                # Compute mass-flow split based on VB logic or your rules
+                mf_small = some_fraction * mass_flow_kg_s
+                mf_large = mass_flow_kg_s - mf_small
+        
+                # --- Evaluate small riser ---
+                MOR_small, dt_small = get_pipe_results(
+                    small_riser,
+                    mass_flow_kg_s,
+                    mass_flow_kg_smin,
+                    mass_flow_foroil,
+                    mass_flow_foroilmin,
+                    override_mass_flow = mf_small
+                )
+        
+                # --- Evaluate large riser ---
+                MOR_large, dt_large = get_pipe_results(
+                    large_riser,
+                    mass_flow_kg_s,
+                    mass_flow_kg_smin,
+                    mass_flow_foroil,
+                    mass_flow_foroilmin,
+                    override_mass_flow = mf_large
+                )
+        
+                # Combine results exactly like the VB logic:
+                MOR_combined = max(MOR_small, MOR_large)
+                dt_combined = max(dt_small, dt_large)
+        
+                if MOR_combined <= required_oil_duty_pct and dt_combined <= max_penalty:
+                    st.success(
+                        f"Double Riser OK\n"
+                        f"Small: {small_riser} | Large: {large_riser}\n"
+                        f"MOR = {MOR_combined:.1f}% | ΔT = {dt_combined:.3f} K"
+                    )
+                else:
+                    st.error("Double riser does not meet limits.")
         
         with spacer:
             st.empty()
