@@ -1823,7 +1823,142 @@ elif tool_selection == "Manual Calculation":
         
             return mor_num, float(dt_local)
 
-        col1, col2, col3, spacer = st.columns([0.1, 0.1, 0.1, 0.9])
+        def select_double_riser_with_MOR(
+            pipe_sizes,
+            mm_map,
+            get_pipe_results_func,
+            total_mass_flow_foroil,   # mass_flow_foroil (full-load flow in that line)
+            required_oil_duty_pct,    # user input
+            exponent=2.63936,
+        ):
+            """
+            MOR-based analogue of the VB DoubleRiserPD logic.
+        
+            - Uses the same flow split between large and small risers as VB:
+                LRCap / PDTY = 1 / (1 + (D_small / D_large)^exp)
+                SRCap / PDTY = 1 - LRCap/PDTY
+              where D_small, D_large are internal diameters.
+        
+            - Oil-return pass/fail is based on *your* MOR calculation for each size.
+              We re-use get_pipe_results_func(size) so densities, viscosities, velocities
+              are computed exactly as in your main logic.
+        
+            Inputs:
+              pipe_sizes:          list of nominal inch strings (ascending)
+              mm_map:              dict size_inch -> ID_mm
+              get_pipe_results_func(size) -> (MORfinal, dt)
+              total_mass_flow_foroil: full-load mass flow through the suction line (kg/s)
+              required_oil_duty_pct: max allowable MOR (%)
+              exponent:            VB exponent (2.63936)
+        
+            Returns:
+              (large_size_inch, small_size_inch)
+            """
+        
+            # 1) Precompute MOR for each size using your existing method
+            #    This mirrors your density/viscosity/velocity calculations exactly.
+            pipe_MOR = {}
+            for ps in pipe_sizes:
+                MOR_i, dt_i = get_pipe_results_func(ps)
+                # Only accept numeric MOR; skip blanks / NaNs
+                if MOR_i is None or not isinstance(MOR_i, (int, float)):
+                    continue
+                pipe_MOR[ps] = MOR_i
+        
+            if not pipe_MOR:
+                raise ValueError("No valid MOR values available for any pipe size.")
+        
+            # 2) Helper to compute LR/SR flow fractions (capacity split) as in VB
+            def capacity_fractions(D_small_m, D_large_m):
+                """
+                Returns:
+                  LR_frac, SR_frac   (fractions of total flow at full load)
+                """
+                ratio = D_small_m / D_large_m
+                LR_frac = 1.0 / (1.0 + ratio**exponent)
+                SR_frac = 1.0 - LR_frac
+                return LR_frac, SR_frac
+        
+            # 3) Find candidate small riser:
+            #    VB walks sizes upwards until the small riser would fail at MinDuty.
+            #    Here we walk until MOR exceeds the allowed limit; we then step one back.
+            #    For simplicity, we pick the *smallest* size whose MOR is <= limit.
+            small_candidate = None
+            for ps in pipe_sizes:
+                if ps not in pipe_MOR:
+                    continue
+                MOR_single = pipe_MOR[ps]
+                if MOR_single <= required_oil_duty_pct:
+                    small_candidate = ps
+                    break
+        
+            if small_candidate is None:
+                raise ValueError(
+                    "No pipe size yields acceptable MOR as a single riser; "
+                    "double riser design is not possible with current limits."
+                )
+        
+            # 4) Now, for this small riser, search for a suitable large riser
+            #    following VB logic: large riser must be >= small, and the pair must
+            #    not have both risers failing oil-return at full load.
+            D_small_m = mm_map[small_candidate] / 1000.0
+            small_index = pipe_sizes.index(small_candidate)
+        
+            best_pair = None
+        
+            for li in range(small_index, len(pipe_sizes)):
+                large_size = pipe_sizes[li]
+                if large_size not in pipe_MOR:
+                    continue
+        
+                D_large_m = mm_map[large_size] / 1000.0
+        
+                # Capacity split fractions (same form as VB LRCap / SRCap)
+                LR_frac, SR_frac = capacity_fractions(D_small_m, D_large_m)
+        
+                # Guard: if any fraction is too tiny, it will be impossible to return oil
+                if LR_frac <= 0.0 or SR_frac <= 0.0:
+                    continue
+        
+                # VB uses MinMassFlow / flow to get MOR.
+                # Your MOR_single is for the case where the line carries total_mass_flow_foroil.
+                # For a reduced flow fraction f, MOR scales by 1/f:
+                #   MOR_new = MOR_single / f
+                MOR_small_single = pipe_MOR[small_candidate]
+                MOR_large_single = pipe_MOR[large_size]
+        
+                # Small riser will, at full load, carry SR_frac of total mass flow:
+                MOR_small_full = MOR_small_single / SR_frac
+        
+                # Large riser carries LR_frac of total at full load:
+                MOR_large_full = MOR_large_single / LR_frac
+        
+                # For small riser, low-load condition (small-only) is *no worse* than
+                # the single-line case your MOR already covers, so worst case for small
+                # is max(single, full-load split):
+                MOR_small_effective = max(MOR_small_single, MOR_small_full)
+        
+                # Determine failures vs your limit
+                small_fails = MOR_small_effective > required_oil_duty_pct
+                large_fails = MOR_large_full > required_oil_duty_pct
+        
+                # VB: reject pair only if BOTH risers fail simultaneously.
+                if small_fails and large_fails:
+                    continue
+        
+                # First pair that passes VB-style test is accepted
+                best_pair = (large_size, small_candidate)
+                break
+        
+            if best_pair is None:
+                raise ValueError(
+                    "No large+small riser pair meets the MOR requirement; "
+                    "try relaxing the oil return duty or penalty limits."
+                )
+        
+            return best_pair
+
+        col1, col2, col3, col4, spacer = st.columns([0.1, 0.1, 0.1, 0.1, 0.9])
         
         # holders for messages to show later (full width)
         error_message = None
@@ -1907,6 +2042,37 @@ elif tool_selection == "Manual Calculation":
                             "❌ No pipe meets both limits simultaneously.  \n"
                             "➡ Please relax one or more input limits."
                         )
+
+        with col4:
+            if st.button("Double Riser"):
+                results, errors = [], []
+                try:
+                    # We reuse get_pipe_results for each size so we mirror densities,
+                    # viscosities, velocities and MOR calcs exactly.
+                    def _gp(size_inch):
+                        return get_pipe_results(size_inch)
+        
+                    large_size, small_size = select_double_riser_with_MOR(
+                        pipe_sizes=pipe_sizes,
+                        mm_map=mm_map,
+                        get_pipe_results_func=_gp,
+                        total_mass_flow_foroil=mass_flow_foroil,   # your existing variable
+                        required_oil_duty_pct=required_oil_duty_pct,
+                    )
+        
+                    # You can decide whether to lock UI to small or large here.
+                    # Most people want to display the **small riser** as the nominal size:
+                    st.session_state["_next_selected_size"] = small_size
+        
+                    st.success(
+                        f"✅ Double Riser Selected:\n"
+                        f"Primary (Large) riser: **{large_size}**\n"
+                        f"Secondary (Small) riser: **{small_size}**"
+                    )
+                    st.rerun()
+        
+                except Exception as e:
+                    st.error(f"Double riser selection failed: {e}")
         
         with spacer:
             st.empty()
