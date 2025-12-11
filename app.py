@@ -2512,6 +2512,7 @@ elif tool_selection == "Manual Calculation":
 
         with col4:
             if st.button("Double Riser"):
+                st.session_state["double_riser_mode"] = True
                 results, errors = [], []
         
                 # STEP 1: same search as Single Riser to find BEST large riser size
