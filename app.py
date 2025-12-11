@@ -2394,9 +2394,6 @@ elif tool_selection == "Manual Calculation":
                         best_LR = min(valid, key=lambda x: mm_map[x["size"]])
                         large_size = best_LR["size"]
         
-                        # auto-update main size to large riser
-                        st.session_state["_next_selected_size"] = large_size
-        
                         # choose a default small riser size = next size down
                         try:
                             idx_LR = pipe_sizes.index(large_size)
@@ -2406,14 +2403,14 @@ elif tool_selection == "Manual Calculation":
                         if idx_LR > 0:
                             default_small = pipe_sizes[idx_LR - 1]
                         else:
-                            # if no smaller size, fall back to same (no real double riser)
                             default_small = pipe_sizes[0]
         
-                        st.session_state["_next_small_riser_size"] = default_small
                         small_size = default_small
-
+        
+                        # set for next run's widgets
+                        st.session_state["_next_selected_size"] = large_size
+                        st.session_state["_next_small_riser_size"] = small_size
                         st.session_state["double_riser_mode"] = True
-                        st.rerun()
         
                         # STEP 2: compute double-riser PD with VB-style 2.63936 split
                         dr_res = compute_double_riser_pd(
@@ -2433,7 +2430,7 @@ elif tool_selection == "Manual Calculation":
                                 f"ΔT: **{dr_res['dt']:.3f} K**, "
                                 f"Total PD: **{dr_res['dp_total_kPa']:.2f} kPa**"
                             )
-
+        
                             if dr_res["MOR_pass"]:
                                 st.success(
                                     f"✅ Oil return OK\n"
@@ -2448,7 +2445,7 @@ elif tool_selection == "Manual Calculation":
                                     f"Small riser MOR = {dr_res['MOR_SR']:.1f}% "
                                     f"({'OK' if dr_res['MOR_SR_pass'] else 'FAIL'})"
                                 )
-                            
+        
                             # overwrite the global PD/DT display with double-riser result
                             dp_pipe_kPa = dr_res["dp_pipe_kPa"]
                             dp_fittings_kPa = dr_res["dp_fittings_kPa"]
@@ -2459,6 +2456,12 @@ elif tool_selection == "Manual Calculation":
                             velocity_m_sfinal = dr_res["velocity_m_sfinal"]
                             density_recalc = dr_res["density_recalc"]
         
+                            # use worst-branch MOR for the global summary at the bottom
+                            if math.isfinite(dr_res["MOR_LR"]) and math.isfinite(dr_res["MOR_SR"]):
+                                MORfinal = max(dr_res["MOR_LR"], dr_res["MOR_SR"])
+                            else:
+                                MORfinal = ""
+                
         with spacer:
             st.empty()
         
