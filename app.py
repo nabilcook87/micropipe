@@ -1944,6 +1944,10 @@ elif tool_selection == "Manual Calculation":
         # MANUAL DOUBLE RISER TEST (like VB)
         # ----------------------------------------------------------
         
+        # ----------------------------------------------------------
+        # MANUAL DOUBLE RISER TEST (like VB)
+        # ----------------------------------------------------------
+        
         col_small, col_large = st.columns(2)
         
         with col_small:
@@ -1969,18 +1973,70 @@ elif tool_selection == "Manual Calculation":
             # Use the existing ctx (no second constructor)
             dr = balance_double_riser(manual_small, manual_large, M_total, ctx)
         
-            st.write("### Double Riser Result")
-        
-            st.write(f"**Small riser {manual_small}:**")
-            st.write(f"- Mass flow: {dr.M_small:.4f} kg/s")
-            st.write(f"- MOR: {dr.MOR_small:.2f}%")
-        
-            st.write(f"**Large riser {manual_large}:**")
-            st.write(f"- Mass flow: {dr.M_large:.4f} kg/s")
-            st.write(f"- MOR: {dr.MOR_large:.2f}%")
-        
-            st.write(f"**Balanced PD:** {dr.DP_kPa:.3f} kPa")
-            st.write(f"**ΔT penalty:** {dr.DT_K:.3f} K")
+            st.subheader("Double Riser Result")
+            
+            # ---------- SYSTEM-LEVEL MOR (all 4 combos: big/small × max/min liq) ----------
+            import math as _math
+            
+            def _fmt_pct(v: float) -> str:
+                return f"{v:.1f}%" if isinstance(v, (int, float)) and _math.isfinite(v) else "—"
+            
+            system_col1, system_col2, system_col3, system_col4 = st.columns(4)
+            with system_col1:
+                st.metric("System MOR (worst)", _fmt_pct(dr.MOR_system_worst))
+            with system_col2:
+                st.metric("System MOR (best)", _fmt_pct(dr.MOR_system_best))
+            with system_col3:
+                st.metric("Required Oil Duty", f"{required_oil_duty_pct:.1f}%")
+            with system_col4:
+                if isinstance(dr.MOR_system_worst, (int, float)) and _math.isfinite(dr.MOR_system_worst):
+                    ok_sys = dr.MOR_system_worst <= required_oil_duty_pct
+                else:
+                    ok_sys = False
+                st.metric("OK?", "Yes" if ok_sys else "No")
+            
+            if ok_sys:
+                st.success("✅ Double riser meets required oil return duty on system worst-case MOR.")
+            else:
+                st.error("❌ Double riser does NOT meet required oil return duty on system worst-case MOR.")
+            
+            st.markdown("---")
+            
+            # ---------- BRANCH DETAILS ----------
+            st.markdown(f"**Small riser: {manual_small}**")
+            s1, s2, s3, s4, s5 = st.columns(5)
+            with s1:
+                st.metric("Mass flow", f"{dr.M_small:.4f} kg/s")
+            with s2:
+                st.metric("MOR (worst)", _fmt_pct(dr.MOR_small_worst))
+            with s3:
+                st.metric("MOR (best)", _fmt_pct(dr.MOR_small_best))
+            with s4:
+                st.metric("MOR @ max liq", _fmt_pct(dr.MOR_small_maxliq))
+            with s5:
+                st.metric("MOR @ min liq", _fmt_pct(dr.MOR_small_minliq))
+            
+            st.markdown(f"**Large riser: {manual_large}**")
+            l1, l2, l3, l4, l5 = st.columns(5)
+            with l1:
+                st.metric("Mass flow", f"{dr.M_large:.4f} kg/s")
+            with l2:
+                st.metric("MOR (worst)", _fmt_pct(dr.MOR_large_worst))
+            with l3:
+                st.metric("MOR (best)", _fmt_pct(dr.MOR_large_best))
+            with l4:
+                st.metric("MOR @ max liq", _fmt_pct(dr.MOR_large_maxliq))
+            with l5:
+                st.metric("MOR @ min liq", _fmt_pct(dr.MOR_large_minliq))
+            
+            st.markdown("---")
+            
+            # ---------- SHARED CIRCUIT PD / ΔT ----------
+            pd_col1, pd_col2 = st.columns(2)
+            with pd_col1:
+                st.metric("Balanced PD", f"{dr.DP_kPa:.3f} kPa")
+            with pd_col2:
+                st.metric("ΔT penalty", f"{dr.DT_K:.3f} K")
 
         with spacer:
             st.empty()
