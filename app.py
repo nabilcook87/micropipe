@@ -886,7 +886,7 @@ elif tool_selection == "Manual Calculation":
         # ---------------------------------------------------
         if st.session_state.get("double_riser_mode", False):
         
-            smaller_sizes = [s for s in pipe_sizes if mm_map[s] < mm_map[selected_size]]
+            smaller_sizes = [s for s in pipe_sizes if mm_map[s] <= mm_map[selected_size]]
         
             if not smaller_sizes:
                 st.info("No smaller pipe sizes available for double riser.")
