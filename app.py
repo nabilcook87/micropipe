@@ -2105,7 +2105,6 @@ elif tool_selection == "Manual Calculation":
         with col4:
             if use_double_riser and st.button("Double Riser"):
             
-
                 Ds_mm = mm_map[dr_small]
                 Dl_mm = mm_map[dr_large]
 
@@ -2143,7 +2142,6 @@ elif tool_selection == "Manual Calculation":
             
                 if small_fails and large_fails:
                     st.error("❌ Double riser does not meet oil return requirements.")
-                    return
                 else:
                     st.success("✔ Double riser configuration is valid.")
             
