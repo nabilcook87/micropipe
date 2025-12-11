@@ -849,13 +849,16 @@ elif tool_selection == "Manual Calculation":
             mm_list = [mm_map[s] for s in pipe_sizes]
             return min(range(len(mm_list)), key=lambda i: abs(mm_list[i] - target_mm)) if mm_list else 0
 
-        # --- Safe deferred pipe selection handling ---
-        override_val = None
+        # --- Handle deferred pipe selection (from "Select Optimal Pipe Size" button) ---
         if "_next_selected_size" in st.session_state:
-            override_val = st.session_state["_next_selected_size"]
+            new_val = st.session_state["_next_selected_size"]
+            # ✅ directly set the selectbox value itself
+            st.session_state["selected_size"] = new_val
+            # clean up the temporary flag
             del st.session_state["_next_selected_size"]
 
         default_index = 0
+        override_val = st.session_state.get("selected_size_override")
         if override_val and override_val in pipe_sizes:
             default_index = pipe_sizes.index(override_val)
         elif material_changed and "prev_pipe_mm" in ss:
@@ -865,7 +868,7 @@ elif tool_selection == "Manual Calculation":
             default_index = pipe_sizes.index(want)
         elif "selected_size" in ss and ss.selected_size in pipe_sizes:
             default_index = pipe_sizes.index(ss.selected_size)
-
+        
         with col1:
             selected_size = st.selectbox(
                 "Nominal Pipe Size (inch)",
@@ -873,37 +876,10 @@ elif tool_selection == "Manual Calculation":
                 index=default_index,
                 key="selected_size",
             )
-        
-        # ============================
-        # SAFE APPLY pending small-riser defaults
-        # ============================
-        if "_next_small_riser_size" in st.session_state:
-            st.session_state["small_riser_size"] = st.session_state["_next_small_riser_size"]
-            del st.session_state["_next_small_riser_size"]
-        
-        # ---------------------------------------------------
-        # SMALL RISER SELECTBOX (only appears in DR mode)
-        # ---------------------------------------------------
-        if st.session_state.get("double_riser_mode", False):
-        
-            smaller_sizes = [s for s in pipe_sizes if mm_map[s] <= mm_map[selected_size]]
-        
-            if not smaller_sizes:
-                st.info("No smaller pipe sizes available for double riser.")
-        
-            else:
-                if "small_riser_size" not in st.session_state:
-                    st.session_state["small_riser_size"] = smaller_sizes[-1]
-                elif st.session_state["small_riser_size"] not in smaller_sizes:
-                    st.session_state["small_riser_size"] = smaller_sizes[-1]
-        
-                st.selectbox(
-                    "Small Riser Size (inch)",
-                    smaller_sizes,
-                    index=smaller_sizes.index(st.session_state["small_riser_size"]),
-                    key="small_riser_size",
-                )
 
+        ss.prev_pipe_mm = float(mm_map.get(selected_size, float("nan")))
+        
+        # remember the selected size in mm for next material change
         ss.prev_pipe_mm = float(mm_map.get(selected_size, float("nan")))
     
         # 3) Gauge (if applicable)
@@ -1510,6 +1486,7 @@ elif tool_selection == "Manual Calculation":
                 return rows.iloc[0]
             return rows.iloc[0]
         
+        
         def get_pipe_results(size_inch):
             """
             Reproduce MORfinal and dt for a given pipe size (exact same logic path as your main block).
@@ -1846,595 +1823,17 @@ elif tool_selection == "Manual Calculation":
         
             return mor_num, float(dt_local)
 
-        def compute_dp_for_size(
-            size_inch: str,
-            mass_flow_kg_s_branch: float,
-            mass_flow_kg_smin_branch: float,
-        ):
-            """
-            Compute dp_pipe_kPa, dp_fittings_kPa, dp_valves_kPa, dp_plf_kPa, dp_total_kPa, dt
-            for a given nominal size and *branch* mass flow.
-        
-            This reuses the SAME velocity mixing, density, viscosity, Re & f logic
-            as your single-riser path (get_pipe_results), just with branch flows.
-            """
-            pipe_row = _pipe_row_for_size(size_inch)
-            try:
-                ID_mm_local = float(pipe_row["ID_mm"])
-            except Exception:
-                return None  # invalid
-        
-            ID_m_local = ID_mm_local / 1000.0
-            area_m2_local = math.pi * (ID_m_local / 2) ** 2
-        
-            dens = RefrigerantDensities()
-            props = RefrigerantProperties()
-        
-            # --- densities (same as page / get_pipe_results) ---
-            if refrigerant == "R744 TC":
-                density_super = dens.get_density("R744", T_evap - max_penalty + 273.15, superheat_K)
-                density_super2a = dens.get_density("R744", T_evap + 273.15, ((superheat_K + 5) / 2))
-                density_super2b = dens.get_density("R744", T_evap - max_penalty + 273.15, ((superheat_K + 5) / 2))
-                density_super2 = (density_super2a + density_super2b) / 2
-                density_sat = props.get_properties("R744", T_evap)["density_vapor"]
-                density_5K = dens.get_density("R744", T_evap + 273.15, 5)
-            else:
-                density_super = dens.get_density(refrigerant, T_evap - max_penalty + 273.15, superheat_K)
-                density_super2a = dens.get_density(refrigerant, T_evap + 273.15, ((superheat_K + 5) / 2))
-                density_super2b = dens.get_density(refrigerant, T_evap - max_penalty + 273.15, ((superheat_K + 5) / 2))
-                density_super2 = (density_super2a + density_super2b) / 2
-                density_sat = props.get_properties(refrigerant, T_evap)["density_vapor"]
-                density_5K = dens.get_density(refrigerant, T_evap + 273.15, 5)
-        
-            density = (density_super + density_5K) / 2
-        
-            # --- velocities with SAME mixing + velocity1_prop rules ---
-            v1 = mass_flow_kg_s_branch / (area_m2_local * density) if density > 0 else 0.0
-            v1min = mass_flow_kg_smin_branch / (area_m2_local * density) if density > 0 else 0.0
-            v2 = mass_flow_kg_s_branch / (area_m2_local * density_super2) if density_super2 > 0 else 0.0
-            v2min = mass_flow_kg_smin_branch / (area_m2_local * density_super2) if density_super2 > 0 else 0.0
-        
-            if refrigerant in ["R744", "R744 TC"]:
-                velocity1_prop = 1
-            elif refrigerant == "R404A":
-                velocity1_prop = (0.0328330590542629 * superheat_K) - 1.47748765744183 if superheat_K > 45 else 0
-            elif refrigerant == "R134a":
-                velocity1_prop = (
-                    (-0.000566085879684639 * (superheat_K ** 2)) +
-                    (0.075049554857083 * superheat_K) -
-                    1.74200935399632
-                ) if superheat_K > 30 else 0
-            elif refrigerant in ["R407F", "R407A", "R410A", "R22", "R502",
-                                 "R507A", "R448A", "R449A", "R717"]:
-                velocity1_prop = 1
-            elif refrigerant == "R407C":
-                velocity1_prop = 0
-            else:
-                velocity1_prop = (
-                    (0.0000406422632403154 * (superheat_K ** 2)) -
-                    (0.000541007136813307 * superheat_K) +
-                    0.748882946418884
-                ) if superheat_K > 30 else 0.769230769230769
-        
-            velocity_m_s = (v1 * velocity1_prop) + (v2 * (1 - velocity1_prop))
-            velocity_m_smin = (v1min * velocity1_prop) + (v2min * (1 - velocity1_prop))
-            velocity_m_sfinal = max(velocity_m_s, velocity_m_smin)
-        
-            # --- density_recalc (same definition as main path) ---
-            if velocity_m_s > 0:
-                density_recalc_local = mass_flow_kg_s_branch / (velocity_m_s * area_m2_local)
-            else:
-                density_recalc_local = density
-        
-            # --- viscosities and mixing (same as get_pipe_results) ---
-            visc = RefrigerantViscosities()
-        
-            if refrigerant == "R744 TC":
-                viscosity_super = visc.get_viscosity("R744", T_evap - max_penalty + 273.15, superheat_K)
-                viscosity_super2a = visc.get_viscosity("R744", T_evap + 273.15, ((superheat_K + 5) / 2))
-                viscosity_super2b = visc.get_viscosity("R744", T_evap - max_penalty + 273.15, ((superheat_K + 5) / 2))
-                viscosity_super2 = (viscosity_super2a + viscosity_super2b) / 2
-                viscosity_5K = visc.get_viscosity("R744", T_evap + 273.15, 5)
-            else:
-                viscosity_super = visc.get_viscosity(refrigerant, T_evap - max_penalty + 273.15, superheat_K)
-                viscosity_super2a = visc.get_viscosity(refrigerant, T_evap + 273.15, ((superheat_K + 5) / 2))
-                viscosity_super2b = visc.get_viscosity(refrigerant, T_evap - max_penalty + 273.15, ((superheat_K + 5) / 2))
-                viscosity_super2 = (viscosity_super2a + viscosity_super2b) / 2
-                viscosity_5K = visc.get_viscosity(refrigerant, T_evap + 273.15, 5)
-        
-            viscosity = (viscosity_super + viscosity_5K) / 2
-            viscosity_final = (viscosity * velocity1_prop) + (viscosity_super2 * (1 - velocity1_prop))
-        
-            # --- Reynolds & friction factor (same as main) ---
-            reynolds_local = (
-                density_recalc_local * velocity_m_sfinal * ID_m_local /
-                (viscosity_final / 1_000_000)
-                if viscosity_final > 0 else 0.0
-            )
-        
-            eps = 0.00004572 if selected_material in ["Steel SCH40", "Steel SCH80"] else 0.000001524
-        
-            if reynolds_local < 2000.0 and reynolds_local > 0:
-                f_local = 64.0 / reynolds_local
-            else:
-                tol = 1e-5
-                max_iter = 60
-                flo, fhi = 1e-5, 0.1
-        
-                def balance(gg):
-                    s = math.sqrt(gg)
-                    lhs = 1.0 / s
-                    rhs = -2.0 * math.log10((eps / (3.7 * ID_m_local)) + 2.51 / (reynolds_local * s))
-                    return lhs, rhs
-        
-                f_local = 0.5 * (flo + fhi)
-                for _ in range(max_iter):
-                    f_try = 0.5 * (flo + fhi)
-                    lhs, rhs = balance(f_try)
-                    if abs(1.0 - lhs / rhs) < tol:
-                        f_local = f_try
-                        break
-                    if (lhs - rhs) > 0.0:
-                        flo = f_try
-                    else:
-                        fhi = f_try
-        
-            # --- dynamic pressure & K-factors (same logic) ---
-            q_kPa_local = 0.5 * density_recalc_local * (velocity_m_sfinal ** 2) / 1000.0
-        
-            required_cols = ["SRB", "LRB", "BALL", "GLOBE"]
-            for c in required_cols:
-                if c not in pipe_row.index:
-                    return None
-        
-            K_SRB = float(pipe_row["SRB"])
-            K_LRB = float(pipe_row["LRB"])
-            K_BALL = float(pipe_row["BALL"])
-            K_GLOBE = float(pipe_row["GLOBE"])
-        
-            B_SRB = SRB + 0.5 * _45 + 2.0 * ubend + 3.0 * ptrap
-            B_LRB = LRB + MAC
-        
-            dp_pipe_kPa_local = f_local * (L / ID_m_local) * q_kPa_local
-            dp_plf_kPa_local = q_kPa_local * PLF
-            dp_fittings_kPa_local = q_kPa_local * (K_SRB * B_SRB + K_LRB * B_LRB)
-            dp_valves_kPa_local = q_kPa_local * (K_BALL * ball + K_GLOBE * globe)
-            dp_total_kPa_local = (
-                dp_pipe_kPa_local + dp_fittings_kPa_local +
-                dp_valves_kPa_local + dp_plf_kPa_local
-            )
-        
-            # --- ΔT from pressure drop (same as main) ---
-            converter = PressureTemperatureConverter()
-            if refrigerant == "R744 TC":
-                evappres_local = converter.temp_to_pressure("R744", T_evap)
-                postcirc_local = evappres_local - (dp_total_kPa_local / 100)
-                postcirctemp_local = converter.pressure_to_temp("R744", postcirc_local)
-            else:
-                evappres_local = converter.temp_to_pressure(refrigerant, T_evap)
-                postcirc_local = evappres_local - (dp_total_kPa_local / 100)
-                postcirctemp_local = converter.pressure_to_temp(refrigerant, postcirc_local)
-        
-            dt_local = T_evap - postcirctemp_local
-        
-            return {
-                "ID_m": ID_m_local,
-                "area_m2": area_m2_local,
-                "velocity_m_sfinal": velocity_m_sfinal,
-                "density_recalc": density_recalc_local,
-                "dp_pipe_kPa": dp_pipe_kPa_local,
-                "dp_fittings_kPa": dp_fittings_kPa_local,
-                "dp_valves_kPa": dp_valves_kPa_local,
-                "dp_plf_kPa": dp_plf_kPa_local,
-                "dp_total_kPa": dp_total_kPa_local,
-                "dt": dt_local,
-            }  
-        
-        def compute_branch_MOR(
-            size_inch: str,
-            ID_m: float,
-            area_m2: float,
-            mass_flow_kg_s_branch: float,
-            mass_flow_kg_smin_branch: float,
-            mass_flow_foroil_branch: float,
-            mass_flow_foroilmin_branch: float,
-        ):
-            """
-            Produce MOR_final for a given *branch* using exactly the same oil-return logic
-            used in your main single-pipe block and get_pipe_results().
-            """
-        
-            dens = RefrigerantDensities()
-            props = RefrigerantProperties()
-            props_sup = RefrigerantProps()
-        
-            # ---------- REUSE EXACT SAME DENSITY CALCULATIONS ----------
-            if refrigerant == "R744 TC":
-                density_super = dens.get_density("R744", T_evap - max_penalty + 273.15, superheat_K)
-                density_super2a = dens.get_density("R744", T_evap + 273.15, ((superheat_K + 5) / 2))
-                density_super2b = dens.get_density("R744", T_evap - max_penalty + 273.15, ((superheat_K + 5) / 2))
-                density_super2 = (density_super2a + density_super2b) / 2
-                density_super_foroil = dens.get_density("R744", T_evap + 273.15, min(max(superheat_K, 5), 30))
-                density_sat = props.get_properties("R744", T_evap)["density_vapor"]
-                density_5K = dens.get_density("R744", T_evap + 273.15, 5)
-            else:
-                density_super = dens.get_density(refrigerant, T_evap - max_penalty + 273.15, superheat_K)
-                density_super2a = dens.get_density(refrigerant, T_evap + 273.15, ((superheat_K + 5) / 2))
-                density_super2b = dens.get_density(refrigerant, T_evap - max_penalty + 273.15, ((superheat_K + 5) / 2))
-                density_super2 = (density_super2a + density_super2b) / 2
-                density_super_foroil = dens.get_density(refrigerant, T_evap + 273.15, min(max(superheat_K, 5), 30))
-                density_sat = props.get_properties(refrigerant, T_evap)["density_vapor"]
-                density_5K = dens.get_density(refrigerant, T_evap + 273.15, 5)
-        
-            density = (density_super + density_5K) / 2
-            density_foroil = (density_super_foroil + density_sat) / 2
-        
-            # ---------- VELOCITIES USING EXACT SAME FORMULA ----------
-            v1 = mass_flow_kg_s_branch / (area_m2 * density)
-            v1min = mass_flow_kg_smin_branch / (area_m2 * density)
-            v2 = mass_flow_kg_s_branch / (area_m2 * density_super2)
-            v2min = mass_flow_kg_smin_branch / (area_m2 * density_super2)
-        
-            if refrigerant in ["R744", "R744 TC"]:
-                velocity1_prop = 1
-            elif refrigerant == "R404A":
-                velocity1_prop = (0.0328330590542629 * superheat_K) - 1.47748765744183 if superheat_K > 45 else 0
-            elif refrigerant == "R134a":
-                velocity1_prop = (
-                    (-0.000566085879684639 * (superheat_K ** 2)) +
-                    (0.075049554857083 * superheat_K) -
-                    1.74200935399632
-                ) if superheat_K > 30 else 0
-            elif refrigerant in ["R407F", "R407A", "R410A", "R22", "R502", "R507A", "R448A", "R449A", "R717"]:
-                velocity1_prop = 1
-            elif refrigerant == "R407C":
-                velocity1_prop = 0
-            else:
-                velocity1_prop = (
-                    (0.0000406422632403154 * (superheat_K ** 2)) -
-                    (0.000541007136813307 * superheat_K) +
-                    0.748882946418884
-                ) if superheat_K > 30 else 0.769230769230769
-        
-            velocity_m_s = (v1 * velocity1_prop) + (v2 * (1 - velocity1_prop))
-            velocity_m_smin = (v1min * velocity1_prop) + (v2min * (1 - velocity1_prop))
-            velocity_m_sfinal = max(velocity_m_s, velocity_m_smin)
-        
-            # ---------- OIL DENSITY ----------
-            if refrigerant in ["R23", "R508B"]:
-                oil_density_sat = (-0.853841209044878 * T_evap) + 999.190772536527
-                oil_density_super = (-0.853841209044878 * (T_evap + min(max(superheat_K, 5), 30))) + 999.190772536527
-            else:
-                oil_density_sat = (-0.00356060606060549 * (T_evap ** 2)) - (0.957878787878808 * T_evap) + 963.595454545455
-                oil_density_super = (
-                    -0.00356060606060549 * ((T_evap + min(max(superheat_K, 5), 30)) ** 2)
-                    - 0.957878787878808 * (T_evap + min(max(superheat_K, 5), 30))
-                    + 963.595454545455
-                )
-        
-            oil_density = (oil_density_sat + oil_density_super) / 2
-        
-            # ---------- jg (same refrigerant map) ----------
-            jg_map = {
-                "R404A": 0.860772464072673,
-                "R134a": 0.869986729796935,
-                "R407F": 0.869042493641944,
-                "R744": 0.877950613678719,
-                "R744 TC": 0.877950613678719,
-                "R407A": 0.867374311574041,
-                "R410A": 0.8904423325365,
-                "R407C": 0.858592104849471,
-                "R22": 0.860563058394146,
-                "R502": 0.858236706656266,
-                "R507A": 0.887709710291009,
-                "R449A": 0.867980496631757,
-                "R448A": 0.86578818145833,
-                "R717": 0.854957410951708,
-                "R290": 0.844975139695726,
-                "R1270": 0.849089717732815,
-                "R600a": 0.84339338979887,
-                "R1234ze": 0.867821375349728,
-                "R1234yf": 0.860767472602571,
-                "R12": 0.8735441986466,
-                "R11": 0.864493203834913,
-                "R454B": 0.869102255850291,
-                "R450A": 0.865387140496035,
-                "R513A": 0.861251244627232,
-                "R454A": 0.868161104592492,
-                "R455A": 0.865687329727713,
-                "R454C": 0.866423016875524,
-                "R32": 0.875213309852597,
-                "R23": 0.865673418568001,
-                "R508B": 0.864305626845382,
-            }
-            jg_half = jg_map.get(refrigerant, 0.865)
-        
-            MinMassFlux = (jg_half ** 2) * ((density_foroil * 9.81 * ID_m * (oil_density - density_foroil)) ** 0.5)
-            MinMassFlow = MinMassFlux * area_m2
-        
-            MOR_pre = (MinMassFlow / mass_flow_foroil_branch) * 100
-            MOR_premin = (MinMassFlow / mass_flow_foroilmin_branch) * 100
-        
-            # ---------- CORRECTION TERMS (liquid temp and evap temp) ----------
-            if refrigerant in ["R23", "R508B"]:
-                MOR_correctliq = T_cond + 47.03
-                MOR_correctliqmin = minliq_temp + 47.03
-                evapoil = T_evap + 46.14
-            else:
-                MOR_correctliq = T_cond
-                MOR_correctliqmin = minliq_temp
-                evapoil = T_evap
-        
-            # First correction vs liquid temp
-            if refrigerant == "R744":
-                MOR_correction = (0.000225755013421421 * MOR_correctliq) - 0.00280879370374927
-            elif refrigerant == "R744 TC":
-                MOR_correction = (0.0000603336117708171 * h_in) - 0.0142318718120024
-            elif refrigerant in ["R407A", "R449A", "R448A", "R502"]:
-                MOR_correction = (0.00000414431651323856 * (MOR_correctliq ** 2)) + (0.000381908525139781 * MOR_correctliq) - 0.0163450053041212
-            elif refrigerant == "R507A":
-                MOR_correction = (0.000302619054048837 * MOR_correctliq) - 0.00930188913363997
-            elif refrigerant == "R22":
-                MOR_correction = (0.000108153843367715 * MOR_correctliq) - 0.00329248681202757
-            elif refrigerant == "R407C":
-                MOR_correction = (
-                    0.00000420322918839302 * (max(MOR_correctliq, -32.0716410083429) ** 2)
-                    + 0.000269608915211859 * max(MOR_correctliq, -32.0716410083429)
-                    - 0.0134546663857195
-                )
-            elif refrigerant == "R410A":
-                MOR_correction = 0
-            elif refrigerant == "R407F":
-                MOR_correction = (
-                    0.00000347332380289385 * (max(MOR_correctliq, -34.4346433150568) ** 2)
-                    + 0.000239205332540693 * max(MOR_correctliq, -34.4346433150568)
-                    - 0.0121545316131988
-                )
-            elif refrigerant == "R134a":
-                MOR_correction = (0.000195224660107459 * MOR_correctliq) - 0.00591757011487048
-            elif refrigerant == "R404A":
-                MOR_correction = (
-                    0.0000156507169104918 * (max(MOR_correctliq, -22.031637377024) ** 2)
-                    + 0.000689621839324826 * max(MOR_correctliq, -22.031637377024)
-                    - 0.0392
-                )
-            else:
-                MOR_correction = (
-                    0.00000461020482461793 * (max(MOR_correctliq, -23.6334996273983) ** 2)
-                    + 0.000217910548009675 * max(MOR_correctliq, -23.6334996273983)
-                    - 0.012074621594626
-                )
-        
-            if refrigerant == "R744":
-                MOR_correctionmin = (0.000225755013421421 * MOR_correctliqmin) - 0.00280879370374927
-            elif refrigerant == "R744 TC":
-                MOR_correctionmin = (0.0000603336117708171 * h_inmin) - 0.0142318718120024
-            elif refrigerant in ["R407A", "R449A", "R448A", "R502"]:
-                MOR_correctionmin = (
-                    0.00000414431651323856 * (MOR_correctliqmin ** 2)
-                    + 0.000381908525139781 * MOR_correctliqmin
-                    - 0.0163450053041212
-                )
-            elif refrigerant == "R507A":
-                MOR_correctionmin = (0.000302619054048837 * MOR_correctliqmin) - 0.00930188913363997
-            elif refrigerant == "R22":
-                MOR_correctionmin = (0.000108153843367715 * MOR_correctliqmin) - 0.00329248681202757
-            elif refrigerant == "R407C":
-                MOR_correctionmin = (
-                    0.00000420322918839302 * (max(MOR_correctliqmin, -32.0716410083429) ** 2)
-                    + 0.000269608915211859 * max(MOR_correctliqmin, -32.0716410083429)
-                    - 0.0134546663857195
-                )
-            elif refrigerant == "R410A":
-                MOR_correctionmin = 0
-            elif refrigerant == "R407F":
-                MOR_correctionmin = (
-                    0.00000347332380289385 * (max(MOR_correctliqmin, -34.4346433150568) ** 2)
-                    + 0.000239205332540693 * max(MOR_correctliqmin, -34.4346433150568)
-                    - 0.0121545316131988
-                )
-            elif refrigerant == "R134a":
-                MOR_correctionmin = (0.000195224660107459 * MOR_correctliqmin) - 0.00591757011487048
-            elif refrigerant == "R404A":
-                MOR_correctionmin = (
-                    0.0000156507169104918 * (max(MOR_correctliqmin, -22.031637377024) ** 2)
-                    + 0.000689621839324826 * max(MOR_correctliqmin, -22.031637377024)
-                    - 0.0392
-                )
-            else:
-                MOR_correctionmin = (
-                    0.00000461020482461793 * (max(MOR_correctliqmin, -23.6334996273983) ** 2)
-                    + 0.000217910548009675 * max(MOR_correctliqmin, -23.6334996273983)
-                    - 0.012074621594626
-                )
-        
-            # Second correction vs evap temp
-            if refrigerant in ["R744", "R744 TC"]:
-                MOR_correction2 = (
-                    -0.0000176412848988908 * (evapoil ** 2)
-                    - 0.00164308248808803 * evapoil
-                    - 0.0184308798286039
-                )
-            elif refrigerant == "R407A":
-                MOR_correction2 = (-0.000864076433837511 * evapoil) - 0.0145018190416687
-            elif refrigerant == "R449A":
-                MOR_correction2 = (-0.000835375233693285 * evapoil) - 0.0138846063856621
-            elif refrigerant == "R448A":
-                MOR_correction2 = (
-                    0.00000171366802431428 * (evapoil ** 2)
-                    - 0.000865528727278154 * evapoil
-                    - 0.0152961902042161
-                )
-            elif refrigerant == "R502":
-                MOR_correction2 = (
-                    0.00000484734071020993 * (evapoil ** 2)
-                    - 0.000624822304716683 * evapoil
-                    - 0.0128725684240106
-                )
-            elif refrigerant == "R507A":
-                MOR_correction2 = (-0.000701333343440148 * evapoil) - 0.0114900933623056
-            elif refrigerant == "R22":
-                MOR_correction2 = (
-                    0.00000636798209134899 * (evapoil ** 2)
-                    - 0.000157783204337396 * evapoil
-                    - 0.00575251626397381
-                )
-            elif refrigerant == "R407C":
-                MOR_correction2 = (
-                    -0.00000665735727676349 * (evapoil ** 2)
-                    - 0.000894860288947537 * evapoil
-                    - 0.0116054361757929
-                )
-            elif refrigerant == "R410A":
-                MOR_correction2 = (-0.000672268853990701 * evapoil) - 0.0111802230098585
-            elif refrigerant == "R407F":
-                MOR_correction2 = (
-                    0.00000263731418614519 * (evapoil ** 2)
-                    - 0.000683997257738699 * evapoil
-                    - 0.0126005968942147
-                )
-            elif refrigerant == "R134a":
-                MOR_correction2 = (
-                    -0.00000823045532174214 * (evapoil ** 2)
-                    - 0.00108063672211041 * evapoil
-                    - 0.0217411206961643
-                )
-            elif refrigerant == "R404A":
-                MOR_correction2 = (
-                    0.00000342378568620316 * (evapoil ** 2)
-                    - 0.000329572335134041 * evapoil
-                    - 0.00706087606597149
-                )
-            else:
-                MOR_correction2 = (-0.000711441807827186 * evapoil) - 0.0118194116436425
-        
-            # ---------- FINAL MOR ----------
-            if refrigerant in ["R23", "R508B"]:
-                if not (-86 <= T_evap <= -42):
-                    return float("nan"), velocity_m_sfinal
-                MOR = (1 - MOR_correction) * (1 - MOR_correction2) * MOR_pre
-                MORmin = (1 - MOR_correctionmin) * (1 - MOR_correction2) * MOR_premin
-            else:
-                if not (-40 <= T_evap <= 4):
-                    return float("nan"), velocity_m_sfinal
-                MOR = (1 - MOR_correction) * (1 - MOR_correction2) * MOR_pre
-                MORmin = (1 - MOR_correctionmin) * (1 - MOR_correction2) * MOR_premin
-        
-            MOR_final = max(MOR, MORmin)
-            return float(MOR_final), velocity_m_sfinal
-        
-        def compute_double_riser_pd(
-            large_size_inch: str,
-            small_size_inch: str,
-            total_mass_flow_kg_s: float,
-            total_mass_flow_kg_smin: float,
-        ):
-            """
-            VB-style double riser PD using the 2.63936 exponent for flow split.
-        
-            Flow is split between large and small riser such that:
-                Q_LR / Q_SR = (D_LR^2.63936) / (D_SR^2.63936)
-        
-            Then PD is computed on each branch using compute_dp_for_size with the
-            branch mass flows. The controlling PD is the larger of the two.
-            """
-        
-            # --- diameters from your CSV / helper ---
-            LR_row = _pipe_row_for_size(large_size_inch)
-            SR_row = _pipe_row_for_size(small_size_inch)
-        
-            ID_LR_m = float(LR_row["ID_mm"]) / 1000.0
-            ID_SR_m = float(SR_row["ID_mm"]) / 1000.0
-        
-            if ID_LR_m <= 0 or ID_SR_m <= 0:
-                return None
-        
-            exp = 2.63936  # << VB exponent for parallel flow split
-        
-            ratio = (ID_LR_m ** exp) / (ID_SR_m ** exp)
-        
-            # branch flows at design mass flow
-            LR_mass = total_mass_flow_kg_s * ratio / (1.0 + ratio)
-            SR_mass = total_mass_flow_kg_s - LR_mass
-        
-            # branch flows at "min" / low-load mass flow (for velocity/ΔT consistency)
-            LR_mass_min = total_mass_flow_kg_smin * ratio / (1.0 + ratio)
-            SR_mass_min = total_mass_flow_kg_smin - LR_mass_min
-        
-            # --- PD per branch, using EXACT same DP logic as single riser ---
-            LR_res = compute_dp_for_size(large_size_inch, LR_mass, LR_mass_min)
-            SR_res = compute_dp_for_size(small_size_inch, SR_mass, SR_mass_min)
-        
-            if LR_res is None or SR_res is None:
-                return None
-        
-            # controlling branch = higher total PD
-            if LR_res["dp_total_kPa"] >= SR_res["dp_total_kPa"]:
-                controlling = "LR"
-                ctrl = LR_res
-            else:
-                controlling = "SR"
-                ctrl = SR_res
-
-            # --- compute oil mass split the same way gas splits ---
-            LR_mass_foroil      = mass_flow_foroil     * (LR_mass     / total_mass_flow_kg_s)
-            LR_mass_foroil_min  = mass_flow_foroilmin * (LR_mass_min / total_mass_flow_kg_smin)
-            
-            SR_mass_foroil      = mass_flow_foroil     * (SR_mass     / total_mass_flow_kg_s)
-            SR_mass_foroil_min  = mass_flow_foroilmin * (SR_mass_min / total_mass_flow_kg_smin)
-            
-            # --- compute MOR for each branch ---
-            MOR_LR, vel_LR = compute_branch_MOR(
-                large_size_inch,
-                ID_LR_m,
-                math.pi * (ID_LR_m / 2)**2,
-                LR_mass,
-                LR_mass_min,
-                LR_mass_foroil,
-                LR_mass_foroil_min,
-            )
-            
-            MOR_SR, vel_SR = compute_branch_MOR(
-                small_size_inch,
-                ID_SR_m,
-                math.pi * (ID_SR_m / 2)**2,
-                SR_mass,
-                SR_mass_min,
-                SR_mass_foroil,
-                SR_mass_foroil_min,
-            )
-        
-            out = dict(ctrl)  # copy
-            out["controlling_branch"] = controlling
-            out["LR_mass_flow_kg_s"] = LR_mass
-            out["SR_mass_flow_kg_s"] = SR_mass
-            out["LR_mass_flow_kg_smin"] = LR_mass_min
-            out["SR_mass_flow_kg_smin"] = SR_mass_min
-            out["large_size"] = large_size_inch
-            out["small_size"] = small_size_inch
-            out["MOR_LR"] = MOR_LR
-            out["MOR_SR"] = MOR_SR
-            out["vel_LR"] = vel_LR
-            out["vel_SR"] = vel_SR
-            out["MOR_LR_pass"] = MOR_LR <= required_oil_duty_pct
-            out["MOR_SR_pass"] = MOR_SR <= required_oil_duty_pct
-            out["MOR_pass"] = out["MOR_LR_pass"] and out["MOR_SR_pass"]
-
-            return out
-        
-        col1, col2, col3, col4, spacer = st.columns([0.1, 0.1, 0.1, 0.1, 0.6])
+        col1, col2, col3, spacer = st.columns([0.1, 0.1, 0.1, 0.9])
         
         # holders for messages to show later (full width)
         error_message = None
         debug_errors = None
-        double_riser_message = None
         
         with col1:
             st.write("Auto-select")
         
         with col2:
             if st.button("Horizontal"):
-                st.session_state["double_riser_mode"] = False
                 results, errors = [], []
         
                 for ps in pipe_sizes:
@@ -2472,7 +1871,6 @@ elif tool_selection == "Manual Calculation":
         
         with col3:
             if st.button("Single Riser"):
-                st.session_state["double_riser_mode"] = False
                 results, errors = [], []
         
                 for ps in pipe_sizes:
@@ -2509,102 +1907,7 @@ elif tool_selection == "Manual Calculation":
                             "❌ No pipe meets both limits simultaneously.  \n"
                             "➡ Please relax one or more input limits."
                         )
-
-        with col4:
-            if st.button("Double Riser"):
-                st.session_state["double_riser_mode"] = True
-                pair_results = []
-                errors = []
-            
-                for i_lr, lr in enumerate(pipe_sizes):
-                    for i_sr, sr in enumerate(pipe_sizes[:i_lr+1]):  # allow equal or smaller
-                        try:
-                            dr_res = compute_double_riser_pd(
-                                large_size_inch=lr,
-                                small_size_inch=sr,
-                                total_mass_flow_kg_s=mass_flow_kg_s,
-                                total_mass_flow_kg_smin=mass_flow_kg_smin,
-                            )
-                            if dr_res is None:
-                                continue
         
-                            # Check MOR and ΔT constraints on the *double-riser* result
-                            if dr_res["MOR_pass"] and dr_res["dt"] <= max_penalty:
-                                pair_results.append({
-                                    "LR": lr,
-                                    "SR": sr,
-                                    "dt": dr_res["dt"],
-                                    "dp": dr_res["dp_total_kPa"],
-                                    "dr_res": dr_res,
-                                })
-                        except Exception as e:
-                            errors.append(((lr, sr), str(e)))
-            
-                if not pair_results:
-                    error_message = (
-                        "❌ No double riser combination meets MOR & ΔT limits.\n"
-                        "➡ Relax one or more input limits."
-                    )
-                else:
-                    # mimic VB: smallest LR, then smallest SR
-                    best = min(
-                        pair_results,
-                        key=lambda r: (mm_map[r["LR"]], mm_map[r["SR"]])
-                    )
-            
-                    best_res = best["dr_res"]
-                    large_size = best["LR"]
-                    small_size = best["SR"]
-            
-                    st.session_state["_next_selected_size"] = large_size
-                    st.session_state["_next_small_riser_size"] = small_size
-                    st.session_state["double_riser_mode"] = True
-            
-                    double_riser_message = (
-                        f"✅ Double riser selected: large **{large_size}**, "
-                        f"small **{small_size}**  \n"
-                        f"Controlling branch: **{best_res['controlling_branch']}**  \n"
-                        f"ΔT: **{best_res['dt']:.3f} K**, "
-                        f"Total PD: **{best_res['dp_total_kPa']:.2f} kPa**"
-                    )
-            
-                    # 🔴 use best_res, not dr_res, from here down:
-                    if best_res["MOR_pass"]:
-                        st.success(
-                            f"✅ Oil return OK\n"
-                            f"Large riser MOR = {best_res['MOR_LR']:.1f}%\n"
-                            f"Small riser MOR = {best_res['MOR_SR']:.1f}%"
-                        )
-                    else:
-                        st.error(
-                            f"❌ Oil return insufficient\n"
-                            f"Large riser MOR = {best_res['MOR_LR']:.1f}% "
-                            f"({'OK' if best_res['MOR_LR_pass'] else 'FAIL'})\n"
-                            f"Small riser MOR = {best_res['MOR_SR']:.1f}% "
-                            f"({'OK' if best_res['MOR_SR_pass'] else 'FAIL'})"
-                        )
-        
-                    # overwrite the global PD/DT display with double-riser result
-                    dp_pipe_kPa      = best_res["dp_pipe_kPa"]
-                    dp_fittings_kPa  = best_res["dp_fittings_kPa"]
-                    dp_valves_kPa    = best_res["dp_valves_kPa"]
-                    dp_plf_kPa       = best_res["dp_plf_kPa"]
-                    dp_total_kPa     = best_res["dp_total_kPa"]
-                    dt               = best_res["dt"]
-                    velocity_m_sfinal = best_res["velocity_m_sfinal"]
-                    density_recalc    = best_res["density_recalc"]
-        
-                    # use worst-branch MOR for the global summary at the bottom
-                    if math.isfinite(best_res["MOR_LR"]) and math.isfinite(best_res["MOR_SR"]):
-                        MORfinal = max(best_res["MOR_LR"], best_res["MOR_SR"])
-                    else:
-                        MORfinal = ""
-        
-                    st.session_state["double_riser_mode"] = True
-                    st.session_state["double_riser_result"] = best_res
-                    st.session_state["_next_selected_size"] = large_size
-                    st.session_state["_next_small_riser_size"] = small_size
-                
         with spacer:
             st.empty()
         
@@ -2616,26 +1919,6 @@ elif tool_selection == "Manual Calculation":
         
         if error_message:
             st.error(error_message)
-        
-        if double_riser_message:
-            st.success(double_riser_message)
-
-        # default: single-riser numbers already computed above
-
-        if st.session_state.get("double_riser_mode") and "double_riser_result" in st.session_state:
-            dr = st.session_state["double_riser_result"]
-            dp_pipe_kPa     = dr["dp_pipe_kPa"]
-            dp_fittings_kPa = dr["dp_fittings_kPa"]
-            dp_valves_kPa   = dr["dp_valves_kPa"]
-            dp_plf_kPa      = dr["dp_plf_kPa"]
-            dp_total_kPa    = dr["dp_total_kPa"]
-            dt              = dr["dt"]
-            velocity_m_sfinal = dr["velocity_m_sfinal"]
-            density_recalc    = dr["density_recalc"]
-            if math.isfinite(dr["MOR_LR"]) and math.isfinite(dr["MOR_SR"]):
-                MORfinal = max(dr["MOR_LR"], dr["MOR_SR"])
-            else:
-                MORfinal = ""
         
         st.subheader("Results")
     
