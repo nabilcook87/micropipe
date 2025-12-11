@@ -2539,7 +2539,7 @@ elif tool_selection == "Manual Calculation":
                                 })
                         except Exception as e:
                             errors.append(((lr, sr), str(e)))
-        
+            
                 if not pair_results:
                     error_message = (
                         "❌ No double riser combination meets MOR & ΔT limits.\n"
@@ -2551,15 +2551,15 @@ elif tool_selection == "Manual Calculation":
                         pair_results,
                         key=lambda r: (mm_map[r["LR"]], mm_map[r["SR"]])
                     )
-        
+            
                     best_res = best["dr_res"]
                     large_size = best["LR"]
                     small_size = best["SR"]
-        
+            
                     st.session_state["_next_selected_size"] = large_size
                     st.session_state["_next_small_riser_size"] = small_size
                     st.session_state["double_riser_mode"] = True
-        
+            
                     double_riser_message = (
                         f"✅ Double riser selected: large **{large_size}**, "
                         f"small **{small_size}**  \n"
@@ -2567,7 +2567,8 @@ elif tool_selection == "Manual Calculation":
                         f"ΔT: **{best_res['dt']:.3f} K**, "
                         f"Total PD: **{best_res['dp_total_kPa']:.2f} kPa**"
                     )
-        
+            
+                    # 🔴 use best_res, not dr_res, from here down:
                     if best_res["MOR_pass"]:
                         st.success(
                             f"✅ Oil return OK\n"
@@ -2584,14 +2585,14 @@ elif tool_selection == "Manual Calculation":
                         )
         
                     # overwrite the global PD/DT display with double-riser result
-                    dp_pipe_kPa = best_res["dp_pipe_kPa"]
-                    dp_fittings_kPa = best_res["dp_fittings_kPa"]
-                    dp_valves_kPa = best_res["dp_valves_kPa"]
-                    dp_plf_kPa = best_res["dp_plf_kPa"]
-                    dp_total_kPa = best_res["dp_total_kPa"]
-                    dt = best_res["dt"]
+                    dp_pipe_kPa      = best_res["dp_pipe_kPa"]
+                    dp_fittings_kPa  = best_res["dp_fittings_kPa"]
+                    dp_valves_kPa    = best_res["dp_valves_kPa"]
+                    dp_plf_kPa       = best_res["dp_plf_kPa"]
+                    dp_total_kPa     = best_res["dp_total_kPa"]
+                    dt               = best_res["dt"]
                     velocity_m_sfinal = best_res["velocity_m_sfinal"]
-                    density_recalc = best_res["density_recalc"]
+                    density_recalc    = best_res["density_recalc"]
         
                     # use worst-branch MOR for the global summary at the bottom
                     if math.isfinite(best_res["MOR_LR"]) and math.isfinite(best_res["MOR_SR"]):
