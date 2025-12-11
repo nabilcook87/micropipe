@@ -1489,8 +1489,11 @@ elif tool_selection == "Manual Calculation":
 
         from double_riser import RiserContext, balance_double_riser
         
+        # Only meaningful for R744 TC
+        gc_max = gc_max_pres if refrigerant == "R744 TC" else None
+        gc_min = gc_min_pres if refrigerant == "R744 TC" else None
+        
         ctx = RiserContext(
-            # Required thermodynamic fields
             refrigerant=refrigerant,
             T_evap=T_evap,
             T_cond=T_cond,
@@ -1498,7 +1501,6 @@ elif tool_selection == "Manual Calculation":
             superheat_K=superheat_K,
             max_penalty_K=max_penalty,
         
-            # Required geometry and fittings
             L=L,
             SRB=SRB,
             LRB=LRB,
@@ -1510,14 +1512,12 @@ elif tool_selection == "Manual Calculation":
             globe=globe,
             PLF=PLF,
         
-            # Required data access
             selected_material=selected_material,
             pipe_row_for_size=_pipe_row_for_size,
         
-            # Optional fields (MUST come last)
-            gc_max_pres=gc_max_pres if refrigerant == "R744 TC" else None,
-            gc_min_pres=gc_min_pres if refrigerant == "R744 TC" else None,
-        ) 
+            gc_max_pres=gc_max,
+            gc_min_pres=gc_min,
+        )
         
         def get_pipe_results(size_inch):
             """
