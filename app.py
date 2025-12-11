@@ -1099,6 +1099,7 @@ elif tool_selection == "Manual Calculation":
         #st.write("delta_h_foroilmin:", delta_h_foroilmin)
     
         mass_flow_kg_s = evap_capacity_kw / delta_h if delta_h > 0 else 0.01
+        M_total = mass_flow_kg_s
         #st.write("mass_flow_kg_s:", mass_flow_kg_s)
         mass_flow_kg_smin = evap_capacity_kw / delta_hmin if delta_hmin > 0 else 0.01
         #st.write("mass_flow_kg_smin:", mass_flow_kg_smin)
@@ -1485,7 +1486,31 @@ elif tool_selection == "Manual Calculation":
                         return rows_g.iloc[0]
                 return rows.iloc[0]
             return rows.iloc[0]
+
+        from double_riser import RiserContext, balance_double_riser
         
+        ctx = RiserContext(
+            refrigerant=refrigerant,
+            T_evap=T_evap,
+            T_cond=T_cond,
+            minliq_temp=minliq_temp,
+            superheat_K=superheat_K,
+            max_penalty_K=max_penalty,
+            gc_max_pres=gc_max_pres if refrigerant == "R744 TC" else None,
+            gc_min_pres=gc_min_pres if refrigerant == "R744 TC" else None,
+            L=L,
+            SRB=SRB,
+            LRB=LRB,
+            bends_45=_45,
+            MAC=MAC,
+            ptrap=ptrap,
+            ubend=ubend,
+            ball=ball,
+            globe=globe,
+            PLF=PLF,
+            selected_material=selected_material,
+            pipe_row_for_size=_pipe_row_for_size,
+        )     
         
         def get_pipe_results(size_inch):
             """
@@ -1907,7 +1932,70 @@ elif tool_selection == "Manual Calculation":
                             "❌ No pipe meets both limits simultaneously.  \n"
                             "➡ Please relax one or more input limits."
                         )
+
+        # ----------------------------------------------------------
+        # MANUAL DOUBLE RISER TEST (like VB)
+        # ----------------------------------------------------------
         
+        col_small, col_large = st.columns(2)
+        
+        with col_small:
+            manual_small = st.selectbox(
+                "Small riser size",
+                pipe_sizes,
+                index=pipe_sizes.index(selected_size),
+                key="manual_small"
+            )
+        
+        with col_large:
+            # default = next size up if possible
+            default_large_index = min(len(pipe_sizes) - 1, pipe_sizes.index(selected_size) + 1)
+            manual_large = st.selectbox(
+                "Large riser size",
+                pipe_sizes,
+                index=default_large_index,
+                key="manual_large"
+            )
+        
+        if st.button("Double Riser (Manual Pair)"):
+        
+            # Build context object (same as your single-riser)
+            ctx = RiserContext(
+                refrigerant=refrigerant,
+                T_evap=T_evap,
+                maxliq_temp=maxliq_temp,
+                minliq_temp=minliq_temp,
+                superheat_K=superheat_K,
+                max_penalty_K=max_penalty,
+                L=L,
+                SRB=SRB,
+                LRB=LRB,
+                bends_45=_45,
+                MAC=MAC,
+                ptrap=ptrap,
+                ubend=ubend,
+                ball=ball,
+                globe=globe,
+                PLF=PLF,
+                selected_material=selected_material,
+                pipe_row_for_size=_pipe_row_for_size,
+                # Add any additional parameters your MOR/DP engine needs
+            )
+        
+            dr = balance_double_riser(manual_small, manual_large, M_total, ctx)
+        
+            st.write(f"### Double Riser Result")
+            st.write(f"**Small riser {manual_small}:**")
+            st.write(f"- Mass flow: {dr.M_small:.4f} kg/s")
+            st.write(f"- MOR: {dr.MOR_small:.2f}%")
+        
+            st.write(f"**Large riser {manual_large}:**")
+            st.write(f"- Mass flow: {dr.M_large:.4f} kg/s")
+            st.write(f"- MOR: {dr.MOR_large:.2f}%")
+        
+            st.write(f"**Balanced PD:** {dr.DP_kPa:.3f} kPa")
+            st.write(f"**ΔT penalty:** {dr.DT_K:.3f} K")
+
         with spacer:
             st.empty()
         
