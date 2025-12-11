@@ -2104,16 +2104,14 @@ elif tool_selection == "Manual Calculation":
 
         with col4:
             if use_double_riser and st.button("Double Riser"):
-        
-                # Use EXACT variable names defined in your UI
+            
+
                 Ds_mm = mm_map[dr_small]
                 Dl_mm = mm_map[dr_large]
-        
-                # Flow split (VB exponent)
+
                 mass_large, mass_small = split_flow_VB(Ds_mm, Dl_mm, mass_flow_foroil)
-        
-                # --- SMALL RISER ---
-                MOR_small, dt_small = get_pipe_results(
+
+                MOR_small_full, dt_small_full = get_pipe_results(
                     dr_small,
                     mass_flow_kg_s,
                     mass_flow_kg_smin,
@@ -2121,9 +2119,8 @@ elif tool_selection == "Manual Calculation":
                     mass_flow_foroilmin,
                     override_mass_flow = mass_small
                 )
-        
-                # --- LARGE RISER ---
-                MOR_large, dt_large = get_pipe_results(
+
+                MOR_large_full, dt_large_full = get_pipe_results(
                     dr_large,
                     mass_flow_kg_s,
                     mass_flow_kg_smin,
@@ -2131,31 +2128,39 @@ elif tool_selection == "Manual Calculation":
                     mass_flow_foroilmin,
                     override_mass_flow = mass_large
                 )
-        
-                # VB acceptance: both must fail to reject
-                small_fails = MOR_small > required_oil_duty_pct
-                large_fails = MOR_large > required_oil_duty_pct
-        
+            
+                MOR_small_low, dt_small_low = get_pipe_results(
+                    dr_small,
+                    mass_flow_kg_s,
+                    mass_flow_kg_smin,
+                    mass_flow_foroil,
+                    mass_flow_foroilmin,
+                    override_mass_flow = mass_flow_foroilmin
+                )
+
+                small_fails = MOR_small_full > required_oil_duty_pct
+                large_fails = MOR_large_full > required_oil_duty_pct
+            
                 if small_fails and large_fails:
                     st.error("❌ Double riser does not meet oil return requirements.")
+                    return
                 else:
                     st.success("✔ Double riser configuration is valid.")
-        
-                    # STORE RESULTS FOR DISPLAY (again: your exact names)
-                    st.session_state["dr_results"] = {
-                        "small": dr_small,
-                        "large": dr_large,
-                        "mass_small": mass_small,
-                        "mass_large": mass_large,
-                        "MOR_small_low": None,     # fill if needed
-                        "MOR_small_full": MOR_small,
-                        "MOR_large_full": MOR_large,
-                        "dt_small_low": None,      # fill if needed
-                        "dt_small_full": dt_small,
-                        "dt_large_full": dt_large,
-                    }
-        
-                    st.rerun()
+            
+                st.session_state["dr_results"] = {
+                    "small": dr_small,
+                    "large": dr_large,
+                    "mass_small": mass_small,
+                    "mass_large": mass_large,
+                    "MOR_small_low": MOR_small_low,
+                    "dt_small_low": dt_small_low,
+                    "MOR_small_full": MOR_small_full,
+                    "MOR_large_full": MOR_large_full,
+                    "dt_small_full": dt_small_full,
+                    "dt_large_full": dt_large_full,
+                }
+            
+                st.rerun()
         
         with spacer:
             st.empty()
