@@ -13,21 +13,11 @@ from utils.supercompliq_co2 import RefrigerantProps
 from utils.pressure_temp_converter import PressureTemperatureConverter
 
 
-# ---------------------------------------------------------------------------
-# Context + result dataclasses
-# ---------------------------------------------------------------------------
-
 @dataclass
 class RiserContext:
     """
     All non-mass-flow inputs needed to reproduce your MOR + DP + ΔT logic.
     """
-
-    # ------------------------------------------------------------------
-    # 1. REQUIRED FIELDS (no defaults allowed here)
-    # ------------------------------------------------------------------
-
-    # Thermodynamic context
     refrigerant: str
     T_evap: float          # °C
     T_cond: float          # Max liquid temp °C (or GC out for CO2 TC)
@@ -53,38 +43,47 @@ class RiserContext:
     # Function to get CSV row for pipe size
     pipe_row_for_size: Callable[[str], pd.Series]
 
-    # ------------------------------------------------------------------
-    # 2. OPTIONAL FIELDS (defaults allowed ONLY here)
-    # ------------------------------------------------------------------
-
     gc_max_pres: Optional[float] = None  # bar(a) — R744 TC only
     gc_min_pres: Optional[float] = None  # bar(a) — R744 TC only
 
-    # Property helpers
+    # Property helpers (may be shared singletons)
     props: RefrigerantProperties = RefrigerantProperties()
     props_sup: RefrigerantProps = RefrigerantProps()
     dens: RefrigerantDensities = RefrigerantDensities()
     visc: RefrigerantViscosities = RefrigerantViscosities()
     conv: PressureTemperatureConverter = PressureTemperatureConverter()
 
+
 @dataclass
 class PipeResult:
-    """Result of evaluating a SINGLE riser for a given branch mass flow."""
-    MOR: float                     # May be NaN if MOR is "blank" in your logic
-    DP_kPa: float                  # Total pressure drop
-    DT_K: float                    # Temperature penalty
+    """
+    Result for a single branch (one pipe size, one branch mass flow).
+    Includes MOR at max/min liquid conditions and overall best/worst.
+    """
+    MOR_worst: float
+    MOR_best: float
+    MOR_maxliq: float
+    MOR_minliq: float
+    DP_kPa: float
+    DT_K: float
     velocity_m_s: float
     density: float
     viscosity_uPa_s: float
     reynolds: float
-    post_temp_C: float             # Suction temperature after PD
-    post_press_bar: float          # Suction pressure after PD
-    mass_flow_kg_s: float          # Branch mass flow used
+    post_temp_C: float
+    post_press_bar: float
+    mass_flow_kg_s: float
 
 
 @dataclass
 class DoubleRiserResult:
-    """Balanced double-riser solution for a given pair and total mass flow."""
+    """
+    Balanced double-riser solution for a given pair and total mass flow.
+    Contains:
+      - per-branch split & PD
+      - per-branch MOR metrics
+      - system-level worst/best MOR (over all 4 cases, S2 logic)
+    """
     size_small: str
     size_large: str
     M_total: float
@@ -92,18 +91,28 @@ class DoubleRiserResult:
     M_large: float
     DP_kPa: float
     DT_K: float
-    MOR_small: float
-    MOR_large: float
+
+    MOR_small_worst: float
+    MOR_small_best: float
+    MOR_small_maxliq: float
+    MOR_small_minliq: float
+
+    MOR_large_worst: float
+    MOR_large_best: float
+    MOR_large_maxliq: float
+    MOR_large_minliq: float
+
+    MOR_system_worst: float
+    MOR_system_best: float
+
     small_result: PipeResult
     large_result: PipeResult
 
 
-# ---------------------------------------------------------------------------
-# Internal helpers: refrigerant-dependent factors (copied from your code)
-# ---------------------------------------------------------------------------
-
 def _velocity1_prop_for_refrigerant(refrigerant: str, superheat_K: float) -> float:
-    # EXACT same logic as your main block / get_pipe_results
+    """
+    EXACT same logic as your main block / get_pipe_results.
+    """
     if refrigerant == "R744":
         return 1.0
     elif refrigerant == "R744 TC":
@@ -130,7 +139,9 @@ def _velocity1_prop_for_refrigerant(refrigerant: str, superheat_K: float) -> flo
 
 
 def _jg_half_for_refrigerant(refrigerant: str) -> float:
-    # EXACT mapping (you already used this compressed dict in get_pipe_results)
+    """
+    EXACT mapping (you already used this compressed dict in get_pipe_results).
+    """
     jg_map = {
         "R404A": 0.860772464072673, "R134a": 0.869986729796935, "R407F": 0.869042493641944,
         "R744": 0.877950613678719, "R407A": 0.867374311574041, "R410A": 0.8904423325365,
@@ -145,10 +156,6 @@ def _jg_half_for_refrigerant(refrigerant: str) -> float:
     }
     return jg_map.get(refrigerant, 0.865)
 
-
-# ---------------------------------------------------------------------------
-# Core engine: evaluate a single riser at a given BRANCH mass flow
-# ---------------------------------------------------------------------------
 
 def pipe_results_for_massflow(
     size_inch: str,
@@ -165,7 +172,6 @@ def pipe_results_for_massflow(
     - The ONLY structural change is that the "load" is inferred from the
       given branch_mass_flow instead of evap_capacity_kw.
     """
-
     refrigerant = ctx.refrigerant
     T_evap = ctx.T_evap
     T_cond = ctx.T_cond
@@ -179,31 +185,34 @@ def pipe_results_for_massflow(
     visc = ctx.visc
     conv = ctx.conv
 
-    # ---- Pipe geometry for this size ----
     pipe_row = ctx.pipe_row_for_size(size_inch)
     try:
         ID_mm_local = float(pipe_row["ID_mm"])
     except Exception:
         # If for some reason we can't parse, return NaNs
+        nan = float("nan")
         return PipeResult(
-            MOR=float("nan"),
-            DP_kPa=float("nan"),
-            DT_K=float("nan"),
-            velocity_m_s=float("nan"),
-            density=float("nan"),
-            viscosity_uPa_s=float("nan"),
-            reynolds=float("nan"),
-            post_temp_C=float("nan"),
-            post_press_bar=float("nan"),
+            MOR_worst=nan,
+            MOR_best=nan,
+            MOR_maxliq=nan,
+            MOR_minliq=nan,
+            DP_kPa=nan,
+            DT_K=nan,
+            velocity_m_s=nan,
+            density=nan,
+            viscosity_uPa_s=nan,
+            reynolds=nan,
+            post_temp_C=nan,
+            post_press_bar=nan,
             mass_flow_kg_s=branch_mass_flow_kg_s,
         )
 
     ID_m_local = ID_mm_local / 1000.0
     area_m2_local = math.pi * (ID_m_local / 2.0) ** 2
 
-    # ----------------------------------------------------------------------
-    # ENTHALPIES — same as your main code, just not tied to evap_capacity.
-    # ----------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # Enthalpies / Δh as in the original code
+    # ------------------------------------------------------------------
     if refrigerant == "R744 TC":
         if ctx.gc_max_pres is None or ctx.gc_min_pres is None:
             raise ValueError("R744 TC requires gc_max_pres and gc_min_pres in RiserContext.")
@@ -214,7 +223,7 @@ def pipe_results_for_massflow(
         elif ctx.gc_min_pres <= 72.13:
             h_inmin = props.get_properties("R744", minliq_temp)["enthalpy_liquid2"]
         else:
-            # In your page code this is a Streamlit error; here we just raise.
+            # Was a Streamlit error previously; here we just raise.
             raise ValueError("This pressure range (72.13–73.8 bar) is not allowed for R744 TC.")
 
         h_inlet = h_in
@@ -239,24 +248,16 @@ def pipe_results_for_massflow(
     delta_h_foroil = h_foroil - h_inlet
     delta_h_foroilmin = h_foroil - h_inletmin
 
-    # ----------------------------------------------------------------------
-    # MASS FLOWS
-    # We invert your original logic:
-    #
-    #   original: mass_flow = evap_capacity / Δh
-    #   here:     branch_mass_flow is taken as "mass_flow at Δh"
-    #             so we deduce an effective branch capacity and then
-    #             recompute all other mass flows with the same Q.
-    # ----------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # Infer "Q" from branch mass flow and delta_h (full-load mapping)
+    # ------------------------------------------------------------------
     if delta_h <= 0:
-        # degenerate, but keep behaviour safe
         Q_branch = 0.0
         mass_flow_kg_s = max(branch_mass_flow_kg_s, 0.01)
     else:
         mass_flow_kg_s = max(branch_mass_flow_kg_s, 0.0)
         Q_branch = mass_flow_kg_s * delta_h
 
-    # Same Q but different Δh -> different mass flows (as your original code)
     if delta_hmin > 0:
         mass_flow_kg_smin = Q_branch / delta_hmin
     else:
@@ -272,9 +273,9 @@ def pipe_results_for_massflow(
     else:
         mass_flow_foroilmin = 0.01
 
-    # ----------------------------------------------------------------------
-    # DENSITIES — identical to main code (just using local ID and flows)
-    # ----------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # Densities and velocity
+    # ------------------------------------------------------------------
     if refrigerant == "R744 TC":
         density_super = dens.get_density("R744", T_evap - max_penalty + 273.15, superheat_K)
         density_super2a = dens.get_density("R744", T_evap + 273.15, ((superheat_K + 5.0) / 2.0))
@@ -295,7 +296,6 @@ def pipe_results_for_massflow(
     density = (density_super + density_5K) / 2.0
     density_foroil = (density_super_foroil + density_sat) / 2.0
 
-    # Velocities (same mixing & refrigerant-dependent weighting)
     v1 = mass_flow_kg_s / (area_m2_local * density) if density > 0 else 0.0
     v1min = mass_flow_kg_smin / (area_m2_local * density) if density > 0 else 0.0
     v2 = mass_flow_kg_s / (area_m2_local * density_super2) if density_super2 > 0 else 0.0
@@ -306,9 +306,9 @@ def pipe_results_for_massflow(
     velocity_m_smin = (v1min * velocity1_prop) + (v2min * (1.0 - velocity1_prop))
     velocity_m_sfinal = max(velocity_m_s, velocity_m_smin)
 
-    # ----------------------------------------------------------------------
-    # OIL DENSITY + MOR PRE (unchanged logic)
-    # ----------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # Oil density and MinMassFlux => MOR_pre (maxliq) & MOR_premin (minliq)
+    # ------------------------------------------------------------------
     if refrigerant in ["R23", "R508B"]:
         oil_density_sat = (-0.853841209044878 * T_evap) + 999.190772536527
         oil_density_super = (-0.853841209044878 * (T_evap + min(max(superheat_K, 5.0), 30.0))) + 999.190772536527
@@ -319,15 +319,17 @@ def pipe_results_for_massflow(
     oil_density = (oil_density_sat + oil_density_super) / 2.0
     jg_half = _jg_half_for_refrigerant(refrigerant)
 
-    MinMassFlux = (jg_half ** 2) * ((density_foroil * 9.81 * ID_m_local * (oil_density - density_foroil)) ** 0.5)
+    MinMassFlux = (jg_half ** 2) * (
+        (density_foroil * 9.81 * ID_m_local * (oil_density - density_foroil)) ** 0.5
+    )
     MinMassFlow = MinMassFlux * area_m2_local
 
     MOR_pre = (MinMassFlow / mass_flow_foroil) * 100.0 if mass_flow_foroil > 0 else float("inf")
     MOR_premin = (MinMassFlow / mass_flow_foroilmin) * 100.0 if mass_flow_foroilmin > 0 else float("inf")
 
-    # ----------------------------------------------------------------------
-    # MOR corrections (1) vs liquid temp, (2) vs evap temp — unchanged
-    # ----------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # Correction factors (identical to main code)
+    # ------------------------------------------------------------------
     if refrigerant in ["R23", "R508B"]:
         MOR_correctliq = T_cond + 47.03
         MOR_correctliqmin = minliq_temp + 47.03
@@ -337,114 +339,196 @@ def pipe_results_for_massflow(
         MOR_correctliqmin = minliq_temp
         evapoil = T_evap
 
-    # First correction
+    # First correction vs liquid temp
     if refrigerant == "R744":
         MOR_correction = (0.000225755013421421 * MOR_correctliq) - 0.00280879370374927
     elif refrigerant == "R744 TC":
         MOR_correction = (0.0000603336117708171 * h_in) - 0.0142318718120024
     elif refrigerant in ["R407A", "R449A", "R448A", "R502"]:
-        MOR_correction = (0.00000414431651323856 * (MOR_correctliq ** 2)) + (0.000381908525139781 * MOR_correctliq) - 0.0163450053041212
+        MOR_correction = (
+            0.00000414431651323856 * (MOR_correctliq ** 2)
+            + 0.000381908525139781 * MOR_correctliq
+            - 0.0163450053041212
+        )
     elif refrigerant == "R507A":
         MOR_correction = (0.000302619054048837 * MOR_correctliq) - 0.00930188913363997
     elif refrigerant == "R22":
         MOR_correction = (0.000108153843367715 * MOR_correctliq) - 0.00329248681202757
     elif refrigerant == "R407C":
-        MOR_correction = (0.00000420322918839302 * (max(MOR_correctliq, -32.0716410083429) ** 2)) + (0.000269608915211859 * max(MOR_correctliq, -32.0716410083429)) - 0.0134546663857195
+        MOR_correction = (
+            0.00000420322918839302 * (max(MOR_correctliq, -32.0716410083429) ** 2)
+            + 0.000269608915211859 * max(MOR_correctliq, -32.0716410083429)
+            - 0.0134546663857195
+        )
     elif refrigerant == "R410A":
         MOR_correction = 0.0
     elif refrigerant == "R407F":
-        MOR_correction = (0.00000347332380289385 * (max(MOR_correctliq, -34.4346433150568) ** 2)) + (0.000239205332540693 * max(MOR_correctliq, -34.4346433150568)) - 0.0121545316131988
+        MOR_correction = (
+            0.00000347332380289385 * (max(MOR_correctliq, -34.4346433150568) ** 2)
+            + 0.000239205332540693 * max(MOR_correctliq, -34.4346433150568)
+            - 0.0121545316131988
+        )
     elif refrigerant == "R134a":
         MOR_correction = (0.000195224660107459 * MOR_correctliq) - 0.00591757011487048
     elif refrigerant == "R404A":
-        MOR_correction = (0.0000156507169104918 * (max(MOR_correctliq, -22.031637377024) ** 2)) + (0.000689621839324826 * max(MOR_correctliq, -22.031637377024)) - 0.0392
+        MOR_correction = (
+            0.0000156507169104918 * (max(MOR_correctliq, -22.031637377024) ** 2)
+            + 0.000689621839324826 * max(MOR_correctliq, -22.031637377024)
+            - 0.0392
+        )
     else:
-        MOR_correction = (0.00000461020482461793 * (max(MOR_correctliq, -23.6334996273983) ** 2)) + (0.000217910548009675 * max(MOR_correctliq, -23.6334996273983)) - 0.012074621594626
+        MOR_correction = (
+            0.00000461020482461793 * (max(MOR_correctliq, -23.6334996273983) ** 2)
+            + 0.000217910548009675 * max(MOR_correctliq, -23.6334996273983)
+            - 0.012074621594626
+        )
 
-    # Same for min
+    # Same for min-liquid
     if refrigerant == "R744":
         MOR_correctionmin = (0.000225755013421421 * MOR_correctliqmin) - 0.00280879370374927
     elif refrigerant == "R744 TC":
         MOR_correctionmin = (0.0000603336117708171 * h_inmin) - 0.0142318718120024
     elif refrigerant in ["R407A", "R449A", "R448A", "R502"]:
-        MOR_correctionmin = (0.00000414431651323856 * (MOR_correctliqmin ** 2)) + (0.000381908525139781 * MOR_correctliqmin) - 0.0163450053041212
+        MOR_correctionmin = (
+            0.00000414431651323856 * (MOR_correctliqmin ** 2)
+            + 0.000381908525139781 * MOR_correctliqmin
+            - 0.0163450053041212
+        )
     elif refrigerant == "R507A":
         MOR_correctionmin = (0.000302619054048837 * MOR_correctliqmin) - 0.00930188913363997
     elif refrigerant == "R22":
         MOR_correctionmin = (0.000108153843367715 * MOR_correctliqmin) - 0.00329248681202757
     elif refrigerant == "R407C":
-        MOR_correctionmin = (0.00000420322918839302 * (max(MOR_correctliqmin, -32.0716410083429) ** 2)) + (0.000269608915211859 * max(MOR_correctliqmin, -32.0716410083429)) - 0.0134546663857195
+        MOR_correctionmin = (
+            0.00000420322918839302 * (max(MOR_correctliqmin, -32.0716410083429) ** 2)
+            + 0.000269608915211859 * max(MOR_correctliqmin, -32.0716410083429)
+            - 0.0134546663857195
+        )
     elif refrigerant == "R410A":
         MOR_correctionmin = 0.0
     elif refrigerant == "R407F":
-        MOR_correctionmin = (0.00000347332380289385 * (max(MOR_correctliqmin, -34.4346433150568) ** 2)) + (0.000239205332540693 * max(MOR_correctliqmin, -34.4346433150568)) - 0.0121545316131988
+        MOR_correctionmin = (
+            0.00000347332380289385 * (max(MOR_correctliqmin, -34.4346433150568) ** 2)
+            + 0.000239205332540693 * max(MOR_correctliqmin, -34.4346433150568)
+            - 0.0121545316131988
+        )
     elif refrigerant == "R134a":
         MOR_correctionmin = (0.000195224660107459 * MOR_correctliqmin) - 0.00591757011487048
     elif refrigerant == "R404A":
-        MOR_correctionmin = (0.0000156507169104918 * (max(MOR_correctliqmin, -22.031637377024) ** 2)) + (0.000689621839324826 * max(MOR_correctliqmin, -22.031637377024)) - 0.0392
+        MOR_correctionmin = (
+            0.0000156507169104918 * (max(MOR_correctliqmin, -22.031637377024) ** 2)
+            + 0.000689621839324826 * max(MOR_correctliqmin, -22.031637377024)
+            - 0.0392
+        )
     else:
-        MOR_correctionmin = (0.00000461020482461793 * (max(MOR_correctliqmin, -23.6334996273983) ** 2)) + (0.000217910548009675 * max(MOR_correctliqmin, -23.6334996273983)) - 0.012074621594626
+        MOR_correctionmin = (
+            0.00000461020482461793 * (max(MOR_correctliqmin, -23.6334996273983) ** 2)
+            + 0.000217910548009675 * max(MOR_correctliqmin, -23.6334996273983)
+            - 0.012074621594626
+        )
 
     # Second correction vs evap temp
     if refrigerant == "R744":
-        MOR_correction2 = (-0.0000176412848988908 * (evapoil ** 2)) - (0.00164308248808803 * evapoil) - 0.0184308798286039
+        MOR_correction2 = (
+            -0.0000176412848988908 * (evapoil ** 2)
+            - 0.00164308248808803 * evapoil
+            - 0.0184308798286039
+        )
     elif refrigerant == "R744 TC":
-        MOR_correction2 = (-0.0000176412848988908 * (evapoil ** 2)) - (0.00164308248808803 * evapoil) - 0.0184308798286039
+        MOR_correction2 = (
+            -0.0000176412848988908 * (evapoil ** 2)
+            - 0.00164308248808803 * evapoil
+            - 0.0184308798286039
+        )
     elif refrigerant == "R407A":
         MOR_correction2 = (-0.000864076433837511 * evapoil) - 0.0145018190416687
     elif refrigerant == "R449A":
         MOR_correction2 = (-0.000835375233693285 * evapoil) - 0.0138846063856621
     elif refrigerant == "R448A":
-        MOR_correction2 = (0.00000171366802431428 * (evapoil ** 2)) - (0.000865528727278154 * evapoil) - 0.0152961902042161
+        MOR_correction2 = (
+            0.00000171366802431428 * (evapoil ** 2)
+            - 0.000865528727278154 * evapoil
+            - 0.0152961902042161
+        )
     elif refrigerant == "R502":
-        MOR_correction2 = (0.00000484734071020993 * (evapoil ** 2)) - (0.000624822304716683 * evapoil) - 0.0128725684240106
+        MOR_correction2 = (
+            0.00000484734071020993 * (evapoil ** 2)
+            - 0.000624822304716683 * evapoil
+            - 0.0128725684240106
+        )
     elif refrigerant == "R507A":
         MOR_correction2 = (-0.000701333343440148 * evapoil) - 0.0114900933623056
     elif refrigerant == "R22":
-        MOR_correction2 = (0.00000636798209134899 * (evapoil ** 2)) - (0.000157783204337396 * evapoil) - 0.00575251626397381
+        MOR_correction2 = (
+            0.00000636798209134899 * (evapoil ** 2)
+            - 0.000157783204337396 * evapoil
+            - 0.00575251626397381
+        )
     elif refrigerant == "R407C":
-        MOR_correction2 = (-0.00000665735727676349 * (evapoil ** 2)) - (0.000894860288947537 * evapoil) - 0.0116054361757929
+        MOR_correction2 = (
+            -0.00000665735727676349 * (evapoil ** 2)
+            - 0.000894860288947537 * evapoil
+            - 0.0116054361757929
+        )
     elif refrigerant == "R410A":
         MOR_correction2 = (-0.000672268853990701 * evapoil) - 0.0111802230098585
     elif refrigerant == "R407F":
-        MOR_correction2 = (0.00000263731418614519 * (evapoil ** 2)) - (0.000683997257738699 * evapoil) - 0.0126005968942147
+        MOR_correction2 = (
+            0.00000263731418614519 * (evapoil ** 2)
+            - 0.000683997257738699 * evapoil
+            - 0.0126005968942147
+        )
     elif refrigerant == "R134a":
-        MOR_correction2 = (-0.00000823045532174214 * (evapoil ** 2)) - (0.00108063672211041 * evapoil) - 0.0217411206961643
+        MOR_correction2 = (
+            -0.00000823045532174214 * (evapoil ** 2)
+            - 0.00108063672211041 * evapoil
+            - 0.0217411206961643
+        )
     elif refrigerant == "R404A":
-        MOR_correction2 = (0.00000342378568620316 * (evapoil ** 2)) - (0.000329572335134041 * evapoil) - 0.00706087606597149
+        MOR_correction2 = (
+            0.00000342378568620316 * (evapoil ** 2)
+            - 0.000329572335134041 * evapoil
+            - 0.00706087606597149
+        )
     else:
         MOR_correction2 = (-0.000711441807827186 * evapoil) - 0.0118194116436425
 
-    # Compose MOR / bounds (unchanged)
+    # ------------------------------------------------------------------
+    # Final MOR values (max-liquid & min-liquid) for THIS pipe
+    # ------------------------------------------------------------------
     MOR = ""
     MORmin = ""
-    MORfinal_local = ""
 
     if refrigerant in ["R23", "R508B"]:
         if -86 <= T_evap <= -42:
             MOR = (1 - MOR_correction) * (1 - MOR_correction2) * MOR_pre
             MORmin = (1 - MOR_correctionmin) * (1 - MOR_correction2) * MOR_premin
-            MORfinal_local = max(MOR, MORmin)
     else:
         if -40 <= T_evap <= 4:
             MOR = (1 - MOR_correction) * (1 - MOR_correction2) * MOR_pre
             MORmin = (1 - MOR_correctionmin) * (1 - MOR_correction2) * MOR_premin
-            MORfinal_local = max(MOR, MORmin)
 
-    if MORfinal_local == "":
-        mor_num = float("nan")
+    # Extract numeric values
+    if MOR == "" or MORmin == "":
+        MOR_maxliq = float("nan")
+        MOR_minliq = float("nan")
     else:
-        mor_num = float(MORfinal_local)
+        MOR_maxliq = float(MOR)      # MOR at max liquid temp
+        MOR_minliq = float(MORmin)   # MOR at min liquid temp
 
-    # ----------------------------------------------------------------------
-    # density_recalc, viscosity, Reynolds, friction, DP, ΔT — unchanged
-    # ----------------------------------------------------------------------
+    # Worst and best for THIS pipe and THIS branch mass flow
+    MOR_worst = min(MOR_maxliq, MOR_minliq)
+    MOR_best = max(MOR_maxliq, MOR_minliq)
+
+    # ------------------------------------------------------------------
+    # Density for Reynolds, viscosities, friction factor, PD, ΔT
+    # ------------------------------------------------------------------
     if velocity_m_s > 0:
         density_recalc_local = mass_flow_kg_s / (velocity_m_s * area_m2_local)
     else:
         density_recalc_local = density
 
-    # viscosities
+    # Viscosities
     if refrigerant == "R744 TC":
         viscosity_super = visc.get_viscosity("R744", T_evap - max_penalty + 273.15, superheat_K)
         viscosity_super2a = visc.get_viscosity("R744", T_evap + 273.15, ((superheat_K + 5.0) / 2.0))
@@ -466,13 +550,13 @@ def pipe_results_for_massflow(
         if viscosity_final > 0 else 0.0
     )
 
-    # friction factor (Colebrook or laminar) — same eps logic
+    # friction factor (Colebrook or laminar)
     if ctx.selected_material in ["Steel SCH40", "Steel SCH80"]:
         eps = 0.00004572
     else:
         eps = 0.000001524
 
-    if reynolds_local < 2000.0 and reynolds_local > 0:
+    if 0 < reynolds_local < 2000.0:
         f_local = 64.0 / reynolds_local
     else:
         tol = 1e-5
@@ -501,16 +585,20 @@ def pipe_results_for_massflow(
     required_cols = ["SRB", "LRB", "BALL", "GLOBE"]
     for c in required_cols:
         if c not in pipe_row.index:
+            nan = float("nan")
             return PipeResult(
-                MOR=float("nan"),
-                DP_kPa=float("nan"),
-                DT_K=float("nan"),
+                MOR_worst=nan,
+                MOR_best=nan,
+                MOR_maxliq=nan,
+                MOR_minliq=nan,
+                DP_kPa=nan,
+                DT_K=nan,
                 velocity_m_s=velocity_m_sfinal,
                 density=density_recalc_local,
                 viscosity_uPa_s=viscosity_final,
                 reynolds=reynolds_local,
-                post_temp_C=float("nan"),
-                post_press_bar=float("nan"),
+                post_temp_C=nan,
+                post_press_bar=nan,
                 mass_flow_kg_s=mass_flow_kg_s,
             )
 
@@ -529,7 +617,9 @@ def pipe_results_for_massflow(
     dp_plf_kPa_local = q_kPa_local * ctx.PLF
     dp_fittings_kPa_local = q_kPa_local * (K_SRB * B_SRB + K_LRB * B_LRB)
     dp_valves_kPa_local = q_kPa_local * (K_BALL * ctx.ball + K_GLOBE * ctx.globe)
-    dp_total_kPa_local = dp_pipe_kPa_local + dp_fittings_kPa_local + dp_valves_kPa_local + dp_plf_kPa_local
+    dp_total_kPa_local = (
+        dp_pipe_kPa_local + dp_fittings_kPa_local + dp_valves_kPa_local + dp_plf_kPa_local
+    )
 
     # ΔT mapping via pressure change — same as your page
     if refrigerant == "R744 TC":
@@ -546,7 +636,10 @@ def pipe_results_for_massflow(
     dt_local = T_evap - postcirctemp_local
 
     return PipeResult(
-        MOR=mor_num,
+        MOR_worst=MOR_worst,
+        MOR_best=MOR_best,
+        MOR_maxliq=MOR_maxliq,
+        MOR_minliq=MOR_minliq,
         DP_kPa=dp_total_kPa_local,
         DT_K=dt_local,
         velocity_m_s=velocity_m_sfinal,
@@ -558,10 +651,6 @@ def pipe_results_for_massflow(
         mass_flow_kg_s=mass_flow_kg_s,
     )
 
-
-# ---------------------------------------------------------------------------
-# Double-riser DP balancing (VB-style, but using your Python engine)
-# ---------------------------------------------------------------------------
 
 def balance_double_riser(
     size_small: str,
@@ -578,18 +667,11 @@ def balance_double_riser(
 
     at FULL LOAD, using your full MOR/DP/ΔT engine.
 
-    Returns:
-        DoubleRiserResult with:
-            - M_small, M_large
-            - DP_kPa (balanced)
-            - DT_K (penalty at balanced DP)
-            - MOR_small (critical for acceptance)
-            - MOR_large (for information)
-
-    You can call this for any pair of pipe sizes and any total mass flow.
+    System-level MOR is computed with S2 logic:
+      MOR_system_worst = min( all four MOR_max/min from both branches )
+      MOR_system_best  = max( all four MOR_max/min from both branches )
     """
 
-    # Simple guard
     if M_total_kg_s <= 0:
         raise ValueError("M_total_kg_s must be > 0 for double-riser balancing.")
 
@@ -597,8 +679,8 @@ def balance_double_riser(
     lo = 0.01 * M_total_kg_s
     hi = 0.99 * M_total_kg_s
 
-    res_small = None
-    res_large = None
+    res_small: Optional[PipeResult] = None
+    res_large: Optional[PipeResult] = None
 
     for _ in range(max_iter):
         M_small = 0.5 * (lo + hi)
@@ -623,7 +705,6 @@ def balance_double_riser(
             # Small riser has lower PD => increase M_small
             lo = M_small
 
-    # Final balanced values
     if res_small is None or res_large is None:
         raise RuntimeError("Double-riser balancing failed to converge.")
 
@@ -631,7 +712,28 @@ def balance_double_riser(
     M_large_final = res_large.mass_flow_kg_s
 
     DP_final = (res_small.DP_kPa + res_large.DP_kPa) / 2.0  # should be ~equal
-    DT_final = res_small.DT_K  # penalty from balanced PD (common circuit)
+    DT_final = res_small.DT_K  # penalty from balanced PD (branches share same circuit)
+
+    # ------------------------------------------------------------------
+    # System-level MOR (S2 logic): min & max over all 4 cases:
+    #   small.maxliq, small.minliq, large.maxliq, large.minliq
+    # ------------------------------------------------------------------
+    vals = []
+    for v in [
+        res_small.MOR_maxliq,
+        res_small.MOR_minliq,
+        res_large.MOR_maxliq,
+        res_large.MOR_minliq,
+    ]:
+        if isinstance(v, (int, float)) and math.isfinite(v):
+            vals.append(v)
+
+    if vals:
+        MOR_system_worst = min(vals)
+        MOR_system_best = max(vals)
+    else:
+        MOR_system_worst = float("nan")
+        MOR_system_best = float("nan")
 
     return DoubleRiserResult(
         size_small=size_small,
@@ -641,10 +743,20 @@ def balance_double_riser(
         M_large=M_large_final,
         DP_kPa=DP_final,
         DT_K=DT_final,
-        MOR_small=res_small.MOR,
-        MOR_large=res_large.MOR,
+
+        MOR_small_worst=res_small.MOR_worst,
+        MOR_small_best=res_small.MOR_best,
+        MOR_small_maxliq=res_small.MOR_maxliq,
+        MOR_small_minliq=res_small.MOR_minliq,
+
+        MOR_large_worst=res_large.MOR_worst,
+        MOR_large_best=res_large.MOR_best,
+        MOR_large_maxliq=res_large.MOR_maxliq,
+        MOR_large_minliq=res_large.MOR_minliq,
+
+        MOR_system_worst=MOR_system_worst,
+        MOR_system_best=MOR_system_best,
+
         small_result=res_small,
         large_result=res_large,
     )
-
-
