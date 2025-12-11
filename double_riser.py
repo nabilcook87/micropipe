@@ -21,25 +21,21 @@ from utils.pressure_temp_converter import PressureTemperatureConverter
 class RiserContext:
     """
     All non-mass-flow inputs needed to reproduce your MOR + DP + ΔT logic.
-
-    NOTE:
-    - This is deliberately "dumb": it just holds data, no logic.
-    - You populate this from your Streamlit page (existing variables).
     """
+
+    # ------------------------------------------------------------------
+    # 1. REQUIRED FIELDS (no defaults allowed here)
+    # ------------------------------------------------------------------
 
     # Thermodynamic context
     refrigerant: str
     T_evap: float          # °C
-    T_cond: float          # Max liquid temp (or GC out for CO2 TC) °C
+    T_cond: float          # Max liquid temp °C (or GC out for CO2 TC)
     minliq_temp: float     # Min liquid temp °C
     superheat_K: float
     max_penalty_K: float   # Allowed ΔT penalty
 
-    # For R744 TC only
-    gc_max_pres: Optional[float] = None  # bar(a)
-    gc_min_pres: Optional[float] = None  # bar(a)
-
-    # Geometry / fittings for THIS riser section
+    # Geometry / fittings for THIS riser
     L: float               # Pipe length (m)
     SRB: int
     LRB: int
@@ -54,18 +50,22 @@ class RiserContext:
     # Pipe material info
     selected_material: str
 
-    # Function that returns the CSV row (Series) for the given size
-    # It MUST provide at least: "ID_mm", "SRB", "LRB", "BALL", "GLOBE"
+    # Function to get CSV row for pipe size
     pipe_row_for_size: Callable[[str], pd.Series]
 
-    # Property helpers (you already import them in the main app;
-    # we re-instantiate here to avoid touching your global logic)
+    # ------------------------------------------------------------------
+    # 2. OPTIONAL FIELDS (defaults allowed ONLY here)
+    # ------------------------------------------------------------------
+
+    gc_max_pres: Optional[float] = None  # bar(a) — R744 TC only
+    gc_min_pres: Optional[float] = None  # bar(a) — R744 TC only
+
+    # Property helpers
     props: RefrigerantProperties = RefrigerantProperties()
     props_sup: RefrigerantProps = RefrigerantProps()
     dens: RefrigerantDensities = RefrigerantDensities()
     visc: RefrigerantViscosities = RefrigerantViscosities()
     conv: PressureTemperatureConverter = PressureTemperatureConverter()
-
 
 @dataclass
 class PipeResult:
@@ -646,4 +646,5 @@ def balance_double_riser(
         small_result=res_small,
         large_result=res_large,
     )
+
 
