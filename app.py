@@ -294,17 +294,6 @@ elif tool_selection == "Oil Return Checker":
             key="selected_size",
         )
 
-    with col1:
-        enable_dr = st.checkbox("Use Double Riser")
-    
-    if enable_dr:
-        small_riser = st.selectbox("Small Riser Size (inch)", pipe_sizes, key="small_riser")
-        large_riser = st.selectbox(
-            "Large Riser Size (inch)",
-            [s for s in pipe_sizes if mm_map[s] >= mm_map[small_riser]],
-            key="large_riser",
-        )
-
     # remember the selected size in mm for next material change
     ss.prev_pipe_mm = float(mm_map.get(selected_size, float("nan")))
 
@@ -916,9 +905,6 @@ elif tool_selection == "Manual Calculation":
                     f"Large Riser ID: {mm_map[dr_large]:.2f} mm"
                 )
 
-        ss.prev_pipe_mm = float(mm_map.get(selected_size, float("nan")))
-        
-        # remember the selected size in mm for next material change
         ss.prev_pipe_mm = float(mm_map.get(selected_size, float("nan")))
     
         # 3) Gauge (if applicable)
@@ -2117,48 +2103,47 @@ elif tool_selection == "Manual Calculation":
                         )
 
         with col4:
-            if st.button("Double Riser"):
+            if use_double_riser and st.button("Double Riser"):
         
-                if small_riser is None or large_riser is None:
-                    st.error("Select both small and large riser sizes.")
-                    st.stop()
+                # dr_small and dr_large ALWAYS exist when use_double_riser = True
+                small_riser = dr_small
+                large_riser = dr_large
         
-                # Compute mass-flow split based on VB logic or your rules
-                mf_small = some_fraction * mass_flow_kg_s
-                mf_large = mass_flow_kg_s - mf_small
+                # Get diameters
+                Ds_mm = mm_map[small_riser]
+                Dl_mm = mm_map[large_riser]
         
-                # --- Evaluate small riser ---
+                # Split mass flow (VB logic)
+                mass_large, mass_small = split_flow_VB(Ds_mm, Dl_mm, mass_flow_foroil)
+        
+                # Evaluate small riser (full load, portion only)
                 MOR_small, dt_small = get_pipe_results(
                     small_riser,
                     mass_flow_kg_s,
                     mass_flow_kg_smin,
                     mass_flow_foroil,
                     mass_flow_foroilmin,
-                    override_mass_flow = mf_small
+                    override_mass_flow = mass_small
                 )
         
-                # --- Evaluate large riser ---
+                # Evaluate large riser (full load)
                 MOR_large, dt_large = get_pipe_results(
                     large_riser,
                     mass_flow_kg_s,
                     mass_flow_kg_smin,
                     mass_flow_foroil,
                     mass_flow_foroilmin,
-                    override_mass_flow = mf_large
+                    override_mass_flow = mass_large
                 )
         
-                # Combine results exactly like the VB logic:
-                MOR_combined = max(MOR_small, MOR_large)
-                dt_combined = max(dt_small, dt_large)
+                # NOW apply your VB acceptance logic:
+                small_fails = MOR_small > required_oil_duty_pct
+                large_fails = MOR_large > required_oil_duty_pct
         
-                if MOR_combined <= required_oil_duty_pct and dt_combined <= max_penalty:
-                    st.success(
-                        f"Double Riser OK\n"
-                        f"Small: {small_riser} | Large: {large_riser}\n"
-                        f"MOR = {MOR_combined:.1f}% | ΔT = {dt_combined:.3f} K"
-                    )
+                if small_fails and large_fails:
+                    st.error("❌ Double riser does not meet oil return requirements.")
                 else:
-                    st.error("Double riser does not meet limits.")
+                    st.success("✔ Double riser configuration is valid.")
         
         with spacer:
             st.empty()
