@@ -2513,106 +2513,93 @@ elif tool_selection == "Manual Calculation":
         with col4:
             if st.button("Double Riser"):
                 st.session_state["double_riser_mode"] = True
-                results, errors = [], []
+                pair_results = []
+                errors = []
+            
+                for i_lr, lr in enumerate(pipe_sizes):
+                    for i_sr, sr in enumerate(pipe_sizes[:i_lr+1]):  # allow equal or smaller
+                        try:
+                            dr_res = compute_double_riser_pd(
+                                large_size_inch=lr,
+                                small_size_inch=sr,
+                                total_mass_flow_kg_s=mass_flow_kg_s,
+                                total_mass_flow_kg_smin=mass_flow_kg_smin,
+                            )
+                            if dr_res is None:
+                                continue
         
-                # STEP 1: same search as Single Riser to find BEST large riser size
-                for ps in pipe_sizes:
-                    try:
-                        MOR_i, dt_i = get_pipe_results(ps)
-                        if math.isfinite(MOR_i) and math.isfinite(dt_i):
-                            results.append({"size": ps, "MORfinal": MOR_i, "dt": dt_i})
-                        else:
-                            errors.append((ps, "Non-numeric MOR or ΔT"))
-                    except Exception as e:
-                        errors.append((ps, str(e)))
+                            # Check MOR and ΔT constraints on the *double-riser* result
+                            if dr_res["MOR_pass"] and dr_res["dt"] <= max_penalty:
+                                pair_results.append({
+                                    "LR": lr,
+                                    "SR": sr,
+                                    "dt": dr_res["dt"],
+                                    "dp": dr_res["dp_total_kPa"],
+                                    "dr_res": dr_res,
+                                })
+                        except Exception as e:
+                            errors.append(((lr, sr), str(e)))
         
-                if not results:
-                    debug_errors = errors
-                    error_message = "No valid pipe size results for double riser. Check inputs and CSV rows."
+                if not pair_results:
+                    error_message = (
+                        "❌ No double riser combination meets MOR & ΔT limits.\n"
+                        "➡ Relax one or more input limits."
+                    )
                 else:
-                    valid = [
-                        r for r in results
-                        if (r["MORfinal"] <= required_oil_duty_pct)
-                        and (r["dt"] <= max_penalty)
-                    ]
+                    # mimic VB: smallest LR, then smallest SR
+                    best = min(
+                        pair_results,
+                        key=lambda r: (mm_map[r["LR"]], mm_map[r["SR"]])
+                    )
         
-                    if not valid:
-                        error_message = (
-                            "❌ No pipe meets MOR & ΔT limits for the large riser.\n"
-                            "➡ Relax one or more input limits."
+                    best_res = best["dr_res"]
+                    large_size = best["LR"]
+                    small_size = best["SR"]
+        
+                    st.session_state["_next_selected_size"] = large_size
+                    st.session_state["_next_small_riser_size"] = small_size
+                    st.session_state["double_riser_mode"] = True
+        
+                    double_riser_message = (
+                        f"✅ Double riser selected: large **{large_size}**, "
+                        f"small **{small_size}**  \n"
+                        f"Controlling branch: **{best_res['controlling_branch']}**  \n"
+                        f"ΔT: **{best_res['dt']:.3f} K**, "
+                        f"Total PD: **{best_res['dp_total_kPa']:.2f} kPa**"
+                    )
+        
+                    if best_res["MOR_pass"]:
+                        st.success(
+                            f"✅ Oil return OK\n"
+                            f"Large riser MOR = {best_res['MOR_LR']:.1f}%\n"
+                            f"Small riser MOR = {best_res['MOR_SR']:.1f}%"
                         )
                     else:
-                        # BEST large riser = smallest size that meets MOR + ΔT
-                        best_LR = min(valid, key=lambda x: mm_map[x["size"]])
-                        large_size = best_LR["size"]
-        
-                        # choose a default small riser size = next size down
-                        try:
-                            idx_LR = pipe_sizes.index(large_size)
-                        except ValueError:
-                            idx_LR = pipe_sizes.index(selected_size)
-        
-                        if idx_LR > 0:
-                            default_small = pipe_sizes[idx_LR - 1]
-                        else:
-                            default_small = pipe_sizes[0]
-        
-                        small_size = default_small
-        
-                        # set for next run's widgets
-                        st.session_state["_next_selected_size"] = large_size
-                        st.session_state["_next_small_riser_size"] = small_size
-                        st.session_state["double_riser_mode"] = True
-        
-                        # STEP 2: compute double-riser PD with VB-style 2.63936 split
-                        dr_res = compute_double_riser_pd(
-                            large_size_inch=large_size,
-                            small_size_inch=small_size,
-                            total_mass_flow_kg_s=mass_flow_kg_s,
-                            total_mass_flow_kg_smin=mass_flow_kg_smin,
+                        st.error(
+                            f"❌ Oil return insufficient\n"
+                            f"Large riser MOR = {best_res['MOR_LR']:.1f}% "
+                            f"({'OK' if best_res['MOR_LR_pass'] else 'FAIL'})\n"
+                            f"Small riser MOR = {best_res['MOR_SR']:.1f}% "
+                            f"({'OK' if best_res['MOR_SR_pass'] else 'FAIL'})"
                         )
         
-                        if dr_res is None:
-                            error_message = "Failed to compute double-riser pressure drop."
-                        else:
-                            double_riser_message = (
-                                f"✅ Double riser selected: large **{large_size}**, "
-                                f"small **{small_size}**  \n"
-                                f"Controlling branch: **{dr_res['controlling_branch']}**  \n"
-                                f"ΔT: **{dr_res['dt']:.3f} K**, "
-                                f"Total PD: **{dr_res['dp_total_kPa']:.2f} kPa**"
-                            )
+                    # overwrite the global PD/DT display with double-riser result
+                    dp_pipe_kPa = best_res["dp_pipe_kPa"]
+                    dp_fittings_kPa = best_res["dp_fittings_kPa"]
+                    dp_valves_kPa = best_res["dp_valves_kPa"]
+                    dp_plf_kPa = best_res["dp_plf_kPa"]
+                    dp_total_kPa = best_res["dp_total_kPa"]
+                    dt = best_res["dt"]
+                    velocity_m_sfinal = best_res["velocity_m_sfinal"]
+                    density_recalc = best_res["density_recalc"]
         
-                            if dr_res["MOR_pass"]:
-                                st.success(
-                                    f"✅ Oil return OK\n"
-                                    f"Large riser MOR = {dr_res['MOR_LR']:.1f}%\n"
-                                    f"Small riser MOR = {dr_res['MOR_SR']:.1f}%"
-                                )
-                            else:
-                                st.error(
-                                    f"❌ Oil return insufficient\n"
-                                    f"Large riser MOR = {dr_res['MOR_LR']:.1f}% "
-                                    f"({'OK' if dr_res['MOR_LR_pass'] else 'FAIL'})\n"
-                                    f"Small riser MOR = {dr_res['MOR_SR']:.1f}% "
-                                    f"({'OK' if dr_res['MOR_SR_pass'] else 'FAIL'})"
-                                )
+                    # use worst-branch MOR for the global summary at the bottom
+                    if math.isfinite(best_res["MOR_LR"]) and math.isfinite(best_res["MOR_SR"]):
+                        MORfinal = max(best_res["MOR_LR"], best_res["MOR_SR"])
+                    else:
+                        MORfinal = ""
         
-                            # overwrite the global PD/DT display with double-riser result
-                            dp_pipe_kPa = dr_res["dp_pipe_kPa"]
-                            dp_fittings_kPa = dr_res["dp_fittings_kPa"]
-                            dp_valves_kPa = dr_res["dp_valves_kPa"]
-                            dp_plf_kPa = dr_res["dp_plf_kPa"]
-                            dp_total_kPa = dr_res["dp_total_kPa"]
-                            dt = dr_res["dt"]
-                            velocity_m_sfinal = dr_res["velocity_m_sfinal"]
-                            density_recalc = dr_res["density_recalc"]
-        
-                            # use worst-branch MOR for the global summary at the bottom
-                            if math.isfinite(dr_res["MOR_LR"]) and math.isfinite(dr_res["MOR_SR"]):
-                                MORfinal = max(dr_res["MOR_LR"], dr_res["MOR_SR"])
-                            else:
-                                MORfinal = ""
+                    st.rerun()
                 
         with spacer:
             st.empty()
