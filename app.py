@@ -1939,14 +1939,6 @@ elif tool_selection == "Manual Calculation":
                             "❌ No pipe meets both limits simultaneously.  \n"
                             "➡ Please relax one or more input limits."
                         )
-
-        # ----------------------------------------------------------
-        # MANUAL DOUBLE RISER TEST (like VB)
-        # ----------------------------------------------------------
-        
-        # ----------------------------------------------------------
-        # MANUAL DOUBLE RISER TEST (like VB)
-        # ----------------------------------------------------------
         
         col_small, col_large = st.columns(2)
         
@@ -1959,7 +1951,6 @@ elif tool_selection == "Manual Calculation":
             )
         
         with col_large:
-            # default = next size up if possible
             default_large_index = min(len(pipe_sizes) - 1, pipe_sizes.index(selected_size) + 1)
             manual_large = st.selectbox(
                 "Large riser size",
@@ -1970,78 +1961,90 @@ elif tool_selection == "Manual Calculation":
         
         if st.button("Double Riser (Manual Pair)"):
         
-            # Use the existing ctx (no second constructor)
             dr = balance_double_riser(manual_small, manual_large, M_total, ctx)
         
-            st.subheader("Double Riser Result")
-            
-            # ---------- SYSTEM-LEVEL MOR (all 4 combos: big/small × max/min liq) ----------
-            import math as _math
-            
-            def _fmt_pct(v: float) -> str:
-                return f"{v:.1f}%" if isinstance(v, (int, float)) and _math.isfinite(v) else "—"
-            
-            system_col1, system_col2, system_col3, system_col4 = st.columns(4)
-            with system_col1:
-                st.metric("System MOR (worst)", _fmt_pct(dr.MOR_system_worst))
-            with system_col2:
-                st.metric("System MOR (best)", _fmt_pct(dr.MOR_system_best))
-            with system_col3:
-                st.metric("Required Oil Duty", f"{required_oil_duty_pct:.1f}%")
-            with system_col4:
-                if isinstance(dr.MOR_system_worst, (int, float)) and _math.isfinite(dr.MOR_system_worst):
-                    ok_sys = dr.MOR_system_worst <= required_oil_duty_pct
-                else:
-                    ok_sys = False
-                st.metric("OK?", "Yes" if ok_sys else "No")
-            
-            if ok_sys:
-                st.success("✅ Double riser meets required oil return duty on system worst-case MOR.")
-            else:
-                st.error("❌ Double riser does NOT meet required oil return duty on system worst-case MOR.")
-            
-            st.markdown("---")
-            
-            # ---------- BRANCH DETAILS ----------
-            st.markdown(f"**Small riser: {manual_small}**")
-            s1, s2, s3, s4, s5 = st.columns(5)
-            with s1:
-                st.metric("Mass flow", f"{dr.M_small:.4f} kg/s")
-            with s2:
-                st.metric("MOR (worst)", _fmt_pct(dr.MOR_small_worst))
-            with s3:
-                st.metric("MOR (best)", _fmt_pct(dr.MOR_small_best))
-            with s4:
-                st.metric("MOR @ max liq", _fmt_pct(dr.MOR_small_maxliq))
-            with s5:
-                st.metric("MOR @ min liq", _fmt_pct(dr.MOR_small_minliq))
-            
-            st.markdown(f"**Large riser: {manual_large}**")
-            l1, l2, l3, l4, l5 = st.columns(5)
-            with l1:
-                st.metric("Mass flow", f"{dr.M_large:.4f} kg/s")
-            with l2:
-                st.metric("MOR (worst)", _fmt_pct(dr.MOR_large_worst))
-            with l3:
-                st.metric("MOR (best)", _fmt_pct(dr.MOR_large_best))
-            with l4:
-                st.metric("MOR @ max liq", _fmt_pct(dr.MOR_large_maxliq))
-            with l5:
-                st.metric("MOR @ min liq", _fmt_pct(dr.MOR_large_minliq))
-            
-            st.markdown("---")
-            
-            # ---------- SHARED CIRCUIT PD / ΔT ----------
-            pd_col1, pd_col2 = st.columns(2)
-            with pd_col1:
+            st.subheader("Double Riser Balanced Result")
+
+            st.markdown("### **System Summary**")
+            sA, sB, sC, sD = st.columns(4)
+        
+            with sA:
+                st.metric("Total Mass Flow", f"{dr.M_total:.4f} kg/s")
+            with sB:
                 st.metric("Balanced PD", f"{dr.DP_kPa:.3f} kPa")
-            with pd_col2:
-                st.metric("ΔT penalty", f"{dr.DT_K:.3f} K")
+            with sC:
+                st.metric("ΔT Penalty", f"{dr.DT_K:.3f} K")
+            with sD:
+                st.metric("System Worst MOR", f"{dr.MOR_system_worst:.2f}%")
+
+            st.markdown(f"## Small Riser — **{manual_small}**")
+        
+            rs = dr.small_result  # shorthand
+        
+            c1, c2, c3, c4, c5, c6 = st.columns(6)
+            with c1:
+                st.metric("Mass Flow", f"{rs.mass_flow_kg_s:.4f} kg/s")
+            with c2:
+                st.metric("Velocity", f"{rs.velocity_m_s:.2f} m/s")
+            with c3:
+                st.metric("Density", f"{rs.density:.1f} kg/m³")
+            with c4:
+                st.metric("Reynolds", f"{rs.reynolds:,.0f}")
+            with c5:
+                st.metric("PD", f"{rs.DP_kPa:.3f} kPa")
+            with c6:
+                st.metric("ΔT", f"{rs.DT_K:.3f} K")
+        
+            # MOR variants
+            m1, m2, m3, m4 = st.columns(4)
+            with m1:
+                st.metric("MOR Worst", f"{rs.MOR_worst:.2f}%")
+            with m2:
+                st.metric("MOR Best", f"{rs.MOR_best:.2f}%")
+            with m3:
+                st.metric("MOR @ Max Liq", f"{rs.MOR_maxliq:.2f}%")
+            with m4:
+                st.metric("MOR @ Min Liq", f"{rs.MOR_minliq:.2f}%")
+
+            st.markdown(f"## Large Riser — **{manual_large}**")
+        
+            rl = dr.large_result  # shorthand
+        
+            C1, C2, C3, C4, C5, C6 = st.columns(6)
+            with C1:
+                st.metric("Mass Flow", f"{rl.mass_flow_kg_s:.4f} kg/s")
+            with C2:
+                st.metric("Velocity", f"{rl.velocity_m_s:.2f} m/s")
+            with C3:
+                st.metric("Density", f"{rl.density:.1f} kg/m³")
+            with C4:
+                st.metric("Reynolds", f"{rl.reynolds:,.0f}")
+            with C5:
+                st.metric("PD", f"{rl.DP_kPa:.3f} kPa")
+            with C6:
+                st.metric("ΔT", f"{rl.DT_K:.3f} K")
+        
+            # MOR variants
+            M1, M2, M3, M4 = st.columns(4)
+            with M1:
+                st.metric("MOR Worst", f"{rl.MOR_worst:.2f}%")
+            with M2:
+                st.metric("MOR Best", f"{rl.MOR_best:.2f}%")
+            with M3:
+                st.metric("MOR @ Max Liq", f"{rl.MOR_maxliq:.2f}%")
+            with M4:
+                st.metric("MOR @ Min Liq", f"{rl.MOR_minliq:.2f}%")
+
+            st.markdown("### **Oil Return Acceptance**")
+        
+            if dr.MOR_system_worst <= required_oil_duty_pct:
+                st.success(f"✔ System passes — Minimum required: {required_oil_duty_pct}%, Actual worst: {dr.MOR_system_worst:.2f}%")
+            else:
+                st.error(f"❌ Insufficient oil return — Required {required_oil_duty_pct}%, but worst case is {dr.MOR_system_worst:.2f}%")
 
         with spacer:
             st.empty()
         
-        # ---------- FULL-WIDTH ZONE ----------
         if debug_errors:
             with st.expander("⚠️ Pipe selection debug details", expanded=True):
                 for ps, msg in debug_errors:
