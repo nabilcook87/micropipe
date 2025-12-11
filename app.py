@@ -1959,49 +1959,48 @@ elif tool_selection == "Manual Calculation":
                 key="manual_large"
             )
         
+        
         if st.button("Double Riser (Manual Pair)"):
         
             dr = balance_double_riser(manual_small, manual_large, M_total, ctx)
-        
-            # shorthand
             rs = dr.small_result
             rl = dr.large_result
         
-            # ----------------------------------------------------
-            # 1) Full-flow MOR (single riser) – already calculated
-            #    MORfinal is the worst of max / min liq for full flow
-            # ----------------------------------------------------
-            if isinstance(MORfinal, (int, float)):
-                MOR_fullflow_worst = MORfinal
-            else:
-                MOR_fullflow_worst = float("nan")
+            # ---------------------------------------------------------
+            # STEP 1 — Compute MinMassFlow USING SMALL RISER ONLY
+            # ---------------------------------------------------------
+            small_ID_m = rs.ID_mm / 1000
+            small_area = math.pi * (small_ID_m / 2) ** 2
         
-            # ----------------------------------------------------
-            # 2) Small-branch MOR – worst of max/min liq for small branch
-            # ----------------------------------------------------
-            if hasattr(rs, "MOR_worst") and isinstance(rs.MOR_worst, (int, float)):
-                MOR_small_worst = rs.MOR_worst
-            else:
-                # Fallback if your dataclass only exposes max/min
-                MOR_small_worst = max(
-                    getattr(rs, "MOR_maxliq", float("nan")),
-                    getattr(rs, "MOR_minliq", float("nan")),
-                )
+            density_foroil_small = rs.density_for_oil
+            oil_density_small = rs.oil_density
+            jg_small = rs.jg_half
         
-            # Overall worst MOR (system) = worst of full-flow vs small branch
-            if math.isfinite(MOR_fullflow_worst) and math.isfinite(MOR_small_worst):
-                MOR_system_worst = max(MOR_fullflow_worst, MOR_small_worst)
-            else:
-                MOR_system_worst = float("nan")
+            MinMassFlux_small = (jg_small ** 2) * (
+                (density_foroil_small * 9.81 * small_ID_m * (oil_density_small - density_foroil_small)) ** 0.5
+            )
         
-            # ----------------------------------------------------
-            # UI
-            # ----------------------------------------------------
+            MinMassFlow_small = MinMassFlux_small * small_area
+        
+            # ---------------------------------------------------------
+            # STEP 2 — Two MOR values (different denominators only)
+            # ---------------------------------------------------------
+        
+            # 1) Full-flow MOR (denominator = total evaporator mass flow)
+            MOR_full_flow = (MinMassFlow_small / M_total) * 100
+        
+            # 2) Small-riser MOR (denominator = mass flow through small branch)
+            MOR_small = (MinMassFlow_small / rs.mass_flow_kg_s) * 100
+        
+            # System worst
+            MOR_system_worst = max(MOR_full_flow, MOR_small)
+        
+            # ---------------------------------------------------------
+            # UI OUTPUT BELOW
+            # ---------------------------------------------------------
             st.subheader("Double Riser Balanced Result")
         
-            st.markdown("### **System Summary**")
             sA, sB, sC, sD = st.columns(4)
-        
             with sA:
                 st.metric("Total Mass Flow", f"{dr.M_total:.4f} kg/s")
             with sB:
@@ -2009,74 +2008,53 @@ elif tool_selection == "Manual Calculation":
             with sC:
                 st.metric("ΔT Penalty", f"{dr.DT_K:.3f} K")
             with sD:
-                # This is MOR #1 – based on full evaporator mass flow
-                if math.isfinite(MOR_fullflow_worst):
-                    st.metric("MOR (Full Flow)", f"{MOR_fullflow_worst:.2f}%")
-                else:
-                    st.metric("MOR (Full Flow)", "N/A")
+                st.metric("System Worst MOR", f"{MOR_system_worst:.2f}%")
         
-            # ---------------------- Small riser (branch) ----------------------
+            # ---------------------- SMALL RISER ----------------------
             st.markdown(f"## Small Riser — **{manual_small}**")
         
             c1, c2, c3, c4, c5, c6 = st.columns(6)
-            with c1:
-                st.metric("Mass Flow", f"{rs.mass_flow_kg_s:.4f} kg/s")
-            with c2:
-                st.metric("Velocity", f"{rs.velocity_m_s:.2f} m/s")
-            with c3:
-                st.metric("Density", f"{rs.density:.1f} kg/m³")
-            with c4:
-                st.metric("Reynolds", f"{rs.reynolds:,.0f}")
-            with c5:
-                st.metric("PD", f"{rs.DP_kPa:.3f} kPa")
-            with c6:
-                st.metric("ΔT", f"{rs.DT_K:.3f} K")
+            with c1: st.metric("Mass Flow", f"{rs.mass_flow_kg_s:.4f} kg/s")
+            with c2: st.metric("Velocity", f"{rs.velocity_m_s:.2f} m/s")
+            with c3: st.metric("Density", f"{rs.density:.1f} kg/m³")
+            with c4: st.metric("Reynolds", f"{rs.reynolds:,.0f}")
+            with c5: st.metric("PD", f"{rs.DP_kPa:.3f} kPa")
+            with c6: st.metric("ΔT", f"{rs.DT_K:.3f} K")
         
-            # This is MOR #2 – based on the small branch alone
-            m1, _m2, _m3, _m4 = st.columns(4)
+            m1, m2 = st.columns(2)
             with m1:
-                if math.isfinite(MOR_small_worst):
-                    st.metric("MOR (Small Riser)", f"{MOR_small_worst:.2f}%")
-                else:
-                    st.metric("MOR (Small Riser)", "N/A")
-            # No extra MOR breakdowns shown here – we no longer display
-            # best / max liq / min liq individually.
+                st.metric("MOR (Full Flow)", f"{MOR_full_flow:.2f}%")
+            with m2:
+                st.metric("MOR (Small Branch)", f"{MOR_small:.2f}%")
         
-            # ---------------------- Large riser (branch) ----------------------
+            # ---------------------- LARGE RISER ----------------------
             st.markdown(f"## Large Riser — **{manual_large}**")
         
             C1, C2, C3, C4, C5, C6 = st.columns(6)
-            with C1:
-                st.metric("Mass Flow", f"{rl.mass_flow_kg_s:.4f} kg/s")
-            with C2:
-                st.metric("Velocity", f"{rl.velocity_m_s:.2f} m/s")
-            with C3:
-                st.metric("Density", f"{rl.density:.1f} kg/m³")
-            with C4:
-                st.metric("Reynolds", f"{rl.reynolds:,.0f}")
-            with C5:
-                st.metric("PD", f"{rl.DP_kPa:.3f} kPa")
-            with C6:
-                st.metric("ΔT", f"{rl.DT_K:.3f} K")
+            with C1: st.metric("Mass Flow", f"{rl.mass_flow_kg_s:.4f} kg/s")
+            with C2: st.metric("Velocity", f"{rl.velocity_m_s:.2f} m/s")
+            with C3: st.metric("Density", f"{rl.density:.1f} kg/m³")
+            with C4: st.metric("Reynolds", f"{rl.reynolds:,.0f}")
+            with C5: st.metric("PD", f"{rl.DP_kPa:.3f} kPa")
+            with C6: st.metric("ΔT", f"{rl.DT_K:.3f} K")
         
-            # No MOR numbers for large riser – by design.
+            # NO MOR DISPLAY FOR LARGE RISER
         
+            # ---------------------------------------------------------
+            # Acceptance
+            # ---------------------------------------------------------
             st.markdown("### **Oil Return Acceptance**")
         
-            if math.isfinite(MOR_system_worst):
-                if MOR_system_worst <= required_oil_duty_pct:
-                    st.success(
-                        f"✔ System passes — Required ≤ {required_oil_duty_pct:.1f}%  \n"
-                        f"Worst case (full flow vs small riser): {MOR_system_worst:.2f}%"
-                    )
-                else:
-                    st.error(
-                        f"❌ Insufficient oil return  \n"
-                        f"Required ≤ {required_oil_duty_pct:.1f}% but worst case "
-                        f"(full flow vs small riser) is {MOR_system_worst:.2f}%"
-                    )
+            if MOR_system_worst <= required_oil_duty_pct:
+                st.success(
+                    f"✔ System passes — Required ≤ {required_oil_duty_pct:.1f}%, "
+                    f"Worst case: {MOR_system_worst:.2f}%"
+                )
             else:
-                st.info("MOR cannot be evaluated for these conditions (out of validity range).")
+                st.error(
+                    f"❌ Insufficient oil return — Required ≤ {required_oil_duty_pct:.1f}%, "
+                    f"worst case is {MOR_system_worst:.2f}%"
+                )
 
         with spacer:
             st.empty()
