@@ -888,6 +888,34 @@ elif tool_selection == "Manual Calculation":
                 key="selected_size",
             )
 
+            # --------------------------------------------------------
+            # DOUBLE RISER CONFIGURATION UI
+            # --------------------------------------------------------
+            use_double_riser = st.checkbox("Enable Double Riser Configuration")
+            
+            if use_double_riser:
+                st.markdown("### Double Riser Pipe Sizes")
+            
+                # 1. SMALL RISER (independent of main selected_size)
+                dr_small = st.selectbox(
+                    "Small Riser Size (inch)",
+                    pipe_sizes,
+                    key="dr_small"
+                )
+            
+                # 2. LARGE RISER (must be >= small riser)
+                dr_large = st.selectbox(
+                    "Large Riser Size (inch)",
+                    [s for s in pipe_sizes if mm_map[s] >= mm_map[dr_small]],
+                    key="dr_large"
+                )
+            
+                # Optional: show diameters for clarity
+                st.caption(
+                    f"Small Riser ID: {mm_map[dr_small]:.2f} mm | "
+                    f"Large Riser ID: {mm_map[dr_large]:.2f} mm"
+                )
+
         ss.prev_pipe_mm = float(mm_map.get(selected_size, float("nan")))
         
         # remember the selected size in mm for next material change
@@ -2068,39 +2096,37 @@ elif tool_selection == "Manual Calculation":
                         )
 
         with col4:
-            if st.button("Double Riser"):
+            if use_double_riser and st.button("Double Riser"):
                 try:
-                    Ds_mm = mm_map[small_riser]
-                    Dl_mm = mm_map[large_riser]
-        
-                    # VB flow split
+                    Ds_mm = mm_map[dr_small]
+                    Dl_mm = mm_map[dr_large]
+            
+                    # VB flow split (full load)
                     mass_large, mass_small = split_flow_VB(Ds_mm, Dl_mm, mass_flow_foroil)
-        
-                    # MOR low load (small only)
-                    MOR_small_low, dt_small_low = evaluate_riser(
-                        small_riser, mass_flow_foroilmin, get_pipe_results
-                    )
-        
-                    # MOR full load
-                    MOR_small_full, dt_small_full = evaluate_riser(
-                        small_riser, mass_small, get_pipe_results
-                    )
-                    MOR_large_full, dt_large_full = evaluate_riser(
-                        large_riser, mass_large, get_pipe_results
-                    )
-        
+            
+                    # Evaluate each riser using your patched get_pipe_results()
+                    # Low load = small riser only
+                    MOR_small_low, dt_small_low = get_pipe_results(dr_small, override_mass_flow=mass_flow_foroilmin)
+            
+                    # Full load = split load
+                    MOR_small_full, dt_small_full = get_pipe_results(dr_small, override_mass_flow=mass_small)
+                    MOR_large_full, dt_large_full = get_pipe_results(dr_large, override_mass_flow=mass_large)
+            
+                    # VB accept/reject rule
                     small_fails = MOR_small_full > required_oil_duty_pct
                     large_fails = MOR_large_full > required_oil_duty_pct
-        
+            
                     if small_fails and large_fails:
-                        st.error("❌ Double riser pair fails oil return (VB Error 1).")
+                        st.error("❌ Double riser pair fails oil return at full load (VB Error 1).")
                     else:
                         st.success("✔ Double riser configuration is valid.")
-                        st.session_state["double_riser_large"] = large_riser
-                        st.session_state["double_riser_small"] = small_riser
-                        st.session_state["double_riser_results"] = {
-                            "mass_large": mass_large,
+            
+                        # Store results so the Results section can show them
+                        st.session_state["dr_results"] = {
+                            "small": dr_small,
+                            "large": dr_large,
                             "mass_small": mass_small,
+                            "mass_large": mass_large,
                             "MOR_small_low": MOR_small_low,
                             "MOR_small_full": MOR_small_full,
                             "MOR_large_full": MOR_large_full,
@@ -2109,9 +2135,9 @@ elif tool_selection == "Manual Calculation":
                             "dt_large_full": dt_large_full,
                         }
                         st.rerun()
-        
+            
                 except Exception as e:
-                    st.error(str(e))
+                    st.error(f"Double riser calculation failed: {e}")
         
         with spacer:
             st.empty()
@@ -2189,6 +2215,27 @@ elif tool_selection == "Manual Calculation":
             st.success(f"{message}")
         else:
             st.error(f"{message}")
+
+        if use_double_riser and "dr_results" in st.session_state:
+            dr = st.session_state["dr_results"]
+            st.markdown("## Double Riser Results")
+        
+            st.write(f"**Small Riser:** {dr['small']}")
+            st.write(f"**Large Riser:** {dr['large']}")
+        
+            st.markdown("### Flow Split (Full Load)")
+            st.write(f"Large Riser Flow: {dr['mass_large']:.4f} kg/s")
+            st.write(f"Small Riser Flow: {dr['mass_small']:.4f} kg/s")
+        
+            st.markdown("### MOR")
+            st.write(f"Small Riser MOR (Low Load): {dr['MOR_small_low']:.2f}%")
+            st.write(f"Small Riser MOR (Full Load): {dr['MOR_small_full']:.2f}%")
+            st.write(f"Large Riser MOR (Full Load): {dr['MOR_large_full']:.2f}%")
+        
+            st.markdown("### ΔT")
+            st.write(f"Small Riser ΔT (Low Load): {dr['dt_small_low']:.2f} K")
+            st.write(f"Small Riser ΔT (Full Load): {dr['dt_small_full']:.2f} K")
+            st.write(f"Large Riser ΔT (Full Load): {dr['dt_large_full']:.2f} K")
     
     if mode == "Liquid":
         
