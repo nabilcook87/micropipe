@@ -905,9 +905,6 @@ elif tool_selection == "Manual Calculation":
                 )
 
         ss.prev_pipe_mm = float(mm_map.get(selected_size, float("nan")))
-        
-        # remember the selected size in mm for next material change
-        ss.prev_pipe_mm = float(mm_map.get(selected_size, float("nan")))
     
         # 3) Gauge (if applicable)
         gauge_options = material_df[material_df["Nominal Size (inch)"].astype(str).str.strip() == selected_size]
