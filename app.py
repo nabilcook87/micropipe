@@ -1963,8 +1963,42 @@ elif tool_selection == "Manual Calculation":
         
             dr = balance_double_riser(manual_small, manual_large, M_total, ctx)
         
+            # shorthand
+            rs = dr.small_result
+            rl = dr.large_result
+        
+            # ----------------------------------------------------
+            # 1) Full-flow MOR (single riser) – already calculated
+            #    MORfinal is the worst of max / min liq for full flow
+            # ----------------------------------------------------
+            if isinstance(MORfinal, (int, float)):
+                MOR_fullflow_worst = MORfinal
+            else:
+                MOR_fullflow_worst = float("nan")
+        
+            # ----------------------------------------------------
+            # 2) Small-branch MOR – worst of max/min liq for small branch
+            # ----------------------------------------------------
+            if hasattr(rs, "MOR_worst") and isinstance(rs.MOR_worst, (int, float)):
+                MOR_small_worst = rs.MOR_worst
+            else:
+                # Fallback if your dataclass only exposes max/min
+                MOR_small_worst = max(
+                    getattr(rs, "MOR_maxliq", float("nan")),
+                    getattr(rs, "MOR_minliq", float("nan")),
+                )
+        
+            # Overall worst MOR (system) = worst of full-flow vs small branch
+            if math.isfinite(MOR_fullflow_worst) and math.isfinite(MOR_small_worst):
+                MOR_system_worst = max(MOR_fullflow_worst, MOR_small_worst)
+            else:
+                MOR_system_worst = float("nan")
+        
+            # ----------------------------------------------------
+            # UI
+            # ----------------------------------------------------
             st.subheader("Double Riser Balanced Result")
-
+        
             st.markdown("### **System Summary**")
             sA, sB, sC, sD = st.columns(4)
         
@@ -1975,11 +2009,14 @@ elif tool_selection == "Manual Calculation":
             with sC:
                 st.metric("ΔT Penalty", f"{dr.DT_K:.3f} K")
             with sD:
-                st.metric("System Worst MOR", f"{dr.MOR_system_worst:.2f}%")
-
-            st.markdown(f"## Small Riser — **{manual_small}**")
+                # This is MOR #1 – based on full evaporator mass flow
+                if math.isfinite(MOR_fullflow_worst):
+                    st.metric("MOR (Full Flow)", f"{MOR_fullflow_worst:.2f}%")
+                else:
+                    st.metric("MOR (Full Flow)", "N/A")
         
-            rs = dr.small_result  # shorthand
+            # ---------------------- Small riser (branch) ----------------------
+            st.markdown(f"## Small Riser — **{manual_small}**")
         
             c1, c2, c3, c4, c5, c6 = st.columns(6)
             with c1:
@@ -1995,20 +2032,18 @@ elif tool_selection == "Manual Calculation":
             with c6:
                 st.metric("ΔT", f"{rs.DT_K:.3f} K")
         
-            # MOR variants
-            m1, m2, m3, m4 = st.columns(4)
+            # This is MOR #2 – based on the small branch alone
+            m1, _m2, _m3, _m4 = st.columns(4)
             with m1:
-                st.metric("MOR Worst", f"{rs.MOR_worst:.2f}%")
-            with m2:
-                st.metric("MOR Best", f"{rs.MOR_best:.2f}%")
-            with m3:
-                st.metric("MOR @ Max Liq", f"{rs.MOR_maxliq:.2f}%")
-            with m4:
-                st.metric("MOR @ Min Liq", f"{rs.MOR_minliq:.2f}%")
-
-            st.markdown(f"## Large Riser — **{manual_large}**")
+                if math.isfinite(MOR_small_worst):
+                    st.metric("MOR (Small Riser)", f"{MOR_small_worst:.2f}%")
+                else:
+                    st.metric("MOR (Small Riser)", "N/A")
+            # No extra MOR breakdowns shown here – we no longer display
+            # best / max liq / min liq individually.
         
-            rl = dr.large_result  # shorthand
+            # ---------------------- Large riser (branch) ----------------------
+            st.markdown(f"## Large Riser — **{manual_large}**")
         
             C1, C2, C3, C4, C5, C6 = st.columns(6)
             with C1:
@@ -2024,23 +2059,24 @@ elif tool_selection == "Manual Calculation":
             with C6:
                 st.metric("ΔT", f"{rl.DT_K:.3f} K")
         
-            # MOR variants
-            M1, M2, M3, M4 = st.columns(4)
-            with M1:
-                st.metric("MOR Worst", f"{rl.MOR_worst:.2f}%")
-            with M2:
-                st.metric("MOR Best", f"{rl.MOR_best:.2f}%")
-            with M3:
-                st.metric("MOR @ Max Liq", f"{rl.MOR_maxliq:.2f}%")
-            with M4:
-                st.metric("MOR @ Min Liq", f"{rl.MOR_minliq:.2f}%")
-
+            # No MOR numbers for large riser – by design.
+        
             st.markdown("### **Oil Return Acceptance**")
         
-            if dr.MOR_system_worst <= required_oil_duty_pct:
-                st.success(f"✔ System passes — Minimum required: {required_oil_duty_pct}%, Actual worst: {dr.MOR_system_worst:.2f}%")
+            if math.isfinite(MOR_system_worst):
+                if MOR_system_worst <= required_oil_duty_pct:
+                    st.success(
+                        f"✔ System passes — Required ≤ {required_oil_duty_pct:.1f}%  \n"
+                        f"Worst case (full flow vs small riser): {MOR_system_worst:.2f}%"
+                    )
+                else:
+                    st.error(
+                        f"❌ Insufficient oil return  \n"
+                        f"Required ≤ {required_oil_duty_pct:.1f}% but worst case "
+                        f"(full flow vs small riser) is {MOR_system_worst:.2f}%"
+                    )
             else:
-                st.error(f"❌ Insufficient oil return — Required {required_oil_duty_pct}%, but worst case is {dr.MOR_system_worst:.2f}%")
+                st.info("MOR cannot be evaluated for these conditions (out of validity range).")
 
         with spacer:
             st.empty()
