@@ -561,7 +561,7 @@ def balance_double_riser(
         # large riser DP only
         res_l = pipe_results_for_massflow(size_large, M_large, ctx, compute_mor=False)
 
-        diff = res_s.DP_kPa - res_l.DP_kPa
+        diff = (res_s.DP_kPa - res_l.DP_kPa) * 100.0
 
         if abs(diff) <= tol_kPa:
             break
@@ -586,3 +586,4 @@ def balance_double_riser(
         small_result=res_s,
         large_result=res_l,
     )
+
