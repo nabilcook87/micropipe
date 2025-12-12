@@ -1993,11 +1993,9 @@ elif tool_selection == "Manual Calculation":
             with sD:
                 st.metric("System Worst MOR", f"{MOR_system_worst:.2f}%")
         
-            c1, c2, c3, c4, c5, c6 = st.columns(6)
+            c1, c2, c5, c6 = st.columns(4)
             with c1: st.metric("Mass Flow", f"{dr.M_small:.4f} kg/s")
             with c2: st.metric("Velocity", f"{rs.velocity_m_s:.2f} m/s")
-            with c3: st.metric("Density", f"{rs.density:.1f} kg/m³")
-            with c4: st.metric("Reynolds", f"{rs.reynolds:,.0f}")
             with c5: st.metric("PD", f"{rs.DP_kPa:.3f} kPa")
             with c6: st.metric("ΔT", f"{rs.DT_K:.3f} K")
         
@@ -2007,11 +2005,9 @@ elif tool_selection == "Manual Calculation":
             with m2:
                 st.metric("MOR (Small Branch)", f"{MOR_small:.2f}%")
         
-            C1, C2, C3, C4, C5, C6 = st.columns(6)
+            C1, C2, C5, C6 = st.columns(4)
             with C1: st.metric("Mass Flow", f"{dr.M_large:.4f} kg/s")
             with C2: st.metric("Velocity", f"{rl.velocity_m_s:.2f} m/s")
-            with C3: st.metric("Density", f"{rl.density:.1f} kg/m³")
-            with C4: st.metric("Reynolds", f"{rl.reynolds:,.0f}")
             with C5: st.metric("PD", f"{rl.DP_kPa:.3f} kPa")
             with C6: st.metric("ΔT", f"{rl.DT_K:.3f} K")
         
