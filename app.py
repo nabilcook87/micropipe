@@ -1958,6 +1958,34 @@ elif tool_selection == "Manual Calculation":
                 index=default_large_index,
                 key="manual_large"
             )
+
+        small_rows = material_df[
+            material_df["Nominal Size (inch)"].astype(str).str.strip() == manual_small
+        ]
+        
+        if "Gauge" in small_rows.columns and small_rows["Gauge"].notna().any():
+            small_gauges = sorted(small_rows["Gauge"].dropna().unique())
+            manual_small_gauge = st.selectbox(
+                "Small riser gauge",
+                small_gauges,
+                key="manual_small_gauge",
+            )
+        else:
+            manual_small_gauge = None
+        
+        large_rows = material_df[
+            material_df["Nominal Size (inch)"].astype(str).str.strip() == manual_large
+        ]
+        
+        if "Gauge" in large_rows.columns and large_rows["Gauge"].notna().any():
+            large_gauges = sorted(large_rows["Gauge"].dropna().unique())
+            manual_large_gauge = st.selectbox(
+                "Large riser gauge",
+                large_gauges,
+                key="manual_large_gauge",
+            )
+        else:
+            manual_large_gauge = None
         
         if st.button("Double Riser (Manual Pair)"):
             # Balance the pair at full load
