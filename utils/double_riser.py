@@ -546,157 +546,43 @@ def balance_double_riser(
     if M_total_kg_s <= 0:
         raise ValueError("Total mass flow must be > 0.")
 
-    # Initial bracket for small-branch mass flow
-    lo = 0.01 * M_total_kg_s
-    hi = 0.99 * M_total_kg_s
+    lo = 0.01*M_total_kg_s
+    hi = 0.99*M_total_kg_s
 
-    # Helper to evaluate f(M_small) and keep results
-    def eval_branch(M_small: float):
-        M_large = M_total_kg_s - M_small
-        res_s = pipe_results_for_massflow(size_small, M_small, ctx, compute_mor=True)
-        res_l = pipe_results_for_massflow(size_large, M_large, ctx, compute_mor=False)
-        diff = res_s.DP_kPa - res_l.DP_kPa
-        if not (math.isfinite(diff) and math.isfinite(res_s.DP_kPa) and math.isfinite(res_l.DP_kPa)):
-            raise RuntimeError("Non-finite DP encountered during double-riser balancing.")
-        return diff, res_s, res_l
-
-    # Evaluate at bracket ends
-    f_lo, res_lo_s, res_lo_l = eval_branch(lo)
-    f_hi, res_hi_s, res_hi_l = eval_branch(hi)
-
-    # If either end is already good enough, return it
-    if abs(f_lo) <= tol_kPa:
-        M_small = lo
-        M_large = M_total_kg_s - M_small
-        return DoubleRiserResult(
-            size_small=size_small,
-            size_large=size_large,
-            M_total=M_total_kg_s,
-            M_small=res_lo_s.mass_flow_kg_s,
-            M_large=res_lo_l.mass_flow_kg_s,
-            DP_kPa=(res_lo_s.DP_kPa + res_lo_l.DP_kPa) / 2,
-            DT_K=res_lo_s.DT_K,
-            MOR_small_worst=res_lo_s.MOR_worst,
-            small_result=res_lo_s,
-            large_result=res_lo_l,
-        )
-
-    if abs(f_hi) <= tol_kPa:
-        M_small = hi
-        M_large = M_total_kg_s - M_small
-        return DoubleRiserResult(
-            size_small=size_small,
-            size_large=size_large,
-            M_total=M_total_kg_s,
-            M_small=res_hi_s.mass_flow_kg_s,
-            M_large=res_hi_l.mass_flow_kg_s,
-            DP_kPa=(res_hi_s.DP_kPa + res_hi_l.DP_kPa) / 2,
-            DT_K=res_hi_s.DT_K,
-            MOR_small_worst=res_hi_s.MOR_worst,
-            small_result=res_hi_s,
-            large_result=res_hi_l,
-        )
-
-    # If no sign change, fall back to simple bisection (robust fallback)
-    if f_lo * f_hi > 0:
-        # monotonic but not properly bracketed; use your original bisection
-        res_s = None
-        res_l = None
-        for _ in range(max_iter):
-            M_small = 0.5 * (lo + hi)
-            M_large = M_total_kg_s - M_small
-            res_s = pipe_results_for_massflow(size_small, M_small, ctx, compute_mor=True)
-            res_l = pipe_results_for_massflow(size_large, M_large, ctx, compute_mor=False)
-            diff = res_s.DP_kPa - res_l.DP_kPa
-
-            if abs(diff) <= tol_kPa:
-                break
-
-            if diff > 0:
-                hi = M_small
-            else:
-                lo = M_small
-
-        if res_s is None or res_l is None:
-            raise RuntimeError("Double riser balance failed (fallback bisection).")
-
-        return DoubleRiserResult(
-            size_small=size_small,
-            size_large=size_large,
-            M_total=M_total_kg_s,
-            M_small=res_s.mass_flow_kg_s,
-            M_large=res_l.mass_flow_kg_s,
-            DP_kPa=(res_s.DP_kPa + res_l.DP_kPa) / 2,
-            DT_K=res_s.DT_K,
-            MOR_small_worst=res_s.MOR_worst,
-            small_result=res_s,
-            large_result=res_l,
-        )
-
-    # ------------------------------------------------------------------
-    # Illinois Regula Falsi proper
-    # ------------------------------------------------------------------
-
-    x0, f0, r0s, r0l = lo, f_lo, res_lo_s, res_lo_l
-    x1, f1, r1s, r1l = hi, f_hi, res_hi_s, res_hi_l
-
-    best_x = x0
-    best_f = abs(f0)
-    best_rs = r0s
-    best_rl = r0l
+    res_s = None
+    res_l = None
 
     for _ in range(max_iter):
-        # Avoid division by zero
-        denom = (f1 - f0)
-        if denom == 0:
+        M_small = 0.5*(lo+hi)
+        M_large = M_total_kg_s - M_small
+
+        # small riser computes MOR
+        res_s = pipe_results_for_massflow(size_small, M_small, ctx, compute_mor=True)
+        # large riser DP only
+        res_l = pipe_results_for_massflow(size_large, M_large, ctx, compute_mor=False)
+
+        diff = res_s.DP_kPa - res_l.DP_kPa
+
+        if abs(diff) <= tol_kPa:
             break
 
-        # Illinois regula falsi formula
-        x2 = (x0 * f1 - x1 * f0) / denom
-
-        # Clamp inside bracket just in case of numerical drift
-        x2 = max(lo, min(hi, x2))
-
-        f2, r2s, r2l = eval_branch(x2)
-
-        # Track best solution so far
-        if abs(f2) < best_f:
-            best_x = x2
-            best_f = abs(f2)
-            best_rs = r2s
-            best_rl = r2l
-
-        # Check convergence
-        if abs(f2) <= tol_kPa:
-            best_x = x2
-            best_f = abs(f2)
-            best_rs = r2s
-            best_rl = r2l
-            break
-
-        # Illinois update: whichever side KEEPING its sign gets its f halved
-        if f0 * f2 < 0:
-            # Root between x0 and x2 → move x1
-            x1, f1, r1s, r1l = x2, f2, r2s, r2l
-            f0 *= 0.5
+        if diff > 0:
+            hi = M_small
         else:
-            # Root between x2 and x1 → move x0
-            x0, f0, r0s, r0l = x2, f2, r2s, r2l
-            f1 *= 0.5
+            lo = M_small
 
-    # Use best solution found
-    if best_rs is None or best_rl is None:
-        raise RuntimeError("Double riser balance failed (Illinois).")
+    if res_s is None or res_l is None:
+        raise RuntimeError("Double riser balance failed.")
 
     return DoubleRiserResult(
         size_small=size_small,
         size_large=size_large,
         M_total=M_total_kg_s,
-        M_small=best_rs.mass_flow_kg_s,
-        M_large=best_rl.mass_flow_kg_s,
-        DP_kPa=(best_rs.DP_kPa + best_rl.DP_kPa) / 2,
-        DT_K=best_rs.DT_K,
-        MOR_small_worst=best_rs.MOR_worst,
-        small_result=best_rs,
-        large_result=best_rl,
+        M_small=res_s.mass_flow_kg_s,
+        M_large=res_l.mass_flow_kg_s,
+        DP_kPa=(res_s.DP_kPa + res_l.DP_kPa)/2,
+        DT_K=res_s.DT_K,
+        MOR_small_worst=res_s.MOR_worst,
+        small_result=res_s,
+        large_result=res_l,
     )
