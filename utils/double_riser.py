@@ -529,7 +529,6 @@ def pipe_results_for_massflow(
         jg_half=jg,
     )
 
-
 # ======================================================================
 #  DOUBLE RISER BALANCING — FINAL VERSION (VB IDENTICAL)
 # ======================================================================
@@ -546,47 +545,81 @@ def balance_double_riser(
     if M_total_kg_s <= 0:
         raise ValueError("Total mass flow must be > 0.")
 
-    lo = 0.01*M_total_kg_s
-    hi = 0.99*M_total_kg_s
+    # We still want the solution where the small riser actually carries
+    # a minority of the flow, so keep your 1–99% bracket,
+    # but we do the search in log10(M_small).
+    M_small_lo = 0.01 * M_total_kg_s
+    M_small_hi = 0.99 * M_total_kg_s
 
-    res_s = None
-    res_l = None
+    # Guard against any weird numerical issues
+    M_small_lo = max(M_small_lo, 1e-10)
+    M_small_hi = min(M_small_hi, M_total_kg_s - 1e-10)
 
-    for _ in range(max_iter):
-        M_small = 0.5*(lo + hi)
-        M_large = M_total_kg_s - M_small
+    x_lo = math.log10(M_small_lo)
+    x_hi = math.log10(M_small_hi)
 
+    # Helper: evaluate DP difference at a given small-riser mass flow
+    def _eval(m_small: float):
+        m_large = M_total_kg_s - m_small
         # small riser computes MOR
-        res_s = pipe_results_for_massflow(size_small, M_small, ctx, compute_mor=True)
+        res_s = pipe_results_for_massflow(size_small, m_small, ctx, compute_mor=True)
         # large riser DP only
-        res_l = pipe_results_for_massflow(size_large, M_large, ctx, compute_mor=False)
-
+        res_l = pipe_results_for_massflow(size_large, m_large, ctx, compute_mor=False)
         diff = res_s.DP_kPa - res_l.DP_kPa
+        return res_s, res_l, diff
 
-        if abs(diff) <= tol_kPa:
-            break
+    # Evaluate at bracket ends
+    res_s_lo, res_l_lo, diff_lo = _eval(M_small_lo)
+    res_s_hi, res_l_hi, diff_hi = _eval(M_small_hi)
 
-        if diff > 0:
-            hi = M_small
+    # If the bracket already satisfies tolerance at either end, short-circuit
+    if abs(diff_lo) <= tol_kPa:
+        res_s, res_l = res_s_lo, res_l_lo
+    elif abs(diff_hi) <= tol_kPa:
+        res_s, res_l = res_s_hi, res_l_hi
+    else:
+        # Log-space bisection
+        res_s = res_s_lo
+        res_l = res_l_lo
+        diff_mid = diff_lo  # just to have something initialised
+
+        for _ in range(max_iter):
+            x_mid = 0.5 * (x_lo + x_hi)
+            M_small_mid = 10.0 ** x_mid
+
+            res_s_mid, res_l_mid, diff_mid = _eval(M_small_mid)
+
+            if abs(diff_mid) <= tol_kPa:
+                res_s, res_l = res_s_mid, res_l_mid
+                break
+
+            # Maintain sign bracket on diff
+            if diff_lo * diff_mid <= 0.0:
+                # Root between lo and mid
+                x_hi = x_mid
+                res_s_hi, res_l_hi, diff_hi = res_s_mid, res_l_mid, diff_mid
+            else:
+                # Root between mid and hi
+                x_lo = x_mid
+                res_s_lo, res_l_lo, diff_lo = res_s_mid, res_l_mid, diff_mid
+
         else:
-            lo = M_small
+            # If we exit without break, just use the last mid-point solution
+            res_s, res_l = res_s_mid, res_l_mid
 
-    if res_s is None or res_l is None:
-        raise RuntimeError("Double riser balance failed.")
+    # Final mass flows from the chosen solution
+    M_small_final = res_s.mass_flow_kg_s
+    M_large_final = res_l.mass_flow_kg_s
 
     return DoubleRiserResult(
         size_small=size_small,
         size_large=size_large,
         M_total=M_total_kg_s,
-        M_small=res_s.mass_flow_kg_s,
-        M_large=res_l.mass_flow_kg_s,
-        DP_kPa=(res_s.DP_kPa + res_l.DP_kPa)/2,
+        M_small=M_small_final,
+        M_large=M_large_final,
+        DP_kPa=(res_s.DP_kPa + res_l.DP_kPa) / 2.0,
         DT_K=res_s.DT_K,
         MOR_small_worst=res_s.MOR_worst,
         small_result=res_s,
         large_result=res_l,
     )
-
-
-
-
