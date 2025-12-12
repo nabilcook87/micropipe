@@ -1487,7 +1487,7 @@ elif tool_selection == "Manual Calculation":
                 return rows.iloc[0]
             return rows.iloc[0]
 
-        from double_riser import RiserContext, balance_double_riser
+        from utils.double_riser import RiserContext, balance_double_riser
         
         # Only meaningful for R744 TC
         gc_max = gc_max_pres if refrigerant == "R744 TC" else None
