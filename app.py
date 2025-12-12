@@ -1513,8 +1513,8 @@ elif tool_selection == "Manual Calculation":
         
             selected_material=selected_material,
         
-            pipe_row_for_size_small=pipe_row_small,
-            pipe_row_for_size_large=pipe_row_large,
+            # ✅ EXACT SAME resolver as Dry Suction
+            pipe_row_for_size=_pipe_row_for_size,
         
             gc_max_pres=gc_max,
             gc_min_pres=gc_min,
