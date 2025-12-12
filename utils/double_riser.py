@@ -553,7 +553,7 @@ def balance_double_riser(
     res_l = None
 
     for _ in range(max_iter):
-        M_small = round(0.5*(lo + hi), 4)
+        M_small = 0.5*(lo + hi)
         M_large = M_total_kg_s - M_small
 
         # small riser computes MOR
@@ -586,6 +586,7 @@ def balance_double_riser(
         small_result=res_s,
         large_result=res_l,
     )
+
 
 
 
