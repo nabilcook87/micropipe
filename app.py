@@ -1993,7 +1993,9 @@ elif tool_selection == "Manual Calculation":
             # Balance the pair at full load
             dr = balance_double_riser(
                 manual_small,
+                manual_small_gauge,
                 manual_large,
+                manual_large_gauge,
                 M_total,
                 ctx,
             )
