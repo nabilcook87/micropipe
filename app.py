@@ -1489,9 +1489,14 @@ elif tool_selection == "Manual Calculation":
 
         from utils.double_riser import RiserContext, balance_double_riser
         
-        # Only meaningful for R744 TC
         gc_max = gc_max_pres if refrigerant == "R744 TC" else None
         gc_min = gc_min_pres if refrigerant == "R744 TC" else None
+        
+        def pipe_row_small(size_inch: str):
+            return _pipe_row_for_size(size_inch, manual_small_gauge)
+        
+        def pipe_row_large(size_inch: str):
+            return _pipe_row_for_size(size_inch, manual_large_gauge)
         
         ctx = RiserContext(
             refrigerant=refrigerant,
@@ -1513,7 +1518,9 @@ elif tool_selection == "Manual Calculation":
             PLF=PLF,
         
             selected_material=selected_material,
-            pipe_row_for_size=_pipe_row_for_size,
+        
+            pipe_row_for_size_small=pipe_row_small,
+            pipe_row_for_size_large=pipe_row_large,
         
             gc_max_pres=gc_max,
             gc_min_pres=gc_min,
@@ -1988,6 +1995,7 @@ elif tool_selection == "Manual Calculation":
                 manual_large_gauge = None
         
         if st.button("Double Riser"):
+        
             # Balance the pair at full load
             dr = balance_double_riser(
                 manual_small,
