@@ -539,15 +539,15 @@ def balance_double_riser(
     size_large: str,
     M_total_kg_s: float,
     ctx: RiserContext,
-    tol_kPa: float = 0.01,
-    max_iter: int = 60,
+    tol_kPa: float = 0.001,
+    max_iter: int = 100,
 ) -> DoubleRiserResult:
 
     if M_total_kg_s <= 0:
         raise ValueError("Total mass flow must be > 0.")
 
-    lo = 0.001*M_total_kg_s
-    hi = 0.999*M_total_kg_s
+    lo = 0.0001*M_total_kg_s
+    hi = 0.9999*M_total_kg_s
 
     res_s = None
     res_l = None
@@ -586,4 +586,5 @@ def balance_double_riser(
         small_result=res_s,
         large_result=res_l,
     )
+
 
