@@ -1985,7 +1985,7 @@ elif tool_selection == "Manual Calculation":
         
             st.subheader("Double Riser Balanced Result")
         
-            sB, sC, sD = st.columns(4)
+            sB, sC, sD = st.columns(3)
             with sB:
                 st.metric("Balanced PD", f"{dr.DP_kPa:.3f} kPa")
             with sC:
