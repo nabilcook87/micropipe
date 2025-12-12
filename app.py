@@ -1492,12 +1492,6 @@ elif tool_selection == "Manual Calculation":
         gc_max = gc_max_pres if refrigerant == "R744 TC" else None
         gc_min = gc_min_pres if refrigerant == "R744 TC" else None
         
-        def pipe_row_small(size_inch: str):
-            return _pipe_row_for_size(size_inch, manual_small_gauge)
-        
-        def pipe_row_large(size_inch: str):
-            return _pipe_row_for_size(size_inch, manual_large_gauge)
-        
         ctx = RiserContext(
             refrigerant=refrigerant,
             T_evap=T_evap,
@@ -1999,7 +1993,9 @@ elif tool_selection == "Manual Calculation":
             # Balance the pair at full load
             dr = balance_double_riser(
                 manual_small,
+                manual_small_gauge,
                 manual_large,
+                manual_large_gauge,
                 M_total,
                 ctx,
             )
