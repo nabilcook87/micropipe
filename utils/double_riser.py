@@ -44,7 +44,8 @@ class RiserContext:
     selected_material: str
 
     # Pipe size lookup function
-    pipe_row_for_size: Callable[[str], pd.Series]
+    # NOTE: now takes (size_inch, gauge)
+    pipe_row_for_size: Callable[[str, Optional[str]], pd.Series]
 
     # R744 TC
     gc_max_pres: Optional[float] = None
@@ -94,7 +95,9 @@ class DoubleRiserResult:
     """Balanced double riser calculation."""
 
     size_small: str
+    gauge_small: Optional[str]
     size_large: str
+    gauge_large: Optional[str]
 
     M_total: float
     M_small: float
@@ -171,6 +174,7 @@ def _jg_half_for_refrigerant(refrigerant: str) -> float:
 
 def pipe_results_for_massflow(
     size_inch: str,
+    gauge: Optional[str],
     branch_mass_flow_kg_s: float,
     ctx: RiserContext,
     compute_mor: bool,
@@ -198,7 +202,8 @@ def pipe_results_for_massflow(
     # ------------------------------------------------------------------
     # PIPE GEOMETRY
     # ------------------------------------------------------------------
-    row = ctx.pipe_row_for_size(size_inch)
+    # NOTE: now uses (size_inch, gauge)
+    row = ctx.pipe_row_for_size(size_inch, gauge)
     ID_mm = float(row["ID_mm"])
     ID_m = ID_mm / 1000
     A = math.pi * (ID_m / 2)**2
@@ -531,12 +536,14 @@ def pipe_results_for_massflow(
 
 
 # ======================================================================
-#  DOUBLE RISER BALANCING — FINAL VERSION (VB IDENTICAL)
+#  DOUBLE RISER BALANCING — FINAL VERSION (WITH GAUGES)
 # ======================================================================
 
 def balance_double_riser(
     size_small: str,
+    gauge_small: Optional[str],
     size_large: str,
+    gauge_large: Optional[str],
     M_total_kg_s: float,
     ctx: RiserContext,
     tol_kPa: float = 0.001,
@@ -546,20 +553,21 @@ def balance_double_riser(
     if M_total_kg_s <= 0:
         raise ValueError("Total mass flow must be > 0.")
 
-    lo = 0.000001*M_total_kg_s
-    hi = 0.999999*M_total_kg_s
+    # Very wide but non-zero bounds to allow tiny branch flows
+    lo = 0.000001 * M_total_kg_s
+    hi = 0.999999 * M_total_kg_s
 
-    res_s = None
-    res_l = None
+    res_s: Optional[PipeResult] = None
+    res_l: Optional[PipeResult] = None
 
     for _ in range(max_iter):
-        M_small = 0.5*(lo+hi)
+        M_small = 0.5 * (lo + hi)
         M_large = M_total_kg_s - M_small
 
         # small riser computes MOR
-        res_s = pipe_results_for_massflow(size_small, M_small, ctx, compute_mor=True)
+        res_s = pipe_results_for_massflow(size_small, gauge_small, M_small, ctx, compute_mor=True)
         # large riser DP only
-        res_l = pipe_results_for_massflow(size_large, M_large, ctx, compute_mor=False)
+        res_l = pipe_results_for_massflow(size_large, gauge_large, M_large, ctx, compute_mor=False)
 
         diff = res_s.DP_kPa - res_l.DP_kPa
 
@@ -576,7 +584,9 @@ def balance_double_riser(
 
     return DoubleRiserResult(
         size_small=size_small,
+        gauge_small=gauge_small,
         size_large=size_large,
+        gauge_large=gauge_large,
         M_total=M_total_kg_s,
         M_small=res_s.mass_flow_kg_s,
         M_large=res_l.mass_flow_kg_s,
@@ -586,7 +596,3 @@ def balance_double_riser(
         small_result=res_s,
         large_result=res_l,
     )
-
-
-
-
