@@ -260,8 +260,6 @@ def pipe_results_for_massflow(
     # --------------------------------------------------------------
     # PRESSURE DROP (unchanged)
     # --------------------------------------------------------------
-    DP = 0.0
-    DT = 0.0
 
     return PipeResult(
         MOR_worst=MOR_worst,
@@ -328,3 +326,4 @@ def balance_double_riser(
         small_result=res_s,
         large_result=res_l,
     )
+
