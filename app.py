@@ -1961,7 +1961,14 @@ elif tool_selection == "Manual Calculation":
         
         if st.button("Double Riser (Manual Pair)"):
             # Balance the pair at full load
-            dr = balance_double_riser(manual_small, manual_large, M_total, ctx)
+            dr = balance_double_riser(
+                manual_small,
+                manual_small_gauge,
+                manual_large,
+                manual_large_gauge,
+                M_total,
+                ctx,
+            )
             rs = dr.small_result  # PipeResult for small riser
             rl = dr.large_result  # PipeResult for large riser
 
