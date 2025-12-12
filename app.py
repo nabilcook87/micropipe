@@ -1489,6 +1489,7 @@ elif tool_selection == "Manual Calculation":
 
         from utils.double_riser import RiserContext, balance_double_riser
         
+        # Only meaningful for R744 TC
         gc_max = gc_max_pres if refrigerant == "R744 TC" else None
         gc_min = gc_min_pres if refrigerant == "R744 TC" else None
         
@@ -1512,8 +1513,6 @@ elif tool_selection == "Manual Calculation":
             PLF=PLF,
         
             selected_material=selected_material,
-        
-            # ✅ EXACT SAME resolver as Dry Suction
             pipe_row_for_size=_pipe_row_for_size,
         
             gc_max_pres=gc_max,
@@ -1950,20 +1949,6 @@ elif tool_selection == "Manual Calculation":
                 index=pipe_sizes.index(selected_size),
                 key="manual_small"
             )
-
-            small_rows = material_df[
-                material_df["Nominal Size (inch)"].astype(str).str.strip() == manual_small
-            ]
-            
-            if "Gauge" in small_rows.columns and small_rows["Gauge"].notna().any():
-                small_gauges = sorted(small_rows["Gauge"].dropna().unique())
-                manual_small_gauge = st.selectbox(
-                    "Small riser gauge",
-                    small_gauges,
-                    key="manual_small_gauge",
-                )
-            else:
-                manual_small_gauge = None
         
         with col_large:
             default_large_index = min(len(pipe_sizes) - 1, pipe_sizes.index(selected_size) + 1)
@@ -1973,30 +1958,10 @@ elif tool_selection == "Manual Calculation":
                 index=default_large_index,
                 key="manual_large"
             )
-
-            large_rows = material_df[
-                material_df["Nominal Size (inch)"].astype(str).str.strip() == manual_large
-            ]
-            
-            if "Gauge" in large_rows.columns and large_rows["Gauge"].notna().any():
-                large_gauges = sorted(large_rows["Gauge"].dropna().unique())
-                manual_large_gauge = st.selectbox(
-                    "Large riser gauge",
-                    large_gauges,
-                    key="manual_large_gauge",
-                )
-            else:
-                manual_large_gauge = None
         
-        if st.button("Double Riser"):
-        
+        if st.button("Double Riser (Manual Pair)"):
             # Balance the pair at full load
-            dr = balance_double_riser(
-                manual_small,
-                manual_large,
-                M_total,
-                ctx,
-            )
+            dr = balance_double_riser(manual_small, manual_large, M_total, ctx)
             rs = dr.small_result  # PipeResult for small riser
             rl = dr.large_result  # PipeResult for large riser
 
