@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import Callable, Optional
 
 import pandas as pd
+import streamlit as st
 
 from utils.refrigerant_properties import RefrigerantProperties
 from utils.refrigerant_densities import RefrigerantDensities
@@ -95,7 +96,9 @@ class DoubleRiserResult:
     """Balanced double riser calculation."""
 
     size_small: str
+    gauge_small: Optional[str]
     size_large: str
+    gauge_large: Optional[str]
 
     M_total: float
     M_small: float
@@ -538,7 +541,9 @@ def pipe_results_for_massflow(
 
 def balance_double_riser(
     size_small: str,
+    gauge_small: Optional[str],
     size_large: str,
+    gauge_large: Optional[str],
     M_total_kg_s: float,
     ctx: RiserContext,
     tol_kPa: float = 0.001,
@@ -559,8 +564,11 @@ def balance_double_riser(
         M_small = 0.5 * (lo + hi)
         M_large = M_total_kg_s - M_small
 
+        st.session_state["selected_gauge"] = gauge_small
         # small riser computes MOR
         res_s = pipe_results_for_massflow(size_small, M_small, ctx, compute_mor=True, is_small=True)
+
+        st.session_state["selected_gauge"] = gauge_large
         # large riser DP only
         res_l = pipe_results_for_massflow(size_large, M_large, ctx, compute_mor=False, is_small=False)
 
@@ -579,7 +587,9 @@ def balance_double_riser(
 
     return DoubleRiserResult(
         size_small=size_small,
+        gauge_small=gauge_small,
         size_large=size_large,
+        gauge_large=gauge_large,
         M_total=M_total_kg_s,
         M_small=res_s.mass_flow_kg_s,
         M_large=res_l.mass_flow_kg_s,
