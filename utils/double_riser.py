@@ -539,7 +539,7 @@ def balance_double_riser(
     size_large: str,
     M_total_kg_s: float,
     ctx: RiserContext,
-    tol_kPa: float = 0.01,
+    tol_kPa: float = 0.01 * 1000.0,
     max_iter: int = 60,
 ) -> DoubleRiserResult:
 
@@ -586,5 +586,6 @@ def balance_double_riser(
         small_result=res_s,
         large_result=res_l,
     )
+
 
 
