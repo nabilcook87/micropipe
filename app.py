@@ -2026,9 +2026,9 @@ elif tool_selection == "Manual Calculation":
     
         m1, m2 = st.columns(2)
         with m1:
-            st.metric("MOR (Full Flow)", f"{MOR_full_flow:.2f}%")
+            st.metric("Minimum Oil Capacity", f"{MOR_full_flow:.2f}%")
         with m2:
-            st.metric("MOR (Small Branch)", f"{MOR_small:.2f}%")
+            st.metric("Maximum Oil Capacity", f"{MOR_large:.2f}%")
     
         C1, C2, C5, C6 = st.columns(4)
         with C1: st.metric("Mass Flow", f"{dr.M_large:.4f} kg/s")
