@@ -1996,12 +1996,14 @@ elif tool_selection == "Manual Calculation":
         MOR_full_flow_2 = (MinMassFlow_small / mass_flow_foroilmin) * 100.0 * (1 - MOR_correctionmin) * (1 - MOR_correction2)
         MOR_full_flow = max(MOR_full_flow_1, MOR_full_flow_2)
 
-        M_smallprop = dr.M_small / M_total
+        M_smallprop = dr.M_small / dr.M_total
 
-        M_smalloil = M_smallprop * M_totaloil
-        M_smalloil = M_smallprop * M_totaloil
+        M_smalloil_1 = M_smallprop * mass_flow_foroil
+        M_smalloil_2 = M_smallprop * mass_flow_foroilmin
     
-        MOR_small = (MinMassFlow_small / M_smalloil) * 100.0
+        MOR_small_1 = (MinMassFlow_small / M_smalloil_1) * 100.0
+        MOR_small_2 = (MinMassFlow_small / M_smalloil_2) * 100.0
+        MOR_small = max(MOR_small_1, MOR_small_2)
     
         sB, sC = st.columns(2)
         with sB:
