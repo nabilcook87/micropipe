@@ -1132,6 +1132,7 @@ elif tool_selection == "Manual Calculation":
         #st.write("mass_flow_kg_s:", mass_flow_kg_s)
         mass_flow_kg_smin = evap_capacity_kw / delta_hmin if delta_hmin > 0 else 0.01
         #st.write("mass_flow_kg_smin:", mass_flow_kg_smin)
+        M_total = max(mass_flow_kg_s, mass_flow_kg_smin)
     
         mass_flow_foroil = evap_capacity_kw / delta_h_foroil if delta_h_foroil > 0 else 0.01
         #st.write("mass_flow_foroil:", mass_flow_foroil)
