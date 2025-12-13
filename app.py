@@ -1033,6 +1033,7 @@ elif tool_selection == "Manual Calculation":
             superheat_K = st.number_input("Superheat (K)", min_value=0.0, max_value=60.0, value=5.0, step=1.0)
             max_penalty = st.number_input("Max Penalty (K)", min_value=0.0, max_value=6.0, value=1.0, step=0.1)
             required_oil_duty_pct = st.number_input("Required Oil Return Duty (%)", min_value=0.0, max_value=100.0, value=100.0, step=5.0)
+            empty1 = st.number_input("", disabled=True)
             g_large_opts = gauges_for_size(manual_large)
             gauge_large = None
             if g_large_opts:
