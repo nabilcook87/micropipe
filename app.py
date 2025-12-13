@@ -1985,6 +1985,8 @@ elif tool_selection == "Manual Calculation":
 
         small_ID_m = rs.ID_m
         small_area = rs.area_m2
+        large_ID_m = rl.ID_m
+        large_area = rl.area_m2
     
         MinMassFlux_small = (jg_half ** 2) * (
             (density_foroil * 9.81 * small_ID_m * (oil_density - density_foroil)) ** 0.5
