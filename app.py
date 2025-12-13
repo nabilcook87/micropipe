@@ -1998,8 +1998,12 @@ elif tool_selection == "Manual Calculation":
         MinMassFlow_small = MinMassFlux_small * small_area
 
         MOR_full_flow = (MinMassFlow_small / M_totaloil) * 100.0
+
+        M_smallprop = dr.M_small / M_total
+
+        M_smalloil = M_smallprop * M_totaloil
     
-        MOR_small = (MinMassFlow_small / dr.M_small) * 100.0
+        MOR_small = (MinMassFlow_small / M_smalloil) * 100.0
     
         sB, sC = st.columns(2)
         with sB:
