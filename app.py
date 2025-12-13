@@ -1138,7 +1138,6 @@ elif tool_selection == "Manual Calculation":
         #st.write("mass_flow_foroil:", mass_flow_foroil)
         mass_flow_foroilmin = evap_capacity_kw / delta_h_foroilmin if delta_h_foroilmin > 0 else 0.01
         #st.write("mass_flow_foroilmin:", mass_flow_foroilmin)
-        M_totaloil = min(mass_flow_foroil, mass_flow_foroilmin)
     
         # Calculate velocity for transparency
         if ID_mm is not None:
@@ -1973,7 +1972,6 @@ elif tool_selection == "Manual Calculation":
                             "➡ Please relax one or more input limits."
                         )
 
-        # Balance the pair at full load
         dr = balance_double_riser(
             manual_small,
             manual_large,
@@ -1982,25 +1980,25 @@ elif tool_selection == "Manual Calculation":
             gauge_small=gauge_small,
             gauge_large=gauge_large,
         )
-        rs = dr.small_result  # PipeResult for small riser
-        rl = dr.large_result  # PipeResult for large riser
+        rs = dr.small_result
+        rl = dr.large_result
 
         small_ID_m = rs.ID_m
         small_area = rs.area_m2
     
-        density_foroil_small = rs.density_foroil
-        oil_density_small = rs.oil_density
-        jg_small = rs.jg_half
-    
-        MinMassFlux_small = (jg_small ** 2) * (
-            (density_foroil_small * 9.81 * small_ID_m * (oil_density_small - density_foroil_small)) ** 0.5
+        MinMassFlux_small = (jg_half ** 2) * (
+            (density_foroil * 9.81 * small_ID_m * (oil_density - density_foroil)) ** 0.5
         )
+        
         MinMassFlow_small = MinMassFlux_small * small_area
 
-        MOR_full_flow = (MinMassFlow_small / M_totaloil) * 100.0
+        MOR_full_flow_1 = (MinMassFlow_small / mass_flow_foroil) * 100.0 * (1 - MOR_correction) * (1 - MOR_correction2)
+        MOR_full_flow_2 = (MinMassFlow_small / mass_flow_foroilmin) * 100.0 * (1 - MOR_correctionmin) * (1 - MOR_correction2)
+        MOR_full_flow = max(MOR_full_flow_1, MOR_full_flow_2)
 
         M_smallprop = dr.M_small / M_total
 
+        M_smalloil = M_smallprop * M_totaloil
         M_smalloil = M_smallprop * M_totaloil
     
         MOR_small = (MinMassFlow_small / M_smalloil) * 100.0
