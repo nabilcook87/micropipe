@@ -1949,6 +1949,7 @@ elif tool_selection == "Manual Calculation":
                 index=pipe_sizes.index(selected_size),
                 key="manual_small"
             )
+            manual_small = st.selectbox("Small riser size", pipe_sizes, key="manual_small")
         
         with col_large:
             default_large_index = min(len(pipe_sizes) - 1, pipe_sizes.index(selected_size) + 1)
@@ -1958,7 +1959,8 @@ elif tool_selection == "Manual Calculation":
                 index=default_large_index,
                 key="manual_large"
             )
-        
+            manual_large = st.selectbox("Large riser size", pipe_sizes, key="manual_large")
+
         if st.button("Double Riser (Manual Pair)"):
             # Balance the pair at full load
             dr = balance_double_riser(manual_small, manual_large, M_total, ctx)
