@@ -1129,15 +1129,16 @@ elif tool_selection == "Manual Calculation":
         #st.write("delta_h_foroilmin:", delta_h_foroilmin)
     
         mass_flow_kg_s = evap_capacity_kw / delta_h if delta_h > 0 else 0.01
-        M_total = mass_flow_kg_s
         #st.write("mass_flow_kg_s:", mass_flow_kg_s)
         mass_flow_kg_smin = evap_capacity_kw / delta_hmin if delta_hmin > 0 else 0.01
         #st.write("mass_flow_kg_smin:", mass_flow_kg_smin)
+        M_total = max(mass_flow_kg_s, mass_flow_kg_smin)
     
         mass_flow_foroil = evap_capacity_kw / delta_h_foroil if delta_h_foroil > 0 else 0.01
         #st.write("mass_flow_foroil:", mass_flow_foroil)
         mass_flow_foroilmin = evap_capacity_kw / delta_h_foroilmin if delta_h_foroilmin > 0 else 0.01
         #st.write("mass_flow_foroilmin:", mass_flow_foroilmin)
+        M_totaloil = min(mass_flow_foroil, mass_flow_foroilmin)
     
         # Calculate velocity for transparency
         if ID_mm is not None:
@@ -1996,19 +1997,15 @@ elif tool_selection == "Manual Calculation":
         )
         MinMassFlow_small = MinMassFlux_small * small_area
 
-        MOR_full_flow = (MinMassFlow_small / dr.M_total) * 100.0
+        MOR_full_flow = (MinMassFlow_small / M_totaloil) * 100.0
     
         MOR_small = (MinMassFlow_small / dr.M_small) * 100.0
     
-        MOR_system_worst = max(MOR_full_flow, MOR_small)
-    
-        sB, sC, sD = st.columns(3)
+        sB, sC = st.columns(2)
         with sB:
             st.metric("Balanced PD", f"{dr.DP_kPa:.3f} kPa")
         with sC:
             st.metric("ΔT Penalty", f"{dr.DT_K:.3f} K")
-        with sD:
-            st.metric("System Worst MOR", f"{MOR_system_worst:.2f}%")
     
         c1, c2, c5, c6 = st.columns(4)
         with c1: st.metric("Mass Flow", f"{dr.M_small:.4f} kg/s")
