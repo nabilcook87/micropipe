@@ -1474,17 +1474,19 @@ elif tool_selection == "Manual Calculation":
         else:
             MinCap = MORfinal * evap_capacity_kw / 100
         
-        def _pipe_row_for_size(size_inch: str):
-            """Return the CSV row for a given nominal size, respecting the selected gauge if present."""
-            rows = material_df[material_df["Nominal Size (inch)"].astype(str).str.strip() == str(size_inch)]
+        def _pipe_row_for_size(size_inch: str, gauge: str | None = None):
+            rows = material_df[
+                material_df["Nominal Size (inch)"].astype(str).str.strip() == str(size_inch)
+            ]
+        
             if "Gauge" in rows.columns and rows["Gauge"].notna().any():
-                # If the UI has a selected_gauge, use it; otherwise take the first available for that size
-                if "selected_gauge" in st.session_state:
-                    g = st.session_state["selected_gauge"]
-                    rows_g = rows[rows["Gauge"] == g]
+                if gauge is not None:
+                    rows_g = rows[rows["Gauge"] == gauge]
                     if not rows_g.empty:
                         return rows_g.iloc[0]
+                # fallback if gauge is None or invalid
                 return rows.iloc[0]
+        
             return rows.iloc[0]
 
         from utils.double_riser import RiserContext, balance_double_riser
