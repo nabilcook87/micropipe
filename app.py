@@ -1972,75 +1972,74 @@ elif tool_selection == "Manual Calculation":
                             "➡ Please relax one or more input limits."
                         )
 
-        if st.button("Double Riser"):
-            # Balance the pair at full load
-            dr = balance_double_riser(
-                manual_small,
-                manual_large,
-                M_total,
-                ctx,
-                gauge_small=gauge_small,
-                gauge_large=gauge_large,
-            )
-            rs = dr.small_result  # PipeResult for small riser
-            rl = dr.large_result  # PipeResult for large riser
+        # Balance the pair at full load
+        dr = balance_double_riser(
+            manual_small,
+            manual_large,
+            M_total,
+            ctx,
+            gauge_small=gauge_small,
+            gauge_large=gauge_large,
+        )
+        rs = dr.small_result  # PipeResult for small riser
+        rl = dr.large_result  # PipeResult for large riser
 
-            small_ID_m = rs.ID_m
-            small_area = rs.area_m2
-        
-            density_foroil_small = rs.density_foroil
-            oil_density_small = rs.oil_density
-            jg_small = rs.jg_half
-        
-            MinMassFlux_small = (jg_small ** 2) * (
-                (density_foroil_small * 9.81 * small_ID_m * (oil_density_small - density_foroil_small)) ** 0.5
-            )
-            MinMassFlow_small = MinMassFlux_small * small_area
+        small_ID_m = rs.ID_m
+        small_area = rs.area_m2
+    
+        density_foroil_small = rs.density_foroil
+        oil_density_small = rs.oil_density
+        jg_small = rs.jg_half
+    
+        MinMassFlux_small = (jg_small ** 2) * (
+            (density_foroil_small * 9.81 * small_ID_m * (oil_density_small - density_foroil_small)) ** 0.5
+        )
+        MinMassFlow_small = MinMassFlux_small * small_area
 
-            MOR_full_flow = (MinMassFlow_small / dr.M_total) * 100.0
-        
-            MOR_small = (MinMassFlow_small / dr.M_small) * 100.0
-        
-            MOR_system_worst = max(MOR_full_flow, MOR_small)
-        
-            sB, sC, sD = st.columns(3)
-            with sB:
-                st.metric("Balanced PD", f"{dr.DP_kPa:.3f} kPa")
-            with sC:
-                st.metric("ΔT Penalty", f"{dr.DT_K:.3f} K")
-            with sD:
-                st.metric("System Worst MOR", f"{MOR_system_worst:.2f}%")
-        
-            c1, c2, c5, c6 = st.columns(4)
-            with c1: st.metric("Mass Flow", f"{dr.M_small:.4f} kg/s")
-            with c2: st.metric("Velocity", f"{rs.velocity_m_s:.2f} m/s")
-            with c5: st.metric("PD", f"{rs.DP_kPa:.3f} kPa")
-            with c6: st.metric("ΔT", f"{rs.DT_K:.3f} K")
-        
-            m1, m2 = st.columns(2)
-            with m1:
-                st.metric("MOR (Full Flow)", f"{MOR_full_flow:.2f}%")
-            with m2:
-                st.metric("MOR (Small Branch)", f"{MOR_small:.2f}%")
-        
-            C1, C2, C5, C6 = st.columns(4)
-            with C1: st.metric("Mass Flow", f"{dr.M_large:.4f} kg/s")
-            with C2: st.metric("Velocity", f"{rl.velocity_m_s:.2f} m/s")
-            with C5: st.metric("PD", f"{rl.DP_kPa:.3f} kPa")
-            with C6: st.metric("ΔT", f"{rl.DT_K:.3f} K")
-        
-            st.markdown("### **Oil Return Acceptance**")
-        
-            if MOR_system_worst <= required_oil_duty_pct:
-                st.success(
-                    f"✔ System passes — Required ≤ {required_oil_duty_pct:.1f}%, "
-                    f"Worst case: {MOR_system_worst:.2f}%"
-                )
-            else:
-                st.error(
-                    f"❌ Insufficient oil return — Required ≤ {required_oil_duty_pct:.1f}%, "
-                    f"worst case is {MOR_system_worst:.2f}%"
-                )
+        MOR_full_flow = (MinMassFlow_small / dr.M_total) * 100.0
+    
+        MOR_small = (MinMassFlow_small / dr.M_small) * 100.0
+    
+        MOR_system_worst = max(MOR_full_flow, MOR_small)
+    
+        sB, sC, sD = st.columns(3)
+        with sB:
+            st.metric("Balanced PD", f"{dr.DP_kPa:.3f} kPa")
+        with sC:
+            st.metric("ΔT Penalty", f"{dr.DT_K:.3f} K")
+        with sD:
+            st.metric("System Worst MOR", f"{MOR_system_worst:.2f}%")
+    
+        c1, c2, c5, c6 = st.columns(4)
+        with c1: st.metric("Mass Flow", f"{dr.M_small:.4f} kg/s")
+        with c2: st.metric("Velocity", f"{rs.velocity_m_s:.2f} m/s")
+        with c5: st.metric("PD", f"{rs.DP_kPa:.3f} kPa")
+        with c6: st.metric("ΔT", f"{rs.DT_K:.3f} K")
+    
+        m1, m2 = st.columns(2)
+        with m1:
+            st.metric("MOR (Full Flow)", f"{MOR_full_flow:.2f}%")
+        with m2:
+            st.metric("MOR (Small Branch)", f"{MOR_small:.2f}%")
+    
+        C1, C2, C5, C6 = st.columns(4)
+        with C1: st.metric("Mass Flow", f"{dr.M_large:.4f} kg/s")
+        with C2: st.metric("Velocity", f"{rl.velocity_m_s:.2f} m/s")
+        with C5: st.metric("PD", f"{rl.DP_kPa:.3f} kPa")
+        with C6: st.metric("ΔT", f"{rl.DT_K:.3f} K")
+    
+        st.markdown("### **Oil Return Acceptance**")
+    
+        if MOR_system_worst <= required_oil_duty_pct:
+            st.success(
+                f"✔ System passes — Required ≤ {required_oil_duty_pct:.1f}%, "
+                f"Worst case: {MOR_system_worst:.2f}%"
+            )
+        else:
+            st.error(
+                f"❌ Insufficient oil return — Required ≤ {required_oil_duty_pct:.1f}%, "
+                f"worst case is {MOR_system_worst:.2f}%"
+            )
 
         with spacer:
             st.empty()
