@@ -1949,7 +1949,6 @@ elif tool_selection == "Manual Calculation":
                 index=pipe_sizes.index(selected_size),
                 key="manual_small"
             )
-            manual_small = st.selectbox("Small riser size", pipe_sizes, key="manual_small")
         
         with col_large:
             default_large_index = min(len(pipe_sizes) - 1, pipe_sizes.index(selected_size) + 1)
@@ -1959,7 +1958,27 @@ elif tool_selection == "Manual Calculation":
                 index=default_large_index,
                 key="manual_large"
             )
-            manual_large = st.selectbox("Large riser size", pipe_sizes, key="manual_large")
+
+        def gauges_for_size(size_inch: str):
+            rows = material_df[material_df["Nominal Size (inch)"].astype(str).str.strip() == str(size_inch)]
+            if "Gauge" in rows.columns and rows["Gauge"].notna().any():
+                return sorted(rows["Gauge"].dropna().unique())
+            return []
+        
+        g_small_opts = gauges_for_size(manual_small)
+        g_large_opts = gauges_for_size(manual_large)
+        
+        gcol1, gcol2 = st.columns(2)
+        
+        with gcol1:
+            gauge_small = None
+            if g_small_opts:
+                gauge_small = st.selectbox("Small riser gauge", g_small_opts, key="gauge_small")
+        
+        with gcol2:
+            gauge_large = None
+            if g_large_opts:
+                gauge_large = st.selectbox("Large riser gauge", g_large_opts, key="gauge_large")
 
         if st.button("Double Riser (Manual Pair)"):
             # Balance the pair at full load
