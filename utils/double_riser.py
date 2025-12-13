@@ -42,9 +42,9 @@ class RiserContext:
     PLF: float
 
     selected_material: str
-
+    from typing import Callable, Optional
     # Pipe size lookup function
-    pipe_row_for_size: Callable[[str], pd.Series]
+    pipe_row_for_size: Callable[[str, Optional[str]], pd.Series]
 
     # R744 TC
     gc_max_pres: Optional[float] = None
@@ -174,6 +174,7 @@ def pipe_results_for_massflow(
     branch_mass_flow_kg_s: float,
     ctx: RiserContext,
     compute_mor: bool,
+    gauge: Optional[str] = None,
 ) -> PipeResult:
     """
     Full DP + ΔT + velocity + oil-return MINIMUM MASS FLOW for THIS pipe.
@@ -198,7 +199,7 @@ def pipe_results_for_massflow(
     # ------------------------------------------------------------------
     # PIPE GEOMETRY
     # ------------------------------------------------------------------
-    row = ctx.pipe_row_for_size(size_inch)
+    row = ctx.pipe_row_for_size(size_inch, gauge)
     ID_mm = float(row["ID_mm"])
     ID_m = ID_mm / 1000
     A = math.pi * (ID_m / 2)**2
@@ -539,6 +540,8 @@ def balance_double_riser(
     size_large: str,
     M_total_kg_s: float,
     ctx: RiserContext,
+    gauge_small: Optional[str] = None,
+    gauge_large: Optional[str] = None,
     tol_kPa: float = 0.001,
     max_iter: int = 100,
 ) -> DoubleRiserResult:
@@ -556,10 +559,8 @@ def balance_double_riser(
         M_small = 0.5*(lo+hi)
         M_large = M_total_kg_s - M_small
 
-        # small riser computes MOR
-        res_s = pipe_results_for_massflow(size_small, M_small, ctx, compute_mor=True)
-        # large riser DP only
-        res_l = pipe_results_for_massflow(size_large, M_large, ctx, compute_mor=False)
+        res_s = pipe_results_for_massflow(size_small, M_small, ctx, compute_mor=True,  gauge=gauge_small)
+        res_l = pipe_results_for_massflow(size_large, M_large, ctx, compute_mor=False, gauge=gauge_large)
 
         diff = res_s.DP_kPa - res_l.DP_kPa
 
@@ -586,3 +587,4 @@ def balance_double_riser(
         small_result=res_s,
         large_result=res_l,
     )
+
