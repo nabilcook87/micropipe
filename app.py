@@ -2019,7 +2019,7 @@ elif tool_selection == "Manual Calculation":
             st.metric("ΔT Penalty", f"{dr.DT_K:.3f} K")
     
         c1, c2, c5, c6 = st.columns(4)
-        with c1: st.metric("Mass Flow", f"{dr.M_small:.4f} kg/s")
+        with c1: st.metric("Mass Flow", f"{dr.M_small:.5f} kg/s")
         with c2: st.metric("Velocity", f"{rs.velocity_m_s:.2f} m/s")
         with c5: st.metric("PD", f"{rs.DP_kPa:.3f} kPa")
         with c6: st.metric("ΔT", f"{rs.DT_K:.3f} K")
@@ -2031,7 +2031,7 @@ elif tool_selection == "Manual Calculation":
             st.metric("Maximum Oil Capacity", f"{MOR_large:.2f}%")
     
         C1, C2, C5, C6 = st.columns(4)
-        with C1: st.metric("Mass Flow", f"{dr.M_large:.4f} kg/s")
+        with C1: st.metric("Mass Flow", f"{dr.M_large:.5f} kg/s")
         with C2: st.metric("Velocity", f"{rl.velocity_m_s:.2f} m/s")
         with C5: st.metric("PD", f"{rl.DP_kPa:.3f} kPa")
         with C6: st.metric("ΔT", f"{rl.DT_K:.3f} K")
