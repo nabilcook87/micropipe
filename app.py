@@ -1989,21 +1989,26 @@ elif tool_selection == "Manual Calculation":
         MinMassFlux_small = (jg_half ** 2) * (
             (density_foroil * 9.81 * small_ID_m * (oil_density - density_foroil)) ** 0.5
         )
+
+        MinMassFlux_large = (jg_half ** 2) * (
+            (density_foroil * 9.81 * large_ID_m * (oil_density - density_foroil)) ** 0.5
+        )
         
         MinMassFlow_small = MinMassFlux_small * small_area
+        MinMassFlow_large = MinMassFlux_large * large_area
 
         MOR_full_flow_1 = (MinMassFlow_small / mass_flow_foroil) * 100.0 * (1 - MOR_correction) * (1 - MOR_correction2)
         MOR_full_flow_2 = (MinMassFlow_small / mass_flow_foroilmin) * 100.0 * (1 - MOR_correctionmin) * (1 - MOR_correction2)
         MOR_full_flow = max(MOR_full_flow_1, MOR_full_flow_2)
 
-        M_smallprop = dr.M_small / dr.M_total
+        M_largeprop = dr.M_large / dr.M_total
 
-        M_smalloil_1 = M_smallprop * mass_flow_foroil
-        M_smalloil_2 = M_smallprop * mass_flow_foroilmin
+        M_largeoil_1 = M_largeprop * mass_flow_foroil
+        M_largeoil_2 = M_largeprop * mass_flow_foroilmin
     
-        MOR_small_1 = (MinMassFlow_small / M_smalloil_1) * 100.0 * (1 - MOR_correction) * (1 - MOR_correction2)
-        MOR_small_2 = (MinMassFlow_small / M_smalloil_2) * 100.0 * (1 - MOR_correctionmin) * (1 - MOR_correction2)
-        MOR_small = max(MOR_small_1, MOR_small_2)
+        MOR_large_1 = (MinMassFlow_large / M_largeoil_1) * 100.0 * (1 - MOR_correction) * (1 - MOR_correction2)
+        MOR_large_2 = (MinMassFlow_large / M_largeoil_2) * 100.0 * (1 - MOR_correctionmin) * (1 - MOR_correction2)
+        MOR_large = max(MOR_large_1, MOR_large_2)
     
         sB, sC = st.columns(2)
         with sB:
