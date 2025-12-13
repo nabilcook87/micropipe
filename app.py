@@ -2028,19 +2028,6 @@ elif tool_selection == "Manual Calculation":
         with C5: st.metric("PD", f"{rl.DP_kPa:.3f} kPa")
         with C6: st.metric("ΔT", f"{rl.DT_K:.3f} K")
     
-        st.markdown("### **Oil Return Acceptance**")
-    
-        if MOR_system_worst <= required_oil_duty_pct:
-            st.success(
-                f"✔ System passes — Required ≤ {required_oil_duty_pct:.1f}%, "
-                f"Worst case: {MOR_system_worst:.2f}%"
-            )
-        else:
-            st.error(
-                f"❌ Insufficient oil return — Required ≤ {required_oil_duty_pct:.1f}%, "
-                f"worst case is {MOR_system_worst:.2f}%"
-            )
-
         with spacer:
             st.empty()
         
