@@ -895,6 +895,12 @@ elif tool_selection == "Manual Calculation":
         # Pipe parameters
         pipe_size_inch = selected_pipe_row["Nominal Size (inch)"]
         ID_mm = selected_pipe_row["ID_mm"]
+
+        def gauges_for_size(size_inch: str):
+            rows = material_df[material_df["Nominal Size (inch)"].astype(str).str.strip() == str(size_inch)]
+            if "Gauge" in rows.columns and rows["Gauge"].notna().any():
+                return sorted(rows["Gauge"].dropna().unique())
+            return []
     
         with col1:
             evap_capacity_kw = st.number_input("Evaporator Capacity (kW)", min_value=0.03, max_value=20000.0, value=10.0, step=1.0)
@@ -1015,11 +1021,32 @@ elif tool_selection == "Manual Calculation":
                 value=ss.evap_temp, step=1.0, key="evap_temp",
                 on_change=on_change_evap,
             )
+            default_large_index = min(len(pipe_sizes) - 1, pipe_sizes.index(selected_size) + 1)
+            manual_large = st.selectbox(
+                "Large riser size",
+                pipe_sizes,
+                index=default_large_index,
+                key="manual_large"
+            )
+            g_large_opts = gauges_for_size(manual_large)
+            gauge_large = None
+            if g_large_opts:
+                gauge_large = st.selectbox("Large riser gauge", g_large_opts, key="gauge_large") 
     
         with col2:
             superheat_K = st.number_input("Superheat (K)", min_value=0.0, max_value=60.0, value=5.0, step=1.0)
             max_penalty = st.number_input("Max Penalty (K)", min_value=0.0, max_value=6.0, value=1.0, step=0.1)
             required_oil_duty_pct = st.number_input("Required Oil Return Duty (%)", min_value=0.0, max_value=100.0, value=100.0, step=5.0)
+            manual_small = st.selectbox(
+                "Small riser size",
+                pipe_sizes,
+                index=pipe_sizes.index(selected_size),
+                key="manual_small"
+            )
+            g_small_opts = gauges_for_size(manual_small)
+            gauge_small = None
+            if g_small_opts:
+                gauge_small = st.selectbox("Small riser gauge", g_small_opts, key="gauge_small")
     
         with col3:
             L = st.number_input("Pipe Length (m)", min_value=0.1, max_value=300.0, value=10.0, step=1.0)
@@ -1941,48 +1968,8 @@ elif tool_selection == "Manual Calculation":
                             "❌ No pipe meets both limits simultaneously.  \n"
                             "➡ Please relax one or more input limits."
                         )
-        
-        col_small, col_large = st.columns(2)
-        
-        with col_small:
-            manual_small = st.selectbox(
-                "Small riser size",
-                pipe_sizes,
-                index=pipe_sizes.index(selected_size),
-                key="manual_small"
-            )
-        
-        with col_large:
-            default_large_index = min(len(pipe_sizes) - 1, pipe_sizes.index(selected_size) + 1)
-            manual_large = st.selectbox(
-                "Large riser size",
-                pipe_sizes,
-                index=default_large_index,
-                key="manual_large"
-            )
 
-        def gauges_for_size(size_inch: str):
-            rows = material_df[material_df["Nominal Size (inch)"].astype(str).str.strip() == str(size_inch)]
-            if "Gauge" in rows.columns and rows["Gauge"].notna().any():
-                return sorted(rows["Gauge"].dropna().unique())
-            return []
-        
-        g_small_opts = gauges_for_size(manual_small)
-        g_large_opts = gauges_for_size(manual_large)
-        
-        gcol1, gcol2 = st.columns(2)
-        
-        with gcol1:
-            gauge_small = None
-            if g_small_opts:
-                gauge_small = st.selectbox("Small riser gauge", g_small_opts, key="gauge_small")
-        
-        with gcol2:
-            gauge_large = None
-            if g_large_opts:
-                gauge_large = st.selectbox("Large riser gauge", g_large_opts, key="gauge_large")
-
-        if st.button("Double Riser (Manual Pair)"):
+        if st.button("Double Riser"):
             # Balance the pair at full load
             dr = balance_double_riser(
                 manual_small,
@@ -2012,8 +1999,6 @@ elif tool_selection == "Manual Calculation":
             MOR_small = (MinMassFlow_small / dr.M_small) * 100.0
         
             MOR_system_worst = max(MOR_full_flow, MOR_small)
-        
-            st.subheader("Double Riser Balanced Result")
         
             sB, sC, sD = st.columns(3)
             with sB:
