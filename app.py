@@ -1908,7 +1908,6 @@ elif tool_selection == "Manual Calculation":
         with col2:
             if st.button("Horizontal"):
                 st.session_state.double_trouble = False
-                del st.session_state["double_trouble"]
                 results, errors = [], []
         
                 for ps in pipe_sizes:
@@ -1947,7 +1946,6 @@ elif tool_selection == "Manual Calculation":
         with col3:
             if st.button("Single Riser"):
                 st.session_state.double_trouble = False
-                del st.session_state["double_trouble"]
                 results, errors = [], []
         
                 for ps in pipe_sizes:
