@@ -582,8 +582,9 @@ def balance_double_riser(
         DT_K=(res_s.DT_K + res_l.DT_K)/2,
         small_result=res_s,
         large_result=res_l,
-        dp_pipe=(res_s.dp_pipe + res_l.dp_pipe)/2
-        dp_fit=(res_s.dp_fit + res_l.dp_fit)/2
-        dp_valve=(res_s.dp_valve + res_l.dp_valve)/2
-        dp_plf=(res_s.dp_plf + res_l.dp_plf)/2
+        dp_pipe=(res_s.dp_pipe + res_l.dp_pipe)/2,
+        dp_fit=(res_s.dp_fit + res_l.dp_fit)/2,
+        dp_valve=(res_s.dp_valve + res_l.dp_valve)/2,
+        dp_plf=(res_s.dp_plf + res_l.dp_plf)/2,
     )
+
