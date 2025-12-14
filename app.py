@@ -2028,12 +2028,6 @@ elif tool_selection == "Manual Calculation":
             st.error(error_message)
         
         st.subheader("Results")
-
-st.metric("Balanced PD", f"{dr.DP_kPa:.3f} kPa")
-st.metric("ΔT Penalty", f"{dr.DT_K:.3f} K")
-        
-st.metric("Minimum Oil Capacity", f"{MOR_full_flow:.2f}%")
-st.metric("Maximum Oil Capacity", f"{MOR_large:.2f}%")
     
         if velocity_m_sfinal:
             col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
@@ -2048,16 +2042,28 @@ st.metric("Maximum Oil Capacity", f"{MOR_large:.2f}%")
                 st.metric("Suction Density", f"{density_recalc:.2f}kg/m³")
     
             with col3:
-                if MORfinal == "":
-                    st.metric("MOR (%)", "")
+                if double_trouble:
+                    if MOR_full_flow == "":
+                        st.metric("Min Oil Return", "")
+                    else:
+                        st.metric("Min Oil Return", f"{MOR_full_flow:.1f}%")
                 else:
-                    st.metric("MOR (%)", f"{MORfinal:.1f}%")
+                    if MORfinal == "":
+                        st.metric("MOR (%)", "")
+                    else:
+                        st.metric("MOR (%)", f"{MORfinal:.1f}%")
     
             with col4:
-                st.metric("Pressure Drop", f"{dp_total_kPa:.2f}kPa")
+                if double_trouble:
+                    st.metric("Pressure Drop", f"{dr.DP_kPa:.2f}kPa")
+                else:
+                    st.metric("Pressure Drop", f"{dp_total_kPa:.2f}kPa")
     
             with col5:
-                st.metric("Temp Penalty", f"{dt:.2f}K")
+                if double_trouble:
+                    st.metric("Temp Penalty", f"{dr.DT_K:.2f}K")
+                else:
+                    st.metric("Temp Penalty", f"{dt:.2f}K")
 
             with col6:
                 st.metric("SST", f"{postcirctemp:.2f}°C")
@@ -2074,10 +2080,16 @@ st.metric("Maximum Oil Capacity", f"{MOR_large:.2f}%")
                 st.metric("Volumetric Flow Rate", f"{volflow:.5f}m³/s")
     
             with col3:
-                if MORfinal == "":
-                    st.metric("Minimum Capacity", "")
+                if double_trouble:
+                    if MOR_large == "":
+                        st.metric("Max Oil Return", "")
+                    else:
+                        st.metric("Max Oil Return", f"{MOR_large:.1f}%")
                 else:
-                    st.metric("Minimum Capacity", f"{MinCap:.4f}kW")
+                    if MORfinal == "":
+                        st.metric("Minimum Capacity", "")
+                    else:
+                        st.metric("Minimum Capacity", f"{MinCap:.4f}kW")
     
             with col4:
                 st.metric("Pipe PD", f"{dp_pipe_kPa:.2f}kPa")
