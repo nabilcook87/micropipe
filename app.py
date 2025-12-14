@@ -868,6 +868,8 @@ elif tool_selection == "Manual Calculation":
             default_index = pipe_sizes.index(want)
         elif "selected_size" in ss and ss.selected_size in pipe_sizes:
             default_index = pipe_sizes.index(ss.selected_size)
+
+        disable_valves = st.session_state.get("double_trouble", False)
         
         with col1:
             selected_size = st.selectbox(
@@ -875,6 +877,7 @@ elif tool_selection == "Manual Calculation":
                 pipe_sizes,
                 index=default_index,
                 key="selected_size",
+                disabled=disable_valves,
             )
 
         ss.prev_pipe_mm = float(mm_map.get(selected_size, float("nan")))
@@ -887,7 +890,7 @@ elif tool_selection == "Manual Calculation":
         if "Gauge" in gauge_options.columns and gauge_options["Gauge"].notna().any():
             gauges = sorted(gauge_options["Gauge"].dropna().unique())
             with col2:
-                selected_gauge = st.selectbox("Copper Gauge", gauges, key="gauge")
+                selected_gauge = st.selectbox("Copper Gauge", gauges, key="gauge", disabled=disable_valves)
             selected_pipe_row = gauge_options[gauge_options["Gauge"] == selected_gauge].iloc[0]
         else:
             selected_pipe_row = gauge_options.iloc[0]
@@ -1041,7 +1044,6 @@ elif tool_selection == "Manual Calculation":
         with col4:
             ptrap = st.number_input("P Traps", min_value=0, max_value=10, value=0, step=1)
             ubend = st.number_input("U Bends", min_value=0, max_value=10, value=0, step=1)
-            disable_valves = st.session_state.get("double_trouble", False)
             ball = st.number_input("Ball Valves", min_value=0, max_value=20, value=0, step=1, key="ball", disabled=disable_valves)
             globe = st.number_input("Globe Valves", min_value=0, max_value=20, value=0, step=1, key="globe", disabled=disable_valves)
             PLF = st.number_input("Pressure Loss Factors", min_value=0.0, max_value=20.0, value=0.0, step=0.1)
