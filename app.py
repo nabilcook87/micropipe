@@ -1040,7 +1040,7 @@ elif tool_selection == "Manual Calculation":
             disable_valves = st.session_state.get("double_trouble", False)
             ball = st.number_input("Ball Valves", min_value=0, max_value=20, value=0, step=1, key="ball", disabled=disable_valves)
             globe = st.number_input("Globe Valves", min_value=0, max_value=20, value=0, step=1, key="globe", disabled=disable_valves)
-            PLF = st.number_input("Pressure Loss Factors", min_value=0.0, max_value=20.0, value=0.0, step=0.1, key="globe")
+            PLF = st.number_input("Pressure Loss Factors", min_value=0.0, max_value=20.0, value=0.0, step=0.1)
         
         col1, col2, col3, col4 = st.columns(4)
 
