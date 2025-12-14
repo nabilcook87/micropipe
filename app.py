@@ -1038,14 +1038,14 @@ elif tool_selection == "Manual Calculation":
             ptrap = st.number_input("P Traps", min_value=0, max_value=10, value=0, step=1)
             ubend = st.number_input("U Bends", min_value=0, max_value=10, value=0, step=1)
             if st.session_state.get("double_trouble"):
-                ball = st.number_input("Ball Valves", min_value=0, max_value=20, value=0, step=1, disabled=True)
+                ball = st.number_input("Ball Valves", min_value=0, max_value=20, value=0, step=1, disabled=True, key="ball")
             else:
-                ball = st.number_input("Ball Valves", min_value=0, max_value=20, value=0, step=1)
+                ball = st.number_input("Ball Valves", min_value=0, max_value=20, value=0, step=1, key="ball")
             if st.session_state.get("double_trouble"):
-                globe = st.number_input("Globe Valves", min_value=0, max_value=20, value=0, step=1, disabled=True)
+                globe = st.number_input("Globe Valves", min_value=0, max_value=20, value=0, step=1, disabled=True, key="globe")
             else:
                 globe = st.number_input("Globe Valves", min_value=0, max_value=20, value=0, step=1)
-            PLF = st.number_input("Pressure Loss Factors", min_value=0.0, max_value=20.0, value=0.0, step=0.1)
+            PLF = st.number_input("Pressure Loss Factors", min_value=0.0, max_value=20.0, value=0.0, step=0.1, key="globe")
         
         col1, col2, col3, col4 = st.columns(4)
 
@@ -1987,6 +1987,8 @@ elif tool_selection == "Manual Calculation":
             double_trouble = st.checkbox("Double Riser Mode", key="double_trouble")
 
         if double_trouble:
+            st.session_state.ball = 0
+            st.session_state.globe = 0
             dr = balance_double_riser(
                 manual_small,
                 manual_large,
