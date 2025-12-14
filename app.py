@@ -1972,72 +1972,73 @@ elif tool_selection == "Manual Calculation":
                             "➡ Please relax one or more input limits."
                         )
 
-        dr = balance_double_riser(
-            manual_small,
-            manual_large,
-            M_total,
-            ctx,
-            gauge_small=gauge_small,
-            gauge_large=gauge_large,
-        )
-        rs = dr.small_result
-        rl = dr.large_result
-
-        small_ID_m = rs.ID_m
-        small_area = rs.area_m2
-        large_ID_m = rl.ID_m
-        large_area = rl.area_m2
-    
-        MinMassFlux_small = (jg_half ** 2) * (
-            (density_foroil * 9.81 * small_ID_m * (oil_density - density_foroil)) ** 0.5
-        )
-
-        MinMassFlux_large = (jg_half ** 2) * (
-            (density_foroil * 9.81 * large_ID_m * (oil_density - density_foroil)) ** 0.5
-        )
-        
-        MinMassFlow_small = MinMassFlux_small * small_area
-        MinMassFlow_large = MinMassFlux_large * large_area
-
-        MOR_full_flow_1 = (MinMassFlow_small / mass_flow_foroil) * 100.0 * (1 - MOR_correction) * (1 - MOR_correction2)
-        MOR_full_flow_2 = (MinMassFlow_small / mass_flow_foroilmin) * 100.0 * (1 - MOR_correctionmin) * (1 - MOR_correction2)
-        MOR_full_flow = max(MOR_full_flow_1, MOR_full_flow_2)
-
-        M_largeprop = dr.M_large / dr.M_total
-
-        M_largeoil_1 = M_largeprop * mass_flow_foroil
-        M_largeoil_2 = M_largeprop * mass_flow_foroilmin
-    
-        MOR_large_1 = (MinMassFlow_large / M_largeoil_1) * 100.0 * (1 - MOR_correction) * (1 - MOR_correction2)
-        MOR_large_2 = (MinMassFlow_large / M_largeoil_2) * 100.0 * (1 - MOR_correctionmin) * (1 - MOR_correction2)
-        MOR_large = max(MOR_large_1, MOR_large_2)
-    
-        sB, sC = st.columns(2)
-        with sB:
-            st.metric("Balanced PD", f"{dr.DP_kPa:.3f} kPa")
-        with sC:
-            st.metric("ΔT Penalty", f"{dr.DT_K:.3f} K")
-    
-        c1, c2, c5, c6 = st.columns(4)
-        with c1: st.metric("Mass Flow", f"{dr.M_small:.5f} kg/s")
-        with c2: st.metric("Velocity", f"{rs.velocity_m_s:.2f} m/s")
-        with c5: st.metric("PD", f"{rs.DP_kPa:.3f} kPa")
-        with c6: st.metric("ΔT", f"{rs.DT_K:.3f} K")
-    
-        m1, m2 = st.columns(2)
-        with m1:
-            st.metric("Minimum Oil Capacity", f"{MOR_full_flow:.2f}%")
-        with m2:
-            st.metric("Maximum Oil Capacity", f"{MOR_large:.2f}%")
-    
-        C1, C2, C5, C6 = st.columns(4)
-        with C1: st.metric("Mass Flow", f"{dr.M_large:.5f} kg/s")
-        with C2: st.metric("Velocity", f"{rl.velocity_m_s:.2f} m/s")
-        with C5: st.metric("PD", f"{rl.DP_kPa:.3f} kPa")
-        with C6: st.metric("ΔT", f"{rl.DT_K:.3f} K")
-
         with col4:
             double_trouble = st.checkbox("Double Riser Mode")
+
+        if double_trouble:
+            dr = balance_double_riser(
+                manual_small,
+                manual_large,
+                M_total,
+                ctx,
+                gauge_small=gauge_small,
+                gauge_large=gauge_large,
+            )
+            rs = dr.small_result
+            rl = dr.large_result
+    
+            small_ID_m = rs.ID_m
+            small_area = rs.area_m2
+            large_ID_m = rl.ID_m
+            large_area = rl.area_m2
+        
+            MinMassFlux_small = (jg_half ** 2) * (
+                (density_foroil * 9.81 * small_ID_m * (oil_density - density_foroil)) ** 0.5
+            )
+    
+            MinMassFlux_large = (jg_half ** 2) * (
+                (density_foroil * 9.81 * large_ID_m * (oil_density - density_foroil)) ** 0.5
+            )
+            
+            MinMassFlow_small = MinMassFlux_small * small_area
+            MinMassFlow_large = MinMassFlux_large * large_area
+    
+            MOR_full_flow_1 = (MinMassFlow_small / mass_flow_foroil) * 100.0 * (1 - MOR_correction) * (1 - MOR_correction2)
+            MOR_full_flow_2 = (MinMassFlow_small / mass_flow_foroilmin) * 100.0 * (1 - MOR_correctionmin) * (1 - MOR_correction2)
+            MOR_full_flow = max(MOR_full_flow_1, MOR_full_flow_2)
+    
+            M_largeprop = dr.M_large / dr.M_total
+    
+            M_largeoil_1 = M_largeprop * mass_flow_foroil
+            M_largeoil_2 = M_largeprop * mass_flow_foroilmin
+        
+            MOR_large_1 = (MinMassFlow_large / M_largeoil_1) * 100.0 * (1 - MOR_correction) * (1 - MOR_correction2)
+            MOR_large_2 = (MinMassFlow_large / M_largeoil_2) * 100.0 * (1 - MOR_correctionmin) * (1 - MOR_correction2)
+            MOR_large = max(MOR_large_1, MOR_large_2)
+        
+            sB, sC = st.columns(2)
+            with sB:
+                st.metric("Balanced PD", f"{dr.DP_kPa:.3f} kPa")
+            with sC:
+                st.metric("ΔT Penalty", f"{dr.DT_K:.3f} K")
+        
+            c1, c2, c5, c6 = st.columns(4)
+            with c1: st.metric("Mass Flow", f"{dr.M_small:.5f} kg/s")
+            with c2: st.metric("Velocity", f"{rs.velocity_m_s:.2f} m/s")
+            with c5: st.metric("PD", f"{rs.DP_kPa:.3f} kPa")
+            with c6: st.metric("ΔT", f"{rs.DT_K:.3f} K")
+        
+            m1, m2 = st.columns(2)
+            with m1:
+                st.metric("Minimum Oil Capacity", f"{MOR_full_flow:.2f}%")
+            with m2:
+                st.metric("Maximum Oil Capacity", f"{MOR_large:.2f}%")
+        
+            C1, C2, C5, C6 = st.columns(4)
+            with C1: st.metric("Mass Flow", f"{dr.M_large:.5f} kg/s")
+            with C2: st.metric("Velocity", f"{rl.velocity_m_s:.2f} m/s")
+            with C5: st.metric("PD", f"{rl.DP_kPa:.3f} kPa")
+            with C6: st.metric("ΔT", f"{rl.DT_K:.3f} K")
         
         with spacer:
             st.empty()
