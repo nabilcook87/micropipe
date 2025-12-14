@@ -2008,7 +2008,6 @@ elif tool_selection == "Manual Calculation":
     
             MOR_full_flow_1 = (MinMassFlow_small / mass_flow_foroil) * 100.0 * (1 - MOR_correction) * (1 - MOR_correction2)
             MOR_full_flow_2 = (MinMassFlow_small / mass_flow_foroilmin) * 100.0 * (1 - MOR_correctionmin) * (1 - MOR_correction2)
-            MOR_full_flow = max(MOR_full_flow_1, MOR_full_flow_2)
     
             M_largeprop = dr.M_large / dr.M_total
     
@@ -2017,34 +2016,27 @@ elif tool_selection == "Manual Calculation":
         
             MOR_large_1 = (MinMassFlow_large / M_largeoil_1) * 100.0 * (1 - MOR_correction) * (1 - MOR_correction2)
             MOR_large_2 = (MinMassFlow_large / M_largeoil_2) * 100.0 * (1 - MOR_correctionmin) * (1 - MOR_correction2)
-            MOR_large = max(MOR_large_1, MOR_large_2)
 
             if refrigerant in ["R23", "R508B"]:
                 if T_evap < -86:
-                    MOR = ""
-                    MORmin = ""
-                    MORfinal = ""
+                    MOR_full_flow = ""
+                    MOR_large = ""
                 elif T_evap > -42:
-                    MOR = ""
-                    MORmin = ""
-                    MORfinal = ""
+                    MOR_full_flow = ""
+                    MOR_large = ""
                 else:
-                    MOR = (1 - MOR_correction) * (1 - MOR_correction2) * MOR_pre
-                    MORmin = (1 - MOR_correctionmin) * (1 - MOR_correction2) * MOR_premin
-                    MORfinal = max(MOR, MORmin)
+                    MOR_full_flow = max(MOR_full_flow_1, MOR_full_flow_2)
+                    MOR_large = max(MOR_large_1, MOR_large_2)
             else:    
                 if T_evap < -40:
-                    MOR = ""
-                    MORmin = ""
-                    MORfinal = ""
+                    MOR_full_flow = ""
+                    MOR_large = ""
                 elif T_evap > 4:
-                    MOR = ""
-                    MORmin = ""
-                    MORfinal = ""
+                    MOR_full_flow = ""
+                    MOR_large = ""
                 else:
-                    MOR = (1 - MOR_correction) * (1 - MOR_correction2) * MOR_pre
-                    MORmin = (1 - MOR_correctionmin) * (1 - MOR_correction2) * MOR_premin
-                    MORfinal = max(MOR, MORmin)
+                    MOR_full_flow = max(MOR_full_flow_1, MOR_full_flow_2)
+                    MOR_large = max(MOR_large_1, MOR_large_2)
 
             SST = T_evap - dr.DT_K
         
