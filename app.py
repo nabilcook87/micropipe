@@ -2407,7 +2407,7 @@ elif tool_selection == "Manual Calculation":
         with col4:
             ptrap = st.number_input("P Traps", min_value=0, max_value=10, value=0, step=1)
             ubend = st.number_input("U Bends", min_value=0, max_value=10, value=0, step=1)
-            ball = st.number_input("Ball Valves", min_value=0, max_value=20, value=0, step=1)
+            ball = st.number_input("Ball Valves", min_value=0, max_value=20, value=0, step=1, key="ball")
             globe = st.number_input("Globe Valves", min_value=0, max_value=20, value=0, step=1)
             PLF = st.number_input("Pressure Loss Factors", min_value=0.0, max_value=20.0, value=0.0, step=0.1)
         
@@ -3048,7 +3048,7 @@ elif tool_selection == "Manual Calculation":
         with col4:
             ptrap = st.number_input("P Traps", min_value=0, max_value=10, value=0, step=1)
             ubend = st.number_input("U Bends", min_value=0, max_value=10, value=0, step=1)
-            ball = st.number_input("Ball Valves", min_value=0, max_value=20, value=0, step=1)
+            ball = st.number_input("Ball Valves", min_value=0, max_value=20, value=0, step=1, key="ball")
             globe = st.number_input("Globe Valves", min_value=0, max_value=20, value=0, step=1)
             PLF = st.number_input("Pressure Loss Factors", min_value=0.0, max_value=20.0, value=0.0, step=0.1)
 
@@ -4101,7 +4101,7 @@ elif tool_selection == "Manual Calculation":
         with col4:
             ptrap = st.number_input("P Traps", min_value=0, max_value=10, value=0, step=1)
             ubend = st.number_input("U Bends", min_value=0, max_value=10, value=0, step=1)
-            ball = st.number_input("Ball Valves", min_value=0, max_value=20, value=0, step=1)
+            ball = st.number_input("Ball Valves", min_value=0, max_value=20, value=0, step=1, key="ball")
             globe = st.number_input("Globe Valves", min_value=0, max_value=20, value=0, step=1)
             PLF = st.number_input("Pressure Loss Factors", min_value=0.0, max_value=20.0, value=0.0, step=0.1)
         
@@ -4746,7 +4746,7 @@ elif tool_selection == "Manual Calculation":
         with col4:
             ptrap = st.number_input("P Traps", min_value=0, max_value=10, value=0, step=1)
             ubend = st.number_input("U Bends", min_value=0, max_value=10, value=0, step=1)
-            ball = st.number_input("Ball Valves", min_value=0, max_value=20, value=0, step=1)
+            ball = st.number_input("Ball Valves", min_value=0, max_value=20, value=0, step=1, key="ball")
             globe = st.number_input("Globe Valves", min_value=0, max_value=20, value=0, step=1)
             PLF = st.number_input("Pressure Loss Factors", min_value=0.0, max_value=20.0, value=0.0, step=0.1)
         
