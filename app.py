@@ -2019,6 +2019,33 @@ elif tool_selection == "Manual Calculation":
             MOR_large_2 = (MinMassFlow_large / M_largeoil_2) * 100.0 * (1 - MOR_correctionmin) * (1 - MOR_correction2)
             MOR_large = max(MOR_large_1, MOR_large_2)
 
+            if refrigerant in ["R23", "R508B"]:
+                if T_evap < -86:
+                    MOR = ""
+                    MORmin = ""
+                    MORfinal = ""
+                elif T_evap > -42:
+                    MOR = ""
+                    MORmin = ""
+                    MORfinal = ""
+                else:
+                    MOR = (1 - MOR_correction) * (1 - MOR_correction2) * MOR_pre
+                    MORmin = (1 - MOR_correctionmin) * (1 - MOR_correction2) * MOR_premin
+                    MORfinal = max(MOR, MORmin)
+            else:    
+                if T_evap < -40:
+                    MOR = ""
+                    MORmin = ""
+                    MORfinal = ""
+                elif T_evap > 4:
+                    MOR = ""
+                    MORmin = ""
+                    MORfinal = ""
+                else:
+                    MOR = (1 - MOR_correction) * (1 - MOR_correction2) * MOR_pre
+                    MORmin = (1 - MOR_correctionmin) * (1 - MOR_correction2) * MOR_premin
+                    MORfinal = max(MOR, MORmin)
+
             SST = T_evap - dr.DT_K
         
         with spacer:
