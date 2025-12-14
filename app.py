@@ -1564,7 +1564,7 @@ elif tool_selection == "Manual Calculation":
             gc_max_pres=gc_max,
             gc_min_pres=gc_min,
         )
-        
+
         def get_pipe_results(size_inch):
             """
             Reproduce MORfinal and dt for a given pipe size (exact same logic path as your main block).
@@ -2000,58 +2000,22 @@ elif tool_selection == "Manual Calculation":
                 gauge_small=gauge_small,
                 gauge_large=gauge_large,
             )
-            rs = dr.small_result
-            rl = dr.large_result
-    
-            small_ID_m = rs.ID_m
-            small_area = rs.area_m2
-            large_ID_m = rl.ID_m
-            large_area = rl.area_m2
-        
-            MinMassFlux_small = (jg_half ** 2) * (
-                (density_foroil * 9.81 * small_ID_m * (oil_density - density_foroil)) ** 0.5
-            )
-    
-            MinMassFlux_large = (jg_half ** 2) * (
-                (density_foroil * 9.81 * large_ID_m * (oil_density - density_foroil)) ** 0.5
-            )
-            
-            MinMassFlow_small = MinMassFlux_small * small_area
-            MinMassFlow_large = MinMassFlux_large * large_area
-    
-            MOR_full_flow_1 = (MinMassFlow_small / mass_flow_foroil) * 100.0 * (1 - MOR_correction) * (1 - MOR_correction2)
-            MOR_full_flow_2 = (MinMassFlow_small / mass_flow_foroilmin) * 100.0 * (1 - MOR_correctionmin) * (1 - MOR_correction2)
-    
-            M_largeprop = dr.M_large / dr.M_total
-    
-            M_largeoil_1 = M_largeprop * mass_flow_foroil
-            M_largeoil_2 = M_largeprop * mass_flow_foroilmin
-        
-            MOR_large_1 = (MinMassFlow_large / M_largeoil_1) * 100.0 * (1 - MOR_correction) * (1 - MOR_correction2)
-            MOR_large_2 = (MinMassFlow_large / M_largeoil_2) * 100.0 * (1 - MOR_correctionmin) * (1 - MOR_correction2)
 
-            if refrigerant in ["R23", "R508B"]:
-                if T_evap < -86:
-                    MOR_full_flow = ""
-                    MOR_large = ""
-                elif T_evap > -42:
-                    MOR_full_flow = ""
-                    MOR_large = ""
-                else:
-                    MOR_full_flow = max(MOR_full_flow_1, MOR_full_flow_2)
-                    MOR_large = max(MOR_large_1, MOR_large_2)
-            else:    
-                if T_evap < -40:
-                    MOR_full_flow = ""
-                    MOR_large = ""
-                elif T_evap > 4:
-                    MOR_full_flow = ""
-                    MOR_large = ""
-                else:
-                    MOR_full_flow = max(MOR_full_flow_1, MOR_full_flow_2)
-                    MOR_large = max(MOR_large_1, MOR_large_2)
+            from utils.double_riser import compute_double_riser_oil_metrics
 
-            SST = T_evap - dr.DT_K
+            MOR_full_flow, MOR_large, SST = compute_double_riser_oil_metrics(
+                dr=dr,
+                refrigerant=refrigerant,
+                T_evap=T_evap,
+                density_foroil=density_foroil,
+                oil_density=oil_density,
+                jg_half=jg_half,
+                mass_flow_foroil=mass_flow_foroil,
+                mass_flow_foroilmin=mass_flow_foroilmin,
+                MOR_correction=MOR_correction,
+                MOR_correctionmin=MOR_correctionmin,
+                MOR_correction2=MOR_correction2,
+            )
         
         with spacer:
             st.empty()
@@ -2080,7 +2044,7 @@ elif tool_selection == "Manual Calculation":
     
             with col3:
                 if double_trouble:
-                    if MOR_full_flow == "":
+                    if MOR_full_flow is None:
                         st.metric("Min Oil Return", "")
                     else:
                         st.metric("Min Oil Return", f"{MOR_full_flow:.1f}%")
@@ -2121,7 +2085,7 @@ elif tool_selection == "Manual Calculation":
     
             with col3:
                 if double_trouble:
-                    if MOR_large == "":
+                    if MOR_large is None:
                         st.metric("Max Oil Return", "")
                     else:
                         st.metric("Max Oil Return", f"{MOR_large:.1f}%")
