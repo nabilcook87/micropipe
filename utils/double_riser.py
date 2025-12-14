@@ -80,6 +80,11 @@ class PipeResult:
     post_press_bar: float
     mass_flow_kg_s: float
 
+    dp_pipe: float
+    dp_fit: float
+    dp_valve: float
+    dp_plf: float
+
     # Geometry & oil physics (needed by UI and full-flow MOR)
     ID_mm: float
     ID_m: float
@@ -107,6 +112,10 @@ class DoubleRiserResult:
     small_result: PipeResult
     large_result: PipeResult
 
+    dp_pipe: float
+    dp_fit: float
+    dp_valve: float
+    dp_plf: float
 
 # ======================================================================
 #  HELPER FUNCTIONS FOR REFRIGERANT DEPENDENCIES
@@ -518,6 +527,11 @@ def pipe_results_for_massflow(
         post_press_bar=P2,
         mass_flow_kg_s=m,
 
+        dp_pipe=dp_pipe,
+        dp_fit=dp_fit,
+        dp_valve=dp_valve,
+        dp_plf=dp_plf,
+
         # Geometry & oil fields — NEW
         ID_mm=ID_mm,
         ID_m=ID_m,
@@ -587,4 +601,5 @@ def balance_double_riser(
         dp_valve=(res_s.dp_valve + res_l.dp_valve)/2,
         dp_plf=(res_s.dp_plf + res_l.dp_plf)/2,
     )
+
 
