@@ -582,9 +582,10 @@ def balance_double_riser(
         M_small=res_s.mass_flow_kg_s,
         M_large=res_l.mass_flow_kg_s,
         DP_kPa=(res_s.DP_kPa + res_l.DP_kPa)/2,
-        DT_K=(res_s.DT_K + res_l.DT_K)/2,
+        DT_K=res_s.DT_K,
         small_result=res_s,
         large_result=res_l,
     )
+
 
 
