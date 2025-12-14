@@ -2001,6 +2001,9 @@ elif tool_selection == "Manual Calculation":
                 gauge_large=gauge_large,
             )
 
+            rs = dr.small_result
+            rl = dr.large_result
+
             from utils.double_riser import compute_double_riser_oil_metrics
 
             MOR_full_flow, MOR_large, SST = compute_double_riser_oil_metrics(
