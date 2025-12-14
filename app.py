@@ -1048,6 +1048,8 @@ elif tool_selection == "Manual Calculation":
             globe = st.number_input("Globe Valves", min_value=0, max_value=20, value=0, step=1, key="globe", disabled=disable_valves)
             PLF = st.number_input("Pressure Loss Factors", min_value=0.0, max_value=20.0, value=0.0, step=0.1)
         
+        disable_pipes = not st.session_state.get("double_trouble", False)
+        
         col1, col2, col3, col4 = st.columns(4)
 
         with col1:
@@ -1055,25 +1057,27 @@ elif tool_selection == "Manual Calculation":
                 "Large Riser Size",
                 pipe_sizes,
                 index=pipe_sizes.index(selected_size),
-                key="manual_large"
+                key="manual_large",
+                disabled=disable_pipes
             )
         with col2:
             g_large_opts = gauges_for_size(manual_large)
             gauge_large = None
             if g_large_opts:
-                gauge_large = st.selectbox("Large Riser Gauge", g_large_opts, key="gauge_large")
+                gauge_large = st.selectbox("Large Riser Gauge", g_large_opts, key="gauge_large", disabled=disable_pipes)
         with col3:
             manual_small = st.selectbox(
                 "Small Riser Size",
                 pipe_sizes,
                 index=pipe_sizes.index(selected_size) - 2,
-                key="manual_small"
+                key="manual_small",
+                disabled=disable_pipes
             )
         with col4:
             g_small_opts = gauges_for_size(manual_small)
             gauge_small = None
             if g_small_opts:
-                gauge_small = st.selectbox("Small Riser Gauge", g_small_opts, key="gauge_small")
+                gauge_small = st.selectbox("Small Riser Gauge", g_small_opts, key="gauge_small", disabled=disable_pipes)
         
         from utils.refrigerant_properties import RefrigerantProperties
         from utils.refrigerant_densities import RefrigerantDensities
