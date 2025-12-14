@@ -2015,6 +2015,8 @@ elif tool_selection == "Manual Calculation":
             MOR_large_1 = (MinMassFlow_large / M_largeoil_1) * 100.0 * (1 - MOR_correction) * (1 - MOR_correction2)
             MOR_large_2 = (MinMassFlow_large / M_largeoil_2) * 100.0 * (1 - MOR_correctionmin) * (1 - MOR_correction2)
             MOR_large = max(MOR_large_1, MOR_large_2)
+
+            SST = T_evap - dr.DT_K
         
         with spacer:
             st.empty()
@@ -2066,7 +2068,10 @@ elif tool_selection == "Manual Calculation":
                     st.metric("Temp Penalty", f"{dt:.2f}K")
 
             with col6:
-                st.metric("SST", f"{postcirctemp:.2f}°C")
+                if double_trouble:
+                    st.metric("SST", f"{SST:.2f}°C")
+                else:
+                    st.metric("SST", f"{postcirctemp:.2f}°C")
 
             with col7:
                 st.metric("Evaporating Pressure", f"{evappres:.2f}bar(a)")
