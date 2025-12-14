@@ -1046,7 +1046,7 @@ elif tool_selection == "Manual Calculation":
         with col1:
             default_large_index = min(len(pipe_sizes) - 1, pipe_sizes.index(selected_size) + 1)
             manual_large = st.selectbox(
-                "Large riser size",
+                "Large Riser Size",
                 pipe_sizes,
                 index=default_large_index,
                 key="manual_large"
@@ -1055,10 +1055,10 @@ elif tool_selection == "Manual Calculation":
             g_large_opts = gauges_for_size(manual_large)
             gauge_large = None
             if g_large_opts:
-                gauge_large = st.selectbox("Large riser gauge", g_large_opts, key="gauge_large")
+                gauge_large = st.selectbox("Large Riser Gauge", g_large_opts, key="gauge_large")
         with col3:
             manual_small = st.selectbox(
-                "Small riser size",
+                "Small Riser Size",
                 pipe_sizes,
                 index=pipe_sizes.index(selected_size),
                 key="manual_small"
@@ -1067,7 +1067,7 @@ elif tool_selection == "Manual Calculation":
             g_small_opts = gauges_for_size(manual_small)
             gauge_small = None
             if g_small_opts:
-                gauge_small = st.selectbox("Small riser gauge", g_small_opts, key="gauge_small")
+                gauge_small = st.selectbox("Small Riser Gauge", g_small_opts, key="gauge_small")
         
         from utils.refrigerant_properties import RefrigerantProperties
         from utils.refrigerant_densities import RefrigerantDensities
