@@ -2093,25 +2093,25 @@ elif tool_selection == "Manual Calculation":
     
             with col4:
                 if double_trouble:
-                    st.metric("Pipe PD", f"{:.2f}kPa")
+                    st.metric("Pipe PD", f"{dr.dp_pipe:.2f}kPa")
                 else:
                     st.metric("Pipe PD", f"{dp_pipe_kPa:.2f}kPa")
     
             with col5:
                 if double_trouble:
-                    st.metric("Fittings PD", f"{:.2f}kPa")
+                    st.metric("Fittings PD", f"{dr.dp_fit:.2f}kPa")
                 else:
                     st.metric("Fittings PD", f"{dp_fittings_kPa:.2f}kPa")
 
             with col6:
                 if double_trouble:
-                    st.metric("Valves PD", f"{:.2f}kPa")
+                    st.metric("Valves PD", f"{dr.dp_valve:.2f}kPa")
                 else:
                     st.metric("Valves PD", f"{dp_valves_kPa:.2f}kPa")
 
             with col7:
                 if double_trouble:
-                    st.metric("Velocity Pressure PD", f"{:.2f}kPa")
+                    st.metric("Velocity Pressure PD", f"{dr.dp_plf:.2f}kPa")
                 else:
                     st.metric("Velocity Pressure PD", f"{dp_plf_kPa:.2f}kPa")
     
