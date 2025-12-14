@@ -602,4 +602,82 @@ def balance_double_riser(
         dp_plf=(res_s.dp_plf + res_l.dp_plf)/2,
     )
 
+def compute_double_riser_oil_metrics(
+    dr,
+    refrigerant: str,
+    T_evap: float,
+    density_foroil: float,
+    oil_density: float,
+    jg_half: float,
+    mass_flow_foroil: float,
+    mass_flow_foroilmin: float,
+    MOR_correction: float,
+    MOR_correctionmin: float,
+    MOR_correction2: float,
+):
+    rs = dr.small_result
+    rl = dr.large_result
 
+    # Geometry
+    small_ID_m = rs.ID_m
+    small_area = rs.area_m2
+    large_ID_m = rl.ID_m
+    large_area = rl.area_m2
+
+    # Min mass flows
+    MinMassFlux_small = (jg_half ** 2) * (
+        (density_foroil * 9.81 * small_ID_m * (oil_density - density_foroil)) ** 0.5
+    )
+    MinMassFlux_large = (jg_half ** 2) * (
+        (density_foroil * 9.81 * large_ID_m * (oil_density - density_foroil)) ** 0.5
+    )
+
+    MinMassFlow_small = MinMassFlux_small * small_area
+    MinMassFlow_large = MinMassFlux_large * large_area
+
+    # Full-flow MOR (small riser)
+    MOR_full_flow_1 = (
+        MinMassFlow_small / mass_flow_foroil
+    ) * 100.0 * (1 - MOR_correction) * (1 - MOR_correction2)
+
+    MOR_full_flow_2 = (
+        MinMassFlow_small / mass_flow_foroilmin
+    ) * 100.0 * (1 - MOR_correctionmin) * (1 - MOR_correction2)
+
+    # Large riser MOR
+    M_largeprop = dr.M_large / dr.M_total
+
+    M_largeoil_1 = M_largeprop * mass_flow_foroil
+    M_largeoil_2 = M_largeprop * mass_flow_foroilmin
+
+    MOR_large_1 = (
+        MinMassFlow_large / M_largeoil_1
+    ) * 100.0 * (1 - MOR_correction) * (1 - MOR_correction2)
+
+    MOR_large_2 = (
+        MinMassFlow_large / M_largeoil_2
+    ) * 100.0 * (1 - MOR_correctionmin) * (1 - MOR_correction2)
+
+    # Validity windows
+    MOR_full_flow: Optional[float]
+    MOR_large: Optional[float]
+
+    if refrigerant in ["R23", "R508B"]:
+        if T_evap < -86 or T_evap > -42:
+            MOR_full_flow = None
+            MOR_large = None
+        else:
+            MOR_full_flow = max(MOR_full_flow_1, MOR_full_flow_2)
+            MOR_large = max(MOR_large_1, MOR_large_2)
+    else:
+        if T_evap < -40 or T_evap > 4:
+            MOR_full_flow = None
+            MOR_large = None
+        else:
+            MOR_full_flow = max(MOR_full_flow_1, MOR_full_flow_2)
+            MOR_large = max(MOR_large_1, MOR_large_2)
+
+    # SST
+    SST = T_evap - dr.DT_K
+
+    return MOR_full_flow, MOR_large, SST
