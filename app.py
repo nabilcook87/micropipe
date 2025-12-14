@@ -1887,7 +1887,7 @@ elif tool_selection == "Manual Calculation":
         
             return mor_num, float(dt_local)
 
-        col1, col2, col3, col4, spacer = st.columns([0.1, 0.1, 0.1, 0.1, 0.65])
+        col1, col2, col3, col4, spacer = st.columns([0.1, 0.1, 0.1, 0.1, 0.6])
         
         # holders for messages to show later (full width)
         error_message = None
