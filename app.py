@@ -1901,6 +1901,7 @@ elif tool_selection == "Manual Calculation":
         
         with col2:
             if st.button("Horizontal"):
+                st.session_state.double_trouble = False
                 results, errors = [], []
         
                 for ps in pipe_sizes:
@@ -1938,6 +1939,7 @@ elif tool_selection == "Manual Calculation":
         
         with col3:
             if st.button("Single Riser"):
+                st.session_state.double_trouble = False
                 results, errors = [], []
         
                 for ps in pipe_sizes:
@@ -1976,7 +1978,7 @@ elif tool_selection == "Manual Calculation":
                         )
 
         with col4:
-            double_trouble = st.checkbox("Double Riser Mode")
+            double_trouble = st.checkbox("Double Riser Mode", key="double_trouble")
 
         if double_trouble:
             dr = balance_double_riser(
