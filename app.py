@@ -1044,11 +1044,10 @@ elif tool_selection == "Manual Calculation":
         col1, col2, col3, col4 = st.columns(4)
 
         with col1:
-            default_large_index = min(len(pipe_sizes) - 1, pipe_sizes.index(selected_size) + 1)
             manual_large = st.selectbox(
                 "Large Riser Size",
                 pipe_sizes,
-                index=default_large_index,
+                index=pipe_sizes.index(selected_size),
                 key="manual_large"
             )
         with col2:
@@ -1060,7 +1059,7 @@ elif tool_selection == "Manual Calculation":
             manual_small = st.selectbox(
                 "Small Riser Size",
                 pipe_sizes,
-                index=pipe_sizes.index(selected_size),
+                index=pipe_sizes.index(selected_size) - 2,
                 key="manual_small"
             )
         with col4:
