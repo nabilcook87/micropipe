@@ -1033,7 +1033,11 @@ elif tool_selection == "Manual Calculation":
             SRB = st.number_input("Short Radius Bends", min_value=0, max_value=50, value=0, step=1)
             _45 = st.number_input("45° Bends", min_value=0, max_value=50, value=0, step=1)
             MAC = st.number_input("Machine Bends", min_value=0, max_value=50, value=0, step=1)
-    
+
+        if st.session_state.get("double_trouble"):
+            st.session_state.ball = 0
+            st.session_state.globe = 0
+
         with col4:
             ptrap = st.number_input("P Traps", min_value=0, max_value=10, value=0, step=1)
             ubend = st.number_input("U Bends", min_value=0, max_value=10, value=0, step=1)
@@ -1982,8 +1986,6 @@ elif tool_selection == "Manual Calculation":
             double_trouble = st.checkbox("Double Riser Mode", key="double_trouble")
 
         if double_trouble:
-            st.session_state.ball = 0
-            st.session_state.globe = 0
             dr = balance_double_riser(
                 manual_small,
                 manual_large,
