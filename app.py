@@ -1887,7 +1887,7 @@ elif tool_selection == "Manual Calculation":
         
             return mor_num, float(dt_local)
 
-        col1, col2, col3, spacer = st.columns([0.1, 0.1, 0.1, 0.9])
+        col1, col2, col3, col4, spacer = st.columns([0.1, 0.1, 0.1, 0.1, 0.9])
         
         # holders for messages to show later (full width)
         error_message = None
@@ -2035,7 +2035,10 @@ elif tool_selection == "Manual Calculation":
         with C2: st.metric("Velocity", f"{rl.velocity_m_s:.2f} m/s")
         with C5: st.metric("PD", f"{rl.DP_kPa:.3f} kPa")
         with C6: st.metric("ΔT", f"{rl.DT_K:.3f} K")
-    
+
+        with col4:
+            double_trouble = st.checkbox("Double Riser Mode")
+        
         with spacer:
             st.empty()
         
