@@ -1021,23 +1021,11 @@ elif tool_selection == "Manual Calculation":
                 value=ss.evap_temp, step=1.0, key="evap_temp",
                 on_change=on_change_evap,
             )
-            default_large_index = min(len(pipe_sizes) - 1, pipe_sizes.index(selected_size) + 1)
-            manual_large = st.selectbox(
-                "Large riser size",
-                pipe_sizes,
-                index=default_large_index,
-                key="manual_large"
-            )
     
         with col2:
             superheat_K = st.number_input("Superheat (K)", min_value=0.0, max_value=60.0, value=5.0, step=1.0)
             max_penalty = st.number_input("Max Penalty (K)", min_value=0.0, max_value=6.0, value=1.0, step=0.1)
             required_oil_duty_pct = st.number_input("Required Oil Return Duty (%)", min_value=0.0, max_value=100.0, value=100.0, step=5.0)
-            empty1 = st.selectbox(" ", options=[""], index=0, disabled=True, key="empty1")
-            g_large_opts = gauges_for_size(manual_large)
-            gauge_large = None
-            if g_large_opts:
-                gauge_large = st.selectbox("Large riser gauge", g_large_opts, key="gauge_large")
     
         with col3:
             L = st.number_input("Pipe Length (m)", min_value=0.1, max_value=300.0, value=10.0, step=1.0)
@@ -1045,13 +1033,6 @@ elif tool_selection == "Manual Calculation":
             SRB = st.number_input("Short Radius Bends", min_value=0, max_value=50, value=0, step=1)
             _45 = st.number_input("45° Bends", min_value=0, max_value=50, value=0, step=1)
             MAC = st.number_input("Machine Bends", min_value=0, max_value=50, value=0, step=1)
-            empty2 = st.selectbox(" ", options=[""], index=0, disabled=True, key="empty2")
-            manual_small = st.selectbox(
-                "Small riser size",
-                pipe_sizes,
-                index=pipe_sizes.index(selected_size),
-                key="manual_small"
-            )
     
         with col4:
             ptrap = st.number_input("P Traps", min_value=0, max_value=10, value=0, step=1)
@@ -1059,7 +1040,30 @@ elif tool_selection == "Manual Calculation":
             ball = st.number_input("Ball Valves", min_value=0, max_value=20, value=0, step=1)
             globe = st.number_input("Globe Valves", min_value=0, max_value=20, value=0, step=1)
             PLF = st.number_input("Pressure Loss Factors", min_value=0.0, max_value=20.0, value=0.0, step=0.1)
-            empty3 = st.selectbox(" ", options=[""], index=0, disabled=True, key="empty3")
+        
+        col1, col2, col3, col4 = st.columns(4)
+
+        with col1:
+            default_large_index = min(len(pipe_sizes) - 1, pipe_sizes.index(selected_size) + 1)
+            manual_large = st.selectbox(
+                "Large riser size",
+                pipe_sizes,
+                index=default_large_index,
+                key="manual_large"
+            )
+        with col2:
+            g_large_opts = gauges_for_size(manual_large)
+            gauge_large = None
+            if g_large_opts:
+                gauge_large = st.selectbox("Large riser gauge", g_large_opts, key="gauge_large")
+        with col3:
+            manual_small = st.selectbox(
+                "Small riser size",
+                pipe_sizes,
+                index=pipe_sizes.index(selected_size),
+                key="manual_small"
+            )
+        with col4:
             g_small_opts = gauges_for_size(manual_small)
             gauge_small = None
             if g_small_opts:
