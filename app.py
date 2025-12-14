@@ -1037,11 +1037,11 @@ elif tool_selection == "Manual Calculation":
         with col4:
             ptrap = st.number_input("P Traps", min_value=0, max_value=10, value=0, step=1)
             ubend = st.number_input("U Bends", min_value=0, max_value=10, value=0, step=1)
-            if st.session_state.double_trouble == True:
+            if st.session_state.get("double_trouble"):
                 ball = st.number_input("Ball Valves", min_value=0, max_value=20, value=0, step=1, disabled=True)
             else:
                 ball = st.number_input("Ball Valves", min_value=0, max_value=20, value=0, step=1)
-            if st.session_state.double_trouble == True:
+            if st.session_state.get("double_trouble"):
                 globe = st.number_input("Globe Valves", min_value=0, max_value=20, value=0, step=1, disabled=True)
             else:
                 globe = st.number_input("Globe Valves", min_value=0, max_value=20, value=0, step=1)
