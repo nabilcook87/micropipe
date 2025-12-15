@@ -901,7 +901,7 @@ elif tool_selection == "Oil Return Checker":
             MaxCaps = ""
         else:
             large_duty = M_largeprop * evap_capacity_kw
-            MaxCaps = MOR_large * large_duty
+            MaxCaps = MOR_large * large_duty / 100
     
     st.subheader("Results")
     
