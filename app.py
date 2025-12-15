@@ -896,6 +896,12 @@ elif tool_selection == "Oil Return Checker":
             MinCaps = ""
         else:
             MinCaps = MOR_full_flow * evap_capacity_kw / 100
+
+        if MOR_large is None:
+            MaxCaps = ""
+        else:
+            large_duty = M_largeprop * evap_capacity_kw
+            MaxCaps = MOR_large * large_duty
     
     st.subheader("Results")
     
@@ -905,9 +911,9 @@ elif tool_selection == "Oil Return Checker":
         with col1:
             if double_trouble:
                 if MOR_full_flow is None:
-                    st.metric("Minimum Capacity", "")
+                    st.metric("Minimum Capacity (Secondary)", "")
                 else:
-                    st.metric("Minimum Capacity", f"{MinCaps:.4f}kW")
+                    st.metric("Minimum Capacity (Secondary)", f"{MinCaps:.4f}kW")
             else:
                 if MORfinal == "":
                     st.metric("Minimum Capacity", "")
@@ -929,9 +935,15 @@ elif tool_selection == "Oil Return Checker":
         if double_trouble:
             with col3:
                 if MOR_large is None:
-                    st.metric("Max Oil Return", "")
+                    st.metric("Minimum Capacity (Primary)", "")
                 else:
-                    st.metric("Max Oil Return", f"{MOR_large:.1f}%")
+                    st.metric("Minimum Capacity (Primary)", f"{MaxCaps:.4f}kW")
+                    
+            with col4:
+                if MOR_large is None:
+                    st.metric("Maximum Oil Return", "")
+                else:
+                    st.metric("Maximum Oil Return", f"{MOR_large:.1f}%")
 
     if isinstance(MORfinal, (int, float)):
         is_ok, message = (True, "✅ OK") if required_oil_duty_pct >= MORfinal else (False, "❌ Insufficient flow")
