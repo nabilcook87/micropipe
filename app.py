@@ -1050,6 +1050,17 @@ elif tool_selection == "Manual Calculation":
         
         disable_pipes = not st.session_state.get("double_trouble", False)
         
+        def size_mm(size):
+            return mm_map.get(size, 0.0)
+        
+        def on_change_large():
+            if size_mm(ss.manual_large) < size_mm(ss.manual_small):
+                ss.manual_small = ss.manual_large
+        
+        def on_change_small():
+            if size_mm(ss.manual_small) > size_mm(ss.manual_large):
+                ss.manual_large = ss.manual_small
+
         col1, col2, col3, col4 = st.columns(4)
 
         with col1:
@@ -1058,6 +1069,7 @@ elif tool_selection == "Manual Calculation":
                 pipe_sizes,
                 index=max(pipe_sizes.index(selected_size), 0),
                 key="manual_large",
+                on_change=on_change_large,
                 disabled=disable_pipes
             )
         with col2:
@@ -1071,6 +1083,7 @@ elif tool_selection == "Manual Calculation":
                 pipe_sizes,
                 index=max(pipe_sizes.index(selected_size) - 2, 0),
                 key="manual_small",
+                on_change=on_change_small,
                 disabled=disable_pipes
             )
         with col4:
