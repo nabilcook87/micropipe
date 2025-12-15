@@ -474,7 +474,6 @@ elif tool_selection == "Oil Return Checker":
         manual_large = st.selectbox(
             "Large Riser Size",
             pipe_sizes,
-            index=max(pipe_sizes.index(selected_size), 0),
             key="manual_large",
             on_change=on_change_large,
             disabled=disable_pipes
@@ -488,7 +487,6 @@ elif tool_selection == "Oil Return Checker":
         manual_small = st.selectbox(
             "Small Riser Size",
             pipe_sizes,
-            index=max(pipe_sizes.index(selected_size) - 2, 0),
             key="manual_small",
             on_change=on_change_small,
             disabled=disable_pipes
