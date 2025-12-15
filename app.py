@@ -276,7 +276,7 @@ elif tool_selection == "Oil Return Checker":
         return min(range(len(mm_list)), key=lambda i: abs(mm_list[i] - target_mm)) if mm_list else 0
 
     default_index = 0
-    elif material_changed and "prev_pipe_mm" in ss:
+    if material_changed and "prev_pipe_mm" in ss:
         default_index = _closest_index(ss.prev_pipe_mm)
     elif selected_material == "Copper ACR" and ("1-1/8" in pipe_sizes or '1-1/8"' in pipe_sizes):
         # first load or no previous selection → prefer 1-1/8" for Copper ACR
