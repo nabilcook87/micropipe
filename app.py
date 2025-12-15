@@ -313,6 +313,12 @@ elif tool_selection == "Oil Return Checker":
     pipe_size_inch = selected_pipe_row["Nominal Size (inch)"]
     ID_mm = selected_pipe_row["ID_mm"]
 
+    def gauges_for_size(size_inch: str):
+        rows = material_df[material_df["Nominal Size (inch)"].astype(str).str.strip() == str(size_inch)]
+        if "Gauge" in rows.columns and rows["Gauge"].notna().any():
+            return sorted(rows["Gauge"].dropna().unique())
+        return []
+
     with col1:
         evap_capacity_kw = st.number_input("Evaporator Capacity (kW)", min_value=0.03, max_value=20000.0, value=10.0, step=1.0)
 
@@ -437,6 +443,50 @@ elif tool_selection == "Oil Return Checker":
         superheat_K = st.number_input("Superheat (K)", min_value=0.0, max_value=60.0, value=5.0, step=1.0)
         max_penalty = st.number_input("Max Penalty (K)", min_value=0.0, max_value=6.0, value=1.0, step=0.1)
         required_oil_duty_pct = st.number_input("Required Oil Return Duty (%)", min_value=0.0, max_value=100.0, value=100.0, step=5.0)
+
+    disable_pipes = not st.session_state.get("double_trouble", False)
+    
+    def size_mm(size):
+        return mm_map.get(size, 0.0)
+    
+    def on_change_large():
+        if size_mm(ss.manual_large) < size_mm(ss.manual_small):
+            ss.manual_small = ss.manual_large
+    
+    def on_change_small():
+        if size_mm(ss.manual_small) > size_mm(ss.manual_large):
+            ss.manual_large = ss.manual_small
+
+    col1, col2, col3, col4 = st.columns(4)
+
+    with col1:
+        manual_large = st.selectbox(
+            "Large Riser Size",
+            pipe_sizes,
+            index=max(pipe_sizes.index(selected_size), 0),
+            key="manual_large",
+            on_change=on_change_large,
+            disabled=disable_pipes
+        )
+    with col2:
+        g_large_opts = gauges_for_size(manual_large)
+        gauge_large = None
+        if g_large_opts:
+            gauge_large = st.selectbox("Large Riser Gauge", g_large_opts, key="gauge_large", disabled=disable_pipes)
+    with col3:
+        manual_small = st.selectbox(
+            "Small Riser Size",
+            pipe_sizes,
+            index=max(pipe_sizes.index(selected_size) - 2, 0),
+            key="manual_small",
+            on_change=on_change_small,
+            disabled=disable_pipes
+        )
+    with col4:
+        g_small_opts = gauges_for_size(manual_small)
+        gauge_small = None
+        if g_small_opts:
+            gauge_small = st.selectbox("Small Riser Gauge", g_small_opts, key="gauge_small", disabled=disable_pipes)
 
     from utils.refrigerant_properties import RefrigerantProperties
     from utils.refrigerant_densities import RefrigerantDensities
