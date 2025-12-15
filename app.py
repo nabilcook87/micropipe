@@ -795,6 +795,84 @@ elif tool_selection == "Oil Return Checker":
         MinCap = ""
     else:
         MinCap = MORfinal * evap_capacity_kw / 100
+
+    def _pipe_row_for_size(size_inch: str, gauge: str | None = None):
+        rows = material_df[
+            material_df["Nominal Size (inch)"].astype(str).str.strip() == str(size_inch)
+        ]
+    
+        if "Gauge" in rows.columns and rows["Gauge"].notna().any():
+            if gauge is not None:
+                rows_g = rows[rows["Gauge"] == gauge]
+                if not rows_g.empty:
+                    return rows_g.iloc[0]
+            # fallback if gauge is None or invalid
+            return rows.iloc[0]
+    
+        return rows.iloc[0]
+
+    from utils.double_riser import RiserContext, balance_double_riser
+    
+    # Only meaningful for R744 TC
+    gc_max = gc_max_pres if refrigerant == "R744 TC" else None
+    gc_min = gc_min_pres if refrigerant == "R744 TC" else None
+    
+    ctx = RiserContext(
+        refrigerant=refrigerant,
+        T_evap=T_evap,
+        T_cond=T_cond,
+        minliq_temp=minliq_temp,
+        superheat_K=superheat_K,
+        max_penalty_K=max_penalty,
+    
+        L=L,
+        SRB=SRB,
+        LRB=LRB,
+        bends_45=_45,
+        MAC=MAC,
+        ptrap=ptrap,
+        ubend=ubend,
+        ball=ball,
+        globe=globe,
+        PLF=PLF,
+    
+        selected_material=selected_material,
+        pipe_row_for_size=_pipe_row_for_size,
+    
+        gc_max_pres=gc_max,
+        gc_min_pres=gc_min,
+    )
+    
+    double_trouble = st.checkbox("Double Riser Mode", key="double_trouble")
+
+    if double_trouble:
+        dr = balance_double_riser(
+            manual_small,
+            manual_large,
+            M_total,
+            ctx,
+            gauge_small=gauge_small,
+            gauge_large=gauge_large,
+        )
+
+        rs = dr.small_result
+        rl = dr.large_result
+
+        from utils.double_riser import compute_double_riser_oil_metrics
+
+        MOR_full_flow, MOR_large, SST = compute_double_riser_oil_metrics(
+            dr=dr,
+            refrigerant=refrigerant,
+            T_evap=T_evap,
+            density_foroil=density_foroil,
+            oil_density=oil_density,
+            jg_half=jg_half,
+            mass_flow_foroil=mass_flow_foroil,
+            mass_flow_foroilmin=mass_flow_foroilmin,
+            MOR_correction=MOR_correction,
+            MOR_correctionmin=MOR_correctionmin,
+            MOR_correction2=MOR_correction2,
+        )
     
     st.subheader("Results")
     
