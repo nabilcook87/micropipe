@@ -419,5 +419,6 @@ def compute_double_riser_oil_metrics(
     # SST
     SST = T_evap - dr.DT_K
 
-    return MOR_full_flow, MOR_large, SST
+    return MOR_full_flow, MOR_large, SST, M_largeprop
+
 
