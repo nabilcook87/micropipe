@@ -203,7 +203,7 @@ elif tool_selection == "System Pressure Checker":
 elif tool_selection == "Oil Return Checker":
     st.subheader("Oil Return Checker")
     
-    col1, col2 = st.columns(2)
+    col1, col2, col3, col4 = st.columns(4)
 
     with col1:
         refrigerant = st.selectbox("Refrigerant", [
@@ -443,6 +443,24 @@ elif tool_selection == "Oil Return Checker":
         superheat_K = st.number_input("Superheat (K)", min_value=0.0, max_value=60.0, value=5.0, step=1.0)
         max_penalty = st.number_input("Max Penalty (K)", min_value=0.0, max_value=6.0, value=1.0, step=0.1)
         required_oil_duty_pct = st.number_input("Required Oil Return Duty (%)", min_value=0.0, max_value=100.0, value=100.0, step=5.0)
+
+    with col3:
+        L = st.number_input("Pipe Length (m)", min_value=0.1, max_value=300.0, value=10.0, step=1.0, key="L", disabled=True)
+        LRB = st.number_input("Long Radius Bends", min_value=0, max_value=50, value=0, step=1, key="LRB", disabled=True)
+        SRB = st.number_input("Short Radius Bends", min_value=0, max_value=50, value=0, step=1, key="SRB", disabled=True)
+        _45 = st.number_input("45° Bends", min_value=0, max_value=50, value=0, step=1, key="_45", disabled=True)
+        MAC = st.number_input("Machine Bends", min_value=0, max_value=50, value=0, step=1, key="MAC", disabled=True)
+
+    if st.session_state.get("double_trouble"):
+        st.session_state.ball = 0
+        st.session_state.globe = 0
+
+    with col4:
+        ptrap = st.number_input("P Traps", min_value=0, max_value=10, value=0, step=1, key="ptrap", disabled=True)
+        ubend = st.number_input("U Bends", min_value=0, max_value=10, value=0, step=1, key="ubend", disabled=True)
+        ball = st.number_input("Ball Valves", min_value=0, max_value=20, value=0, step=1, key="ball", disabled=True)
+        globe = st.number_input("Globe Valves", min_value=0, max_value=20, value=0, step=1, key="globe", disabled=True)
+        PLF = st.number_input("Pressure Loss Factors", min_value=0.0, max_value=20.0, value=0.0, step=0.1, key="PLF", disabled=True)
 
     disable_pipes = not st.session_state.get("double_trouble", False)
     
