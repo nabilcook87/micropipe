@@ -825,16 +825,16 @@ elif tool_selection == "Oil Return Checker":
         superheat_K=superheat_K,
         max_penalty_K=max_penalty,
     
-        L=0,
-        SRB=0,
-        LRB=0,
-        bends_45=0,
-        MAC=0,
-        ptrap=0,
-        ubend=0,
+        L=st.session_state("L"),
+        SRB=st.session_state("SRB"),
+        LRB=st.session_state("LRB"),
+        bends_45=st.session_state("_45"),
+        MAC=st.session_state("MAC"),
+        ptrap=st.session_state("ptrap"),
+        ubend=st.session_state("ubend"),
         ball=0,
         globe=0,
-        PLF=0,
+        PLF=st.session_state("PLF"),
     
         selected_material=selected_material,
         pipe_row_for_size=_pipe_row_for_size,
@@ -1159,22 +1159,22 @@ elif tool_selection == "Manual Calculation":
             required_oil_duty_pct = st.number_input("Required Oil Return Duty (%)", min_value=0.0, max_value=100.0, value=100.0, step=5.0)
     
         with col3:
-            L = st.number_input("Pipe Length (m)", min_value=0.1, max_value=300.0, value=10.0, step=1.0)
-            LRB = st.number_input("Long Radius Bends", min_value=0, max_value=50, value=0, step=1)
-            SRB = st.number_input("Short Radius Bends", min_value=0, max_value=50, value=0, step=1)
-            _45 = st.number_input("45° Bends", min_value=0, max_value=50, value=0, step=1)
-            MAC = st.number_input("Machine Bends", min_value=0, max_value=50, value=0, step=1)
+            L = st.number_input("Pipe Length (m)", min_value=0.1, max_value=300.0, value=10.0, step=1.0, key="L")
+            LRB = st.number_input("Long Radius Bends", min_value=0, max_value=50, value=0, step=1, key="LRB")
+            SRB = st.number_input("Short Radius Bends", min_value=0, max_value=50, value=0, step=1, key="SRB")
+            _45 = st.number_input("45° Bends", min_value=0, max_value=50, value=0, step=1, key="_45")
+            MAC = st.number_input("Machine Bends", min_value=0, max_value=50, value=0, step=1, key="MAC")
 
         if st.session_state.get("double_trouble"):
             st.session_state.ball = 0
             st.session_state.globe = 0
 
         with col4:
-            ptrap = st.number_input("P Traps", min_value=0, max_value=10, value=0, step=1)
-            ubend = st.number_input("U Bends", min_value=0, max_value=10, value=0, step=1)
+            ptrap = st.number_input("P Traps", min_value=0, max_value=10, value=0, step=1, key="ptrap")
+            ubend = st.number_input("U Bends", min_value=0, max_value=10, value=0, step=1, key="ubend")
             ball = st.number_input("Ball Valves", min_value=0, max_value=20, value=0, step=1, key="ball", disabled=disable_valves)
             globe = st.number_input("Globe Valves", min_value=0, max_value=20, value=0, step=1, key="globe", disabled=disable_valves)
-            PLF = st.number_input("Pressure Loss Factors", min_value=0.0, max_value=20.0, value=0.0, step=0.1)
+            PLF = st.number_input("Pressure Loss Factors", min_value=0.0, max_value=20.0, value=0.0, step=0.1, key="PLF")
         
         disable_pipes = not st.session_state.get("double_trouble", False)
         
