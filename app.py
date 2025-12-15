@@ -877,7 +877,7 @@ elif tool_selection == "Oil Return Checker":
     st.subheader("Results")
     
     if velocity_m_sfinal:
-        col1, col2 = st.columns(2)
+        col1, col2, col3 = st.columns(3)
 
         with col1:
             if MORfinal == "":
@@ -886,10 +886,23 @@ elif tool_selection == "Oil Return Checker":
                 st.metric("Minimum Capacity", f"{MinCap:.4f}kW")
 
         with col2:
-            if MORfinal == "":
-                st.metric("Minimum Oil Return", "")
+            if double_trouble:
+                if MOR_full_flow is None:
+                    st.metric("Min Oil Return", "")
+                else:
+                    st.metric("Min Oil Return", f"{MOR_full_flow:.1f}%")
             else:
-                st.metric("Minimum Oil Return", f"{MORfinal:.1f}%")
+                if MORfinal == "":
+                    st.metric("Minimum Oil Return", "")
+                else:
+                    st.metric("Minimum Oil Return", f"{MORfinal:.1f}%")
+
+        if double_trouble:
+            with col3:
+                if MOR_large is None:
+                    st.metric("Max Oil Return", "")
+                else:
+                    st.metric("Max Oil Return", f"{MOR_large:.1f}%")
 
     if isinstance(MORfinal, (int, float)):
         is_ok, message = (True, "✅ OK") if required_oil_duty_pct >= MORfinal else (False, "❌ Insufficient flow")
