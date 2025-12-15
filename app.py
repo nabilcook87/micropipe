@@ -891,6 +891,11 @@ elif tool_selection == "Oil Return Checker":
             MOR_correctionmin=MOR_correctionmin,
             MOR_correction2=MOR_correction2,
         )
+
+        if MOR_full_flow is None:
+            MinCaps = ""
+        else:
+            MinCaps = MOR_full_flow * evap_capacity_kw / 100
     
     st.subheader("Results")
     
@@ -898,17 +903,23 @@ elif tool_selection == "Oil Return Checker":
         col1, col2, col3 = st.columns(3)
 
         with col1:
-            if MORfinal == "":
-                st.metric("Minimum Capacity", "")
-            else:                
-                st.metric("Minimum Capacity", f"{MinCap:.4f}kW")
+            if double_trouble:
+                if MOR_full_flow is None:
+                    st.metric("Minimum Capacity", "")
+                else:
+                    st.metric("Minimum Capacity", f"{MinCaps:.4f}kW")
+            else:
+                if MORfinal == "":
+                    st.metric("Minimum Capacity", "")
+                else:                
+                    st.metric("Minimum Capacity", f"{MinCap:.4f}kW")
 
         with col2:
             if double_trouble:
                 if MOR_full_flow is None:
-                    st.metric("Min Oil Return", "")
+                    st.metric("Minimum Oil Return", "")
                 else:
-                    st.metric("Min Oil Return", f"{MOR_full_flow:.1f}%")
+                    st.metric("Minimum Oil Return", f"{MOR_full_flow:.1f}%")
             else:
                 if MORfinal == "":
                     st.metric("Minimum Oil Return", "")
