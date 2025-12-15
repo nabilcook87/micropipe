@@ -825,7 +825,7 @@ elif tool_selection == "Oil Return Checker":
         superheat_K=superheat_K,
         max_penalty_K=max_penalty,
     
-        L=st.session_state.get("L", 0.0),
+        L=10,
         SRB=st.session_state.get("SRB", 0.0),
         LRB=st.session_state.get("LRB", 0.0),
         bends_45=st.session_state.get("_45", 0.0),
