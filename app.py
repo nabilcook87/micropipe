@@ -878,7 +878,7 @@ elif tool_selection == "Oil Return Checker":
 
         from utils.double_riser import compute_double_riser_oil_metrics
 
-        MOR_full_flow, MOR_large, SST = compute_double_riser_oil_metrics(
+        MOR_full_flow, MOR_large, SST, M_largeprop = compute_double_riser_oil_metrics(
             dr=dr,
             refrigerant=refrigerant,
             T_evap=T_evap,
@@ -2189,7 +2189,7 @@ elif tool_selection == "Manual Calculation":
 
             from utils.double_riser import compute_double_riser_oil_metrics
 
-            MOR_full_flow, MOR_large, SST = compute_double_riser_oil_metrics(
+            MOR_full_flow, MOR_large, SST, M_largeprop = compute_double_riser_oil_metrics(
                 dr=dr,
                 refrigerant=refrigerant,
                 T_evap=T_evap,
