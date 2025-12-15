@@ -275,18 +275,7 @@ elif tool_selection == "Oil Return Checker":
         mm_list = [mm_map[s] for s in pipe_sizes]
         return min(range(len(mm_list)), key=lambda i: abs(mm_list[i] - target_mm)) if mm_list else 0
 
-    # --- Handle deferred pipe selection (from "Select Optimal Pipe Size" button) ---
-    if "_next_selected_size" in st.session_state:
-        new_val = st.session_state["_next_selected_size"]
-        # ✅ directly set the selectbox value itself
-        st.session_state["selected_size"] = new_val
-        # clean up the temporary flag
-        del st.session_state["_next_selected_size"]
-
     default_index = 0
-    override_val = st.session_state.get("selected_size_override")
-    if override_val and override_val in pipe_sizes:
-        default_index = pipe_sizes.index(override_val)
     elif material_changed and "prev_pipe_mm" in ss:
         default_index = _closest_index(ss.prev_pipe_mm)
     elif selected_material == "Copper ACR" and ("1-1/8" in pipe_sizes or '1-1/8"' in pipe_sizes):
