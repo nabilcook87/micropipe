@@ -286,15 +286,17 @@ elif tool_selection == "Oil Return Checker":
         # if Streamlit kept the selection, use it
         default_index = pipe_sizes.index(ss.selected_size)
 
+    disable_valves = st.session_state.get("double_trouble", False)
+    
     with col1:
         selected_size = st.selectbox(
             "Nominal Pipe Size (inch)",
             pipe_sizes,
             index=default_index,
             key="selected_size",
+            disabled=disable_valves,
         )
 
-    # remember the selected size in mm for next material change
     ss.prev_pipe_mm = float(mm_map.get(selected_size, float("nan")))
 
     # 3) Gauge (if applicable)
@@ -302,7 +304,7 @@ elif tool_selection == "Oil Return Checker":
     if "Gauge" in gauge_options.columns and gauge_options["Gauge"].notna().any():
         gauges = sorted(gauge_options["Gauge"].dropna().unique())
         with col2:
-            selected_gauge = st.selectbox("Copper Gauge", gauges, key="gauge")
+            selected_gauge = st.selectbox("Copper Gauge", gauges, key="gauge", disabled=disable_valves)
         selected_pipe_row = gauge_options[gauge_options["Gauge"] == selected_gauge].iloc[0]
     else:
         selected_pipe_row = gauge_options.iloc[0]
@@ -880,9 +882,6 @@ elif tool_selection == "Manual Calculation":
                 disabled=disable_valves,
             )
 
-        ss.prev_pipe_mm = float(mm_map.get(selected_size, float("nan")))
-        
-        # remember the selected size in mm for next material change
         ss.prev_pipe_mm = float(mm_map.get(selected_size, float("nan")))
     
         # 3) Gauge (if applicable)
