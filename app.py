@@ -284,7 +284,10 @@ elif tool_selection == "Oil Return Checker":
         del st.session_state["_next_selected_size"]
 
     default_index = 0
-    if material_changed and "prev_pipe_mm" in ss:
+    override_val = st.session_state.get("selected_size_override")
+    if override_val and override_val in pipe_sizes:
+        default_index = pipe_sizes.index(override_val)
+    elif material_changed and "prev_pipe_mm" in ss:
         default_index = _closest_index(ss.prev_pipe_mm)
     elif selected_material == "Copper ACR" and ("1-1/8" in pipe_sizes or '1-1/8"' in pipe_sizes):
         # first load or no previous selection → prefer 1-1/8" for Copper ACR
