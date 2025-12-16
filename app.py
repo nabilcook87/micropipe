@@ -2479,16 +2479,27 @@ elif tool_selection == "Manual Calculation":
                     st.metric("Velocity Pressure PD", f"{dr.dp_plf:.2f}kPa")
                 else:
                     st.metric("Velocity Pressure PD", f"{dp_plf_kPa:.2f}kPa")
-    
-        if isinstance(MORfinal, (int, float)):
-            is_ok, message = (True, "✅ OK") if required_oil_duty_pct >= MORfinal else (False, "❌ Insufficient flow")
+
+        if double_trouble:
+            if isinstance(MOR_full_flow, (int, float)):
+                is_ok, message = (True, "✅ OK") if required_oil_duty_pct >= MOR_full_flow else (False, "❌ Insufficient flow")
+            else:
+                is_ok, message = (False, "")
+        
+            if is_ok:
+                st.success(f"{message}")
+            else:
+                st.error(f"{message}")   
         else:
-            is_ok, message = (False, "")
-    
-        if is_ok:
-            st.success(f"{message}")
-        else:
-            st.error(f"{message}")
+            if isinstance(MORfinal, (int, float)):
+                is_ok, message = (True, "✅ OK") if required_oil_duty_pct >= MORfinal else (False, "❌ Insufficient flow")
+            else:
+                is_ok, message = (False, "")
+        
+            if is_ok:
+                st.success(f"{message}")
+            else:
+                st.error(f"{message}")
     
     if mode == "Liquid":
         
