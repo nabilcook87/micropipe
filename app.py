@@ -2227,29 +2227,9 @@ elif tool_selection == "Manual Calculation":
         
         with col5:
             if st.button("Double Riser") and double_trouble:
-                small_candidates = []
-                for s in pipe_sizes:
-                    MOR_s, dt_s = get_pipe_results(s)
-                    if math.isfinite(MOR_s) and MOR_s <= required_oil_duty_pct:
-                        small_candidates.append(s)
-            
-                if not small_candidates:
-                    st.error("❌ No pipe size satisfies full-flow oil return duty.")
-                    st.stop()
-            
-                small = max(small_candidates, key=lambda s: mm_map[s])
-            
                 sizes_asc = sorted(pipe_sizes, key=lambda s: mm_map[s])
             
-                best_large = None
-                best_dr = None
-                best_MOR_full = None
-                best_MOR_large = None
-            
-                for large in sizes_asc:
-                    if mm_map[large] < mm_map[small]:
-                        continue
-            
+                def eval_pair(small, large):
                     dr = balance_double_riser(
                         size_small=small,
                         size_large=large,
@@ -2273,31 +2253,87 @@ elif tool_selection == "Manual Calculation":
                         MOR_correction2=MOR_correction2,
                     )
             
-                    if MOR_full is None or MOR_large is None:
-                        continue
+                    return dr, MOR_full, MOR_large
             
-                    if MOR_large <= 100.0 and dr.DT_K <= max_penalty:
-                        best_large = large
-                        best_dr = dr
-                        best_MOR_full = MOR_full
-                        best_MOR_large = MOR_large
+                small = None
+                last_ok = None
+            
+                for s in sizes_asc:
+                    MOR_s, _ = get_pipe_results(s)
+                    if not math.isfinite(MOR_s):
+                        break
+                    if MOR_s <= required_oil_duty_pct:
+                        last_ok = s
+                    else:
                         break
             
-                if best_large is None:
-                    st.error("❌ No valid large riser meets MOR_large ≤ 100% and ΔT ≤ Max Penalty.")
+                if last_ok is None:
+                    st.error("❌ No pipe size satisfies full-flow oil return duty.")
                     st.stop()
             
+                small = last_ok
+            
+                def resolve_large(small, start_large):
+                    for large in sizes_asc:
+                        if mm_map[large] < mm_map[start_large]:
+                            continue
+            
+                        dr, MOR_full, MOR_large = eval_pair(small, large)
+            
+                        if MOR_full is None or MOR_large is None:
+                            continue
+            
+                        if MOR_large <= 100.0 and dr.DT_K <= max_penalty:
+                            return large, dr, MOR_full, MOR_large
+            
+                    return None, None, None, None
+            
+                large, dr, MOR_full, MOR_large = resolve_large(small, small)
+            
+                if large is None:
+                    st.error("❌ No valid large riser meets ΔT and MOR limits.")
+                    st.stop()
+            
+                best_small = small
+                best_large = large
+                best_dr = dr
+                best_MOR_full = MOR_full
+                best_MOR_large = MOR_large
+            
+                idx = sizes_asc.index(small)
+            
+                while idx > 0:
+                    candidate_small = sizes_asc[idx - 1]
+            
+                    MOR_s, _ = get_pipe_results(candidate_small)
+                    if not math.isfinite(MOR_s) or MOR_s > required_oil_duty_pct:
+                        break
+            
+                    candidate_large, dr_c, MOR_f, MOR_l = resolve_large(candidate_small, candidate_small)
+            
+                    if candidate_large is None:
+                        break
+            
+                    best_small = candidate_small
+                    best_large = candidate_large
+                    best_dr = dr_c
+                    best_MOR_full = MOR_f
+                    best_MOR_large = MOR_l
+            
+                    idx -= 1
+            
                 st.session_state["_next_double_riser"] = True
-                st.session_state["_next_manual_small"] = small
+                st.session_state["_next_manual_small"] = best_small
                 st.session_state["_next_manual_large"] = best_large
             
                 st.success(
                     f"✅ **Double Riser Selected**\n\n"
-                    f"Small: **{small}** | Large: **{best_large}**\n"
+                    f"Small: **{best_small}** | Large: **{best_large}**\n"
                     f"MOR (full flow): {best_MOR_full:.1f}%\n"
                     f"MOR (large riser): {best_MOR_large:.1f}%\n"
                     f"Temperature penalty: {best_dr.DT_K:.2f} K"
                 )
+            
                 st.rerun()
         
         with spacer:
