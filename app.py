@@ -1043,6 +1043,15 @@ elif tool_selection == "Manual Calculation":
             # clean up the temporary flag
             del st.session_state["_next_selected_size"]
 
+        if "_next_double_riser" in st.session_state:
+            st.session_state["double_trouble"] = True
+            st.session_state["manual_small"] = st.session_state["_next_manual_small"]
+            st.session_state["manual_large"] = st.session_state["_next_manual_large"]
+        
+            del st.session_state["_next_double_riser"]
+            del st.session_state["_next_manual_small"]
+            del st.session_state["_next_manual_large"]
+
         default_index = 0
         override_val = st.session_state.get("selected_size_override")
         if override_val and override_val in pipe_sizes:
@@ -2290,10 +2299,10 @@ elif tool_selection == "Manual Calculation":
                         )
                     )
             
-                    # Lock UI into double-riser mode
-                    st.session_state.double_trouble = True
-                    st.session_state.manual_small = best["small"]
-                    st.session_state.manual_large = best["large"]
+                    # ---- defer UI updates until next run ----
+                    st.session_state["_next_double_riser"] = True
+                    st.session_state["_next_manual_small"] = best["small"]
+                    st.session_state["_next_manual_large"] = best["large"]
             
                     st.success(
                         f"✅ **Double Riser Selected**\n\n"
