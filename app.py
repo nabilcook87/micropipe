@@ -2227,6 +2227,7 @@ elif tool_selection == "Manual Calculation":
         
         with col5:
             if st.button("Double Riser"):
+                st.session_state["_next_double_riser"] = True
                 small_candidates = []
                 for s in pipe_sizes:
                     MOR_s, dt_s = get_pipe_results(s)
