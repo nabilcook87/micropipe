@@ -2261,7 +2261,8 @@ elif tool_selection == "Manual Calculation":
         
         with col5:
             if st.button("Double Riser") and double_trouble:
-            
+                MOR_full_cached.cache_clear()
+                eval_pair_cached.cache_clear()
                 sizes_asc = sorted(pipe_sizes, key=lambda s: mm_map[s])
             
                 def eval_pair(small, large):
@@ -2341,7 +2342,7 @@ elif tool_selection == "Manual Calculation":
                 while idx > 0:
                     candidate_small = sizes_asc[idx - 1]
             
-                    MOR_s, _ = get_pipe_results(candidate_small)
+                    MOR_s = MOR_full_cached(candidate_small)
                     if not math.isfinite(MOR_s) or MOR_s > required_oil_duty_pct:
                         break
             
