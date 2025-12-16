@@ -1045,7 +1045,7 @@ elif tool_selection == "Manual Calculation":
             del st.session_state["_next_selected_size"]
 
         if "_next_double_riser" in st.session_state:
-            st.session_state["double_trouble"] = True
+            st.session_state["_force_double_riser"] = True
             st.session_state["manual_small"] = st.session_state["_next_manual_small"]
             st.session_state["manual_large"] = st.session_state["_next_manual_large"]
         
@@ -2195,7 +2195,12 @@ elif tool_selection == "Manual Calculation":
                         )
 
         with col4:
-            double_trouble = st.checkbox("Double Riser Mode", key="double_trouble")
+            if "_force_double_riser" in st.session_state:
+                default_double = True
+                del st.session_state["_force_double_riser"]
+            else:
+                default_double = False
+            double_trouble = st.checkbox("Double Riser Mode", value=default_double, key="double_trouble")
 
         if double_trouble:
             dr = balance_double_riser(
@@ -2228,116 +2233,71 @@ elif tool_selection == "Manual Calculation":
         
         with col5:
             if st.button("Double Riser"):
-            
-                M_total = M_total
-                chosen_small = None
-            
-                for small in pipe_sizes:
-                    try:
-                        dr = balance_double_riser(
-                            size_small=small,
-                            size_large=small,
-                            M_total_kg_s=M_total,
-                            ctx=ctx,
-                        )
-            
-                        MOR_full, _, _, _ = compute_double_riser_oil_metrics(
-                            dr=dr,
-                            refrigerant=refrigerant,
-                            T_evap=T_evap,
-                            density_foroil=density_foroil,
-                            oil_density=oil_density,
-                            jg_half=jg_half,
-                            mass_flow_foroil=mass_flow_foroil,
-                            mass_flow_foroilmin=mass_flow_foroilmin,
-                            MOR_correction=MOR_correction,
-                            MOR_correctionmin=MOR_correctionmin,
-                            MOR_correction2=MOR_correction2,
-                        )
-            
-                        if MOR_full is not None and MOR_full <= required_oil_duty_pct:
-                            chosen_small = small
-                            break
-            
-                    except Exception:
+                small_candidates = []
+                
+                for s in pipe_sizes:
+                    MOR_s, dt_s = get_pipe_results(s)
+                    if not math.isfinite(MOR_s):
                         continue
-            
-                if chosen_small is None:
-                    st.error("❌ No small riser satisfies full-flow oil return.")
+                    if MOR_s <= required_oil_duty_pct:
+                        small_candidates.append(s)
+                
+                if not small_candidates:
+                    st.error("❌ No pipe size satisfies full-flow oil return.")
                     st.stop()
-            
-                chosen_large = None
-            
+                
+                small = min(small_candidates, key=lambda s: mm_map[s])
+                
+                sizes_desc = sorted(pipe_sizes, key=lambda s: mm_map[s], reverse=True)
+                
+                accepted_large = None
+                last_good = None
+                
                 for large in sizes_desc:
-                    if mm_map[large] < mm_map[chosen_small]:
+                    if mm_map[large] < mm_map[small]:
                         continue
-            
-                    try:
-                        dr = balance_double_riser(
-                            size_small=chosen_small,
-                            size_large=large,
-                            M_total_kg_s=M_total,
-                            ctx=ctx,
-                        )
-            
-                        _, MOR_large, _, _ = compute_double_riser_oil_metrics(
-                            dr=dr,
-                            refrigerant=refrigerant,
-                            T_evap=T_evap,
-                            density_foroil=density_foroil,
-                            oil_density=oil_density,
-                            jg_half=jg_half,
-                            mass_flow_foroil=mass_flow_foroil,
-                            mass_flow_foroilmin=mass_flow_foroilmin,
-                            MOR_correction=MOR_correction,
-                            MOR_correctionmin=MOR_correctionmin,
-                            MOR_correction2=MOR_correction2,
-                        )
-            
-                        if MOR_large is not None and MOR_large <= 100.0:
-                            chosen_large = large
-                            break
-            
-                    except Exception:
+                
+                    dr = balance_double_riser(
+                        size_small=small,
+                        size_large=large,
+                        M_total_kg_s=M_total,
+                        ctx=ctx,
+                        gauge_small=st.session_state.get("gauge_small"),
+                        gauge_large=st.session_state.get("gauge_large"),
+                    )
+                
+                    MOR_full, MOR_large, SST, frac_large = compute_double_riser_oil_metrics(
+                        dr=dr,
+                        refrigerant=refrigerant,
+                        T_evap=T_evap,
+                        density_foroil=density_foroil,
+                        oil_density=oil_density,
+                        jg_half=jg_half,
+                        mass_flow_foroil=mass_flow_foroil,
+                        mass_flow_foroilmin=mass_flow_foroilmin,
+                        MOR_correction=MOR_correction,
+                        MOR_correctionmin=MOR_correctionmin,
+                        MOR_correction2=MOR_correction2,
+                    )
+                
+                    if MOR_large > 100.0:
                         continue
-            
-                if chosen_large is None:
-                    st.error("❌ No large riser satisfies low-load oil return.")
+                
+                    if dr.DT_K <= max_penalty:
+                        last_good = large
+                    else:
+                        break
+                
+                if last_good is None:
+                    st.error("❌ No valid large riser meets ΔT and oil return limits.")
                     st.stop()
-            
-                best_large = chosen_large
-            
-                for large in sizes_desc[sizes_desc.index(chosen_large) + 1:]:
-                    if mm_map[large] < mm_map[chosen_small]:
-                        break
-            
-                    try:
-                        dr = balance_double_riser(
-                            size_small=chosen_small,
-                            size_large=large,
-                            M_total_kg_s=M_total,
-                            ctx=ctx,
-                        )
-            
-                        if dr.DT_K <= max_penalty:
-                            best_large = large
-                        else:
-                            break
-            
-                    except Exception:
-                        break
-            
+                
+                best_small = small
+                best_large = last_good
+
                 st.session_state["_next_double_riser"] = True
-                st.session_state["_next_manual_small"] = chosen_small
+                st.session_state["_next_manual_small"] = best_small
                 st.session_state["_next_manual_large"] = best_large
-            
-                st.success(
-                    f"✅ **Double Riser Selected**\n\n"
-                    f"Small: **{chosen_small}**\n"
-                    f"Large: **{best_large}**\n"
-                    f"ΔT ≤ {max_penalty:.2f} K"
-                )
-            
                 st.rerun()
         
         with spacer:
