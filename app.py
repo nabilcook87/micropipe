@@ -2227,15 +2227,53 @@ elif tool_selection == "Manual Calculation":
         
         with col5:
             if st.button("Double Riser"):
-                results = []
+                valid_smalls = []
                 failures = []
             
-                # Total mass flow already computed earlier
                 M_total = M_total
             
-                for i, small in enumerate(pipe_sizes):
-                    for large in pipe_sizes[i:]:  # enforce large ≥ small
+                for small in pipe_sizes:
+                    try:
+                        dr = balance_double_riser(
+                            size_small=small,
+                            size_large=small,
+                            M_total_kg_s=M_total,
+                            ctx=ctx,
+                            gauge_small=st.session_state.get("gauge_small"),
+                            gauge_large=st.session_state.get("gauge_large"),
+                        )
             
+                        MOR_full, _, _, _ = compute_double_riser_oil_metrics(
+                            dr=dr,
+                            refrigerant=refrigerant,
+                            T_evap=T_evap,
+                            density_foroil=density_foroil,
+                            oil_density=oil_density,
+                            jg_half=jg_half,
+                            mass_flow_foroil=mass_flow_foroil,
+                            mass_flow_foroilmin=mass_flow_foroilmin,
+                            MOR_correction=MOR_correction,
+                            MOR_correctionmin=MOR_correctionmin,
+                            MOR_correction2=MOR_correction2,
+                        )
+            
+                        if MOR_full is not None and MOR_full <= required_oil_duty_pct:
+                            valid_smalls.append(small)
+            
+                    except Exception as e:
+                        failures.append((small, str(e)))
+            
+                if not valid_smalls:
+                    st.error(
+                        "❌ No small riser satisfies full-flow oil return.\n\n"
+                        "Try relaxing Required Oil Return Duty."
+                    )
+                    st.stop()
+            
+                results = []
+            
+                for small in valid_smalls:
+                    for large in pipe_sizes[pipe_sizes.index(small):]:
                         try:
                             dr = balance_double_riser(
                                 size_small=small,
@@ -2246,7 +2284,7 @@ elif tool_selection == "Manual Calculation":
                                 gauge_large=st.session_state.get("gauge_large"),
                             )
             
-                            MOR_full, MOR_large, SST, frac_large = compute_double_riser_oil_metrics(
+                            MOR_full, MOR_large, _, _ = compute_double_riser_oil_metrics(
                                 dr=dr,
                                 refrigerant=refrigerant,
                                 T_evap=T_evap,
@@ -2260,13 +2298,6 @@ elif tool_selection == "Manual Calculation":
                                 MOR_correction2=MOR_correction2,
                             )
             
-                            # Invalid operating envelope
-                            if MOR_full is None or MOR_large is None:
-                                continue
-            
-                            # ---- HARD CONSTRAINTS ----
-                            if MOR_full > required_oil_duty_pct:
-                                continue
                             if MOR_large > 100.0:
                                 continue
                             if dr.DT_K > max_penalty:
@@ -2279,36 +2310,32 @@ elif tool_selection == "Manual Calculation":
                                 "MOR_large": MOR_large,
                                 "DT": dr.DT_K,
                             })
+                            break
             
-                        except Exception as e:
-                            failures.append((small, large, str(e)))
+                        except Exception:
+                            continue
             
                 if not results:
                     st.error(
                         "❌ No valid double-riser configuration found.\n\n"
-                        "Check oil duty, temperature penalty, or pipe size range."
+                        "Try relaxing temperature penalty or oil limits."
                     )
                 else:
-                    # ---- pick smallest valid geometry ----
                     best = min(
                         results,
-                        key=lambda r: (
-                            mm_map[r["large"]],
-                            mm_map[r["small"]],
-                        )
+                        key=lambda r: (mm_map[r["large"]], mm_map[r["small"]])
                     )
             
-                    # ---- defer UI updates until next run ----
                     st.session_state["_next_double_riser"] = True
                     st.session_state["_next_manual_small"] = best["small"]
                     st.session_state["_next_manual_large"] = best["large"]
             
                     st.success(
                         f"✅ **Double Riser Selected**\n\n"
-                        f"Small: **{best['small']}**  |  Large: **{best['large']}**\n"
-                        f"MOR (full flow): {best['MOR_full']:.1f}%\n"
-                        f"MOR (large riser): {best['MOR_large']:.1f}%\n"
-                        f"Temperature penalty: {best['DT']:.2f} K"
+                        f"Small: **{best['small']}** | Large: **{best['large']}**\n"
+                        f"MOR (full): {best['MOR_full']:.1f}%\n"
+                        f"MOR (large): {best['MOR_large']:.1f}%\n"
+                        f"ΔT: {best['DT']:.2f} K"
                     )
             
                     st.rerun()
