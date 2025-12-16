@@ -2193,9 +2193,6 @@ elif tool_selection == "Manual Calculation":
                             "➡ Please relax one or more input limits."
                         )
 
-        with col4:
-            double_trouble = st.checkbox("Double Riser Mode", key="double_trouble")
-
         if double_trouble:
             dr = balance_double_riser(
                 manual_small,
@@ -2224,12 +2221,10 @@ elif tool_selection == "Manual Calculation":
                 MOR_correctionmin=MOR_correctionmin,
                 MOR_correction2=MOR_correction2,
             )
-
-        if st.button("Double Riser"):
-            st.session_state.double_trouble = True
     
-        with col5:
+        with col4:
             if st.button("Double Riser"):
+                st.session_state.double_trouble = True
                 results = []
                 failures = []
             
@@ -2315,6 +2310,9 @@ elif tool_selection == "Manual Calculation":
                     )
             
                     st.rerun()
+
+        with col5:
+            double_trouble = st.checkbox("Double Riser Mode", key="double_trouble")
         
         with spacer:
             st.empty()
