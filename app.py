@@ -2097,7 +2097,7 @@ elif tool_selection == "Manual Calculation":
         
             return mor_num, float(dt_local)
 
-        col1, col2, col3, col4, spacer = st.columns([0.1, 0.1, 0.1, 0.1, 0.5])
+        col1, col2, col3, col4, col5, spacer = st.columns([0.1, 0.1, 0.1, 0.1, 0.1, 0.5])
         
         # holders for messages to show later (full width)
         error_message = None
@@ -2215,6 +2215,95 @@ elif tool_selection == "Manual Calculation":
                 MOR_correctionmin=MOR_correctionmin,
                 MOR_correction2=MOR_correction2,
             )
+
+        with col5:
+            if st.button("Double Riser"):
+            
+                results = []
+                failures = []
+            
+                # Total mass flow already computed earlier
+                M_total = M_total
+            
+                for i, small in enumerate(pipe_sizes):
+                    for large in pipe_sizes[i:]:  # enforce large ≥ small
+            
+                        try:
+                            dr = balance_double_riser(
+                                size_small=small,
+                                size_large=large,
+                                M_total_kg_s=M_total,
+                                ctx=ctx,
+                                gauge_small=st.session_state.get("gauge_small"),
+                                gauge_large=st.session_state.get("gauge_large"),
+                            )
+            
+                            MOR_full, MOR_large, SST, frac_large = compute_double_riser_oil_metrics(
+                                dr=dr,
+                                refrigerant=refrigerant,
+                                T_evap=T_evap,
+                                density_foroil=density_foroil,
+                                oil_density=oil_density,
+                                jg_half=jg_half,
+                                mass_flow_foroil=mass_flow_foroil,
+                                mass_flow_foroilmin=mass_flow_foroilmin,
+                                MOR_correction=MOR_correction,
+                                MOR_correctionmin=MOR_correctionmin,
+                                MOR_correction2=MOR_correction2,
+                            )
+            
+                            # Invalid operating envelope
+                            if MOR_full is None or MOR_large is None:
+                                continue
+            
+                            # ---- HARD CONSTRAINTS ----
+                            if MOR_full > required_oil_duty_pct:
+                                continue
+                            if MOR_large > 100.0:
+                                continue
+                            if dr.DT_K > max_penalty:
+                                continue
+            
+                            results.append({
+                                "small": small,
+                                "large": large,
+                                "MOR_full": MOR_full,
+                                "MOR_large": MOR_large,
+                                "DT": dr.DT_K,
+                            })
+            
+                        except Exception as e:
+                            failures.append((small, large, str(e)))
+            
+                if not results:
+                    st.error(
+                        "❌ No valid double-riser configuration found.\n\n"
+                        "Check oil duty, temperature penalty, or pipe size range."
+                    )
+                else:
+                    # ---- pick smallest valid geometry ----
+                    best = min(
+                        results,
+                        key=lambda r: (
+                            mm_map[r["large"]],
+                            mm_map[r["small"]],
+                        )
+                    )
+            
+                    # Lock UI into double-riser mode
+                    st.session_state.double_trouble = True
+                    st.session_state.manual_small = best["small"]
+                    st.session_state.manual_large = best["large"]
+            
+                    st.success(
+                        f"✅ **Double Riser Selected**\n\n"
+                        f"Small: **{best['small']}**  |  Large: **{best['large']}**\n"
+                        f"MOR (full flow): {best['MOR_full']:.1f}%\n"
+                        f"MOR (large riser): {best['MOR_large']:.1f}%\n"
+                        f"Temperature penalty: {best['DT']:.2f} K"
+                    )
+            
+                    st.rerun()
         
         with spacer:
             st.empty()
