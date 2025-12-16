@@ -1029,7 +1029,6 @@ elif tool_selection == "Manual Calculation":
     
         pipe_sizes = sizes_df["Nominal Size (inch)"].tolist()
         mm_map = dict(zip(sizes_df["Nominal Size (inch)"], sizes_df["mm_num"]))
-        sizes_desc = sorted(pipe_sizes, key=lambda s: mm_map[s], reverse=True)
     
         # choose default index
         def _closest_index(target_mm: float) -> int:
