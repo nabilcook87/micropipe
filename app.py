@@ -2297,7 +2297,7 @@ elif tool_selection == "Manual Calculation":
                     if not math.isfinite(MOR_s):
                         continue
             
-                    if MOR_s <= required_oil_duty_pct:
+                    if MOR_s <= min(required_oil_duty_pct, 50):
                         small_candidates.append(s)
             
                 if not small_candidates:
@@ -2341,7 +2341,7 @@ elif tool_selection == "Manual Calculation":
                     candidate_small = sizes_asc[idx - 1]
             
                     MOR_s = MOR_full_cached(candidate_small)
-                    if not math.isfinite(MOR_s) or MOR_s > required_oil_duty_pct:
+                    if not math.isfinite(MOR_s) or MOR_s > min(required_oil_duty_pct, 50):
                         break
             
                     candidate_large, dr_c, MOR_f, MOR_l = resolve_large(
@@ -2355,7 +2355,6 @@ elif tool_selection == "Manual Calculation":
                     if mm_map[candidate_large] > prev_large_mm:
                         break
             
-                    # ✅ accept smaller geometry
                     best_small = candidate_small
                     best_large = candidate_large
                     best_dr = dr_c
