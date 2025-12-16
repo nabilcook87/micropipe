@@ -2352,9 +2352,6 @@ elif tool_selection == "Manual Calculation":
                     if candidate_large is None:
                         break
             
-                    if mm_map[candidate_large] > prev_large_mm:
-                        break
-            
                     best_small = candidate_small
                     best_large = candidate_large
                     best_dr = dr_c
