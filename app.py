@@ -2140,6 +2140,10 @@ elif tool_selection == "Manual Calculation":
             MOR_s, _ = get_pipe_results(size)
             return MOR_s
 
+        @st.cache_data(show_spinner=False)
+        def _cached_double_riser(*args, **kwargs):
+            return balance_double_riser(*args, **kwargs)
+
         col1, col2, col3, col4, col5, spacer = st.columns([0.1, 0.1, 0.1, 0.1, 0.1, 0.4])
         
         # holders for messages to show later (full width)
@@ -2264,7 +2268,7 @@ elif tool_selection == "Manual Calculation":
                 sizes_asc = sorted(pipe_sizes, key=lambda s: mm_map[s])
             
                 def eval_pair(small, large):
-                    dr = balance_double_riser(
+                    dr = _cached_double_riser(
                         size_small=small,
                         size_large=large,
                         M_total_kg_s=M_total,
