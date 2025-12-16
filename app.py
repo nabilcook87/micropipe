@@ -1064,11 +1064,6 @@ elif tool_selection == "Manual Calculation":
         elif "selected_size" in ss and ss.selected_size in pipe_sizes:
             default_index = pipe_sizes.index(ss.selected_size)
 
-        is_double_riser = (
-            st.session_state.get("_auto_double_riser", False)
-            or st.session_state.get("double_trouble", False)
-        )
-
         disable_valves = st.session_state.get("double_trouble", False)
         
         with col1:
@@ -2232,7 +2227,6 @@ elif tool_selection == "Manual Calculation":
         
         with col5:
             if st.button("Double Riser"):
-                st.session_state["_auto_double_riser"] = True
                 results = []
                 failures = []
             
