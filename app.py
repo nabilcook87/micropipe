@@ -2233,29 +2233,28 @@ elif tool_selection == "Manual Calculation":
         with col5:
             if st.button("Double Riser"):
                 small_candidates = []
-                
                 for s in pipe_sizes:
                     MOR_s, dt_s = get_pipe_results(s)
-                    if not math.isfinite(MOR_s):
-                        continue
-                    if MOR_s <= required_oil_duty_pct:
+                    if math.isfinite(MOR_s) and MOR_s <= required_oil_duty_pct:
                         small_candidates.append(s)
-                
+            
                 if not small_candidates:
-                    st.error("❌ No pipe size satisfies full-flow oil return.")
+                    st.error("❌ No pipe size satisfies full-flow oil return duty.")
                     st.stop()
-                
+            
                 small = max(small_candidates, key=lambda s: mm_map[s])
-                
-                sizes_desc = sorted(pipe_sizes, key=lambda s: mm_map[s], reverse=True)
-                
-                accepted_large = None
-                last_good = None
-                
-                for large in sizes_desc:
+            
+                sizes_asc = sorted(pipe_sizes, key=lambda s: mm_map[s])
+            
+                best_large = None
+                best_dr = None
+                best_MOR_full = None
+                best_MOR_large = None
+            
+                for large in sizes_asc:
                     if mm_map[large] < mm_map[small]:
                         continue
-                
+            
                     dr = balance_double_riser(
                         size_small=small,
                         size_large=large,
@@ -2264,7 +2263,7 @@ elif tool_selection == "Manual Calculation":
                         gauge_small=st.session_state.get("gauge_small"),
                         gauge_large=st.session_state.get("gauge_large"),
                     )
-                
+            
                     MOR_full, MOR_large, SST, frac_large = compute_double_riser_oil_metrics(
                         dr=dr,
                         refrigerant=refrigerant,
@@ -2278,25 +2277,32 @@ elif tool_selection == "Manual Calculation":
                         MOR_correctionmin=MOR_correctionmin,
                         MOR_correction2=MOR_correction2,
                     )
-                
-                    if MOR_large > 100.0:
+            
+                    if MOR_full is None or MOR_large is None:
                         continue
-                
-                    if dr.DT_K <= max_penalty:
-                        last_good = large
-                    else:
+            
+                    if MOR_large <= 100.0 and dr.DT_K <= max_penalty:
+                        best_large = large
+                        best_dr = dr
+                        best_MOR_full = MOR_full
+                        best_MOR_large = MOR_large
                         break
-                
-                if last_good is None:
-                    st.error("❌ No valid large riser meets ΔT and oil return limits.")
+            
+                if best_large is None:
+                    st.error("❌ No valid large riser meets MOR_large ≤ 100% and ΔT ≤ Max Penalty.")
                     st.stop()
-                
-                best_small = small
-                best_large = last_good
-
+            
                 st.session_state["_next_double_riser"] = True
-                st.session_state["_next_manual_small"] = best_small
+                st.session_state["_next_manual_small"] = small
                 st.session_state["_next_manual_large"] = best_large
+            
+                st.success(
+                    f"✅ **Double Riser Selected**\n\n"
+                    f"Small: **{small}** | Large: **{best_large}**\n"
+                    f"MOR (full flow): {best_MOR_full:.1f}%\n"
+                    f"MOR (large riser): {best_MOR_large:.1f}%\n"
+                    f"Temperature penalty: {best_dr.DT_K:.2f} K"
+                )
                 st.rerun()
         
         with spacer:
