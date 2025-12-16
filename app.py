@@ -2301,7 +2301,7 @@ elif tool_selection == "Manual Calculation":
                     if not math.isfinite(MOR_s):
                         continue
             
-                    if MOR_s <= min(required_oil_duty_pct, 50.0):
+                    if MOR_s <= min(required_oil_duty_pct, 49.0):
                         small_candidates.append(s)
             
                 if not small_candidates:
@@ -2345,7 +2345,7 @@ elif tool_selection == "Manual Calculation":
                     candidate_small = sizes_asc[idx - 1]
             
                     MOR_s = MOR_full_cached(candidate_small)
-                    if not math.isfinite(MOR_s) or MOR_s > min(required_oil_duty_pct, 50.0):
+                    if not math.isfinite(MOR_s) or MOR_s > min(required_oil_duty_pct, 49.0):
                         break
             
                     candidate_large, dr_c, MOR_f, MOR_l = resolve_large(
