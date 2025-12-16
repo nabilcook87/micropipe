@@ -1044,7 +1044,7 @@ elif tool_selection == "Manual Calculation":
             del st.session_state["_next_selected_size"]
 
         if "_next_double_riser" in st.session_state:
-            st.session_state["_force_double_riser"] = True
+            st.session_state["double_trouble"] = True
             st.session_state["manual_small"] = st.session_state["_next_manual_small"]
             st.session_state["manual_large"] = st.session_state["_next_manual_large"]
         
@@ -2194,12 +2194,7 @@ elif tool_selection == "Manual Calculation":
                         )
 
         with col4:
-            if "_force_double_riser" in st.session_state:
-                default_double = True
-                del st.session_state["_force_double_riser"]
-            else:
-                default_double = False
-            double_trouble = st.checkbox("Double Riser Mode", value=default_double, key="double_trouble")
+            double_trouble = st.checkbox("Double Riser Mode", key="double_trouble")
 
         if double_trouble:
             dr = balance_double_riser(
