@@ -2225,9 +2225,11 @@ elif tool_selection == "Manual Calculation":
                 MOR_correction2=MOR_correction2,
             )
 
+        if st.button("Double Riser"):
+            st.session_state.double_trouble = True
+    
         with col5:
             if st.button("Double Riser"):
-                st.session_state.double_trouble = True
                 results = []
                 failures = []
             
