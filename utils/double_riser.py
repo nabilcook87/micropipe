@@ -321,8 +321,8 @@ def balance_double_riser(
     ctx: RiserContext,
     gauge_small: Optional[str] = None,
     gauge_large: Optional[str] = None,
-    tol_kPa: float = 0.01,
-    max_iter: int = 60,
+    tol_kPa: float = 0.001,
+    max_iter: int = 100,
 ) -> DoubleRiserResult:
 
     if M_total_kg_s <= 0:
@@ -449,4 +449,5 @@ def compute_double_riser_oil_metrics(
     SST = T_evap - dr.DT_K
 
     return MOR_full_flow, MOR_large, SST, M_largeprop
+
 
