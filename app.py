@@ -2245,7 +2245,7 @@ elif tool_selection == "Manual Calculation":
                     st.error("❌ No pipe size satisfies full-flow oil return.")
                     st.stop()
                 
-                small = min(small_candidates, key=lambda s: mm_map[s])
+                small = max(small_candidates, key=lambda s: mm_map[s])
                 
                 sizes_desc = sorted(pipe_sizes, key=lambda s: mm_map[s], reverse=True)
                 
