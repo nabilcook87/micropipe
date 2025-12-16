@@ -2227,7 +2227,7 @@ elif tool_selection == "Manual Calculation":
 
         with col5:
             if st.button("Double Riser"):
-            
+                st.session_state.double_trouble = True
                 results = []
                 failures = []
             
