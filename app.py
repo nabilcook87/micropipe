@@ -2262,7 +2262,7 @@ elif tool_selection == "Manual Calculation":
                     MOR_s, _ = get_pipe_results(s)
             
                     if not math.isfinite(MOR_s):
-                        continue  # ← critical fix
+                        continue
             
                     if MOR_s <= required_oil_duty_pct:
                         small_candidates.append(s)
@@ -2273,9 +2273,9 @@ elif tool_selection == "Manual Calculation":
             
                 small = max(small_candidates, key=lambda s: mm_map[s])
             
-                def resolve_large(small):
+                def resolve_large(small, min_large_mm):
                     for large in sizes_asc:
-                        if mm_map[large] < mm_map[small]:
+                        if mm_map[large] < min_large_mm:
                             continue
             
                         dr, MOR_full, MOR_large = eval_pair(small, large)
@@ -2288,7 +2288,7 @@ elif tool_selection == "Manual Calculation":
             
                     return None, None, None, None
             
-                large, dr, MOR_full, MOR_large = resolve_large(small)
+                large, dr, MOR_full, MOR_large = resolve_large(small, mm_map[small])
             
                 if large is None:
                     st.error("❌ No valid large riser meets ΔT and MOR limits.")
@@ -2300,6 +2300,8 @@ elif tool_selection == "Manual Calculation":
                 best_MOR_full = MOR_full
                 best_MOR_large = MOR_large
             
+                prev_large_mm = mm_map[best_large]
+            
                 idx = sizes_asc.index(small)
             
                 while idx > 0:
@@ -2309,16 +2311,25 @@ elif tool_selection == "Manual Calculation":
                     if not math.isfinite(MOR_s) or MOR_s > required_oil_duty_pct:
                         break
             
-                    candidate_large, dr_c, MOR_f, MOR_l = resolve_large(candidate_small)
+                    candidate_large, dr_c, MOR_f, MOR_l = resolve_large(
+                        candidate_small,
+                        min_large_mm=mm_map[candidate_small],
+                    )
+            
                     if candidate_large is None:
                         break
             
+                    if mm_map[candidate_large] > prev_large_mm:
+                        break
+            
+                    # ✅ accept smaller geometry
                     best_small = candidate_small
                     best_large = candidate_large
                     best_dr = dr_c
                     best_MOR_full = MOR_f
                     best_MOR_large = MOR_l
             
+                    prev_large_mm = mm_map[candidate_large]
                     idx -= 1
             
                 st.session_state["_next_double_riser"] = True
