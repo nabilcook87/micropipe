@@ -2106,6 +2106,40 @@ elif tool_selection == "Manual Calculation":
         
             return mor_num, float(dt_local)
 
+        from functools import lru_cache
+        
+        @lru_cache(maxsize=None)
+        def eval_pair_cached(small, large):
+            dr = balance_double_riser(
+                size_small=small,
+                size_large=large,
+                M_total_kg_s=M_total,
+                ctx=ctx,
+                gauge_small=st.session_state.get("gauge_small"),
+                gauge_large=st.session_state.get("gauge_large"),
+            )
+        
+            MOR_full, MOR_large, SST, frac_large = compute_double_riser_oil_metrics(
+                dr=dr,
+                refrigerant=refrigerant,
+                T_evap=T_evap,
+                density_foroil=density_foroil,
+                oil_density=oil_density,
+                jg_half=jg_half,
+                mass_flow_foroil=mass_flow_foroil,
+                mass_flow_foroilmin=mass_flow_foroilmin,
+                MOR_correction=MOR_correction,
+                MOR_correctionmin=MOR_correctionmin,
+                MOR_correction2=MOR_correction2,
+            )
+        
+            return dr, MOR_full, MOR_large
+
+        @lru_cache(maxsize=None)
+        def MOR_full_cached(size):
+            MOR_s, _ = get_pipe_results(size)
+            return MOR_s
+
         col1, col2, col3, col4, col5, spacer = st.columns([0.1, 0.1, 0.1, 0.1, 0.1, 0.4])
         
         # holders for messages to show later (full width)
@@ -2259,7 +2293,7 @@ elif tool_selection == "Manual Calculation":
                 small_candidates = []
             
                 for s in sizes_asc:
-                    MOR_s, _ = get_pipe_results(s)
+                    MOR_s = MOR_full_cached(s)
             
                     if not math.isfinite(MOR_s):
                         continue
@@ -2278,7 +2312,7 @@ elif tool_selection == "Manual Calculation":
                         if mm_map[large] < min_large_mm:
                             continue
             
-                        dr, MOR_full, MOR_large = eval_pair(small, large)
+                        dr, MOR_full, MOR_large = eval_pair_cached(small, large)
             
                         if MOR_full is None or MOR_large is None:
                             continue
