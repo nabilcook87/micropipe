@@ -2226,6 +2226,8 @@ elif tool_selection == "Manual Calculation":
             )
         
         with col5:
+            if st.button("Double Riser") and not double_trouble:
+                st.warning("⚠️ Please enable **Double Riser Mode** before auto-selecting.")
             if st.button("Double Riser") and double_trouble:
                 small_candidates = []
                 for s in pipe_sizes:
