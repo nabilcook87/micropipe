@@ -2192,35 +2192,6 @@ elif tool_selection == "Manual Calculation":
                             "❌ No pipe meets both limits simultaneously.  \n"
                             "➡ Please relax one or more input limits."
                         )
-
-        if double_trouble:
-            dr = balance_double_riser(
-                manual_small,
-                manual_large,
-                M_total,
-                ctx,
-                gauge_small=gauge_small,
-                gauge_large=gauge_large,
-            )
-
-            rs = dr.small_result
-            rl = dr.large_result
-
-            from utils.double_riser import compute_double_riser_oil_metrics
-
-            MOR_full_flow, MOR_large, SST, M_largeprop = compute_double_riser_oil_metrics(
-                dr=dr,
-                refrigerant=refrigerant,
-                T_evap=T_evap,
-                density_foroil=density_foroil,
-                oil_density=oil_density,
-                jg_half=jg_half,
-                mass_flow_foroil=mass_flow_foroil,
-                mass_flow_foroilmin=mass_flow_foroilmin,
-                MOR_correction=MOR_correction,
-                MOR_correctionmin=MOR_correctionmin,
-                MOR_correction2=MOR_correction2,
-            )
     
         with col4:
             if st.button("Double Riser"):
@@ -2313,6 +2284,35 @@ elif tool_selection == "Manual Calculation":
 
         with col5:
             double_trouble = st.checkbox("Double Riser Mode", key="double_trouble")
+
+        if double_trouble:
+            dr = balance_double_riser(
+                manual_small,
+                manual_large,
+                M_total,
+                ctx,
+                gauge_small=gauge_small,
+                gauge_large=gauge_large,
+            )
+
+            rs = dr.small_result
+            rl = dr.large_result
+
+            from utils.double_riser import compute_double_riser_oil_metrics
+
+            MOR_full_flow, MOR_large, SST, M_largeprop = compute_double_riser_oil_metrics(
+                dr=dr,
+                refrigerant=refrigerant,
+                T_evap=T_evap,
+                density_foroil=density_foroil,
+                oil_density=oil_density,
+                jg_half=jg_half,
+                mass_flow_foroil=mass_flow_foroil,
+                mass_flow_foroilmin=mass_flow_foroilmin,
+                MOR_correction=MOR_correction,
+                MOR_correctionmin=MOR_correctionmin,
+                MOR_correction2=MOR_correction2,
+            )
         
         with spacer:
             st.empty()
