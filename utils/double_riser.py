@@ -12,6 +12,45 @@ from utils.refrigerant_viscosities import RefrigerantViscosities
 from utils.supercompliq_co2 import RefrigerantProps
 from utils.pressure_temp_converter import PressureTemperatureConverter
 
+from functools import lru_cache
+
+# ---- module-level singletons to avoid re-instantiation overhead ----
+_PROPS = RefrigerantProperties()
+_DENS = RefrigerantDensities()
+_VISC = RefrigerantViscosities()
+_CONV = PressureTemperatureConverter()
+
+@lru_cache(maxsize=4096)
+def _props_cached(ref: str, T_C: float) -> dict:
+    # RefrigerantProperties returns a dict of properties for a given saturation temperature (°C)
+    return _PROPS.get_properties(ref, T_C)
+
+@lru_cache(maxsize=4096)
+def _density_cached(ref: str, T_K: float, SH: float) -> float:
+    return _DENS.get_density(ref, T_K, SH)
+
+@lru_cache(maxsize=4096)
+def _visc_cached(ref: str, T_K: float, SH: float) -> float:
+    return _VISC.get_viscosity(ref, T_K, SH)
+
+@lru_cache(maxsize=4096)
+def _t2p_cached(ref: str, T_C: float) -> float:
+    return _CONV.temp_to_pressure(ref, T_C)
+
+@lru_cache(maxsize=4096)
+def _p2t_cached(ref: str, P_bar: float) -> float:
+    return _CONV.pressure_to_temp(ref, P_bar)
+
+def _friction_factor(Re: float, eps: float, D: float) -> float:
+    """Fast explicit friction factor.
+    Uses laminar 64/Re, otherwise Swamee–Jain approximation of Colebrook.
+    """
+    if Re <= 0:
+        return 0.0
+    if Re < 2000.0:
+        return 64.0 / Re
+    return 0.25 / (math.log10((eps / (3.7 * D)) + (5.74 / (Re ** 0.9))) ** 2)
+
 @dataclass
 class RiserContext:
 
@@ -147,25 +186,25 @@ def pipe_results_for_massflow(
         if ctx.gc_min_pres >= 73.8:
             h_inmin = props_sup.get_enthalpy_sup(ctx.gc_min_pres, T_min)
         elif ctx.gc_min_pres <= 72.13:
-            h_inmin = props.get_properties("R744", T_min)["enthalpy_liquid2"]
+            h_inmin = _props_cached("R744", T_min)["enthalpy_liquid2"]
         else:
             raise ValueError("Disallowed CO2 TC region")
 
-        h_evap = props.get_properties("R744", T_evap)["enthalpy_vapor"]
-        h_10K = props.get_properties("R744", T_evap)["enthalpy_super"]
+        h_evap = _props_cached("R744", T_evap)["enthalpy_vapor"]
+        h_10K = _props_cached("R744", T_evap)["enthalpy_super"]
 
         h_inlet = h_in
         h_inletmin = h_inmin
 
     else:
-        h_in = props.get_properties(ref, T_cond)["enthalpy_liquid2"]
-        h_inmin = props.get_properties(ref, T_min)["enthalpy_liquid2"]
+        h_in = _props_cached(ref, T_cond)["enthalpy_liquid2"]
+        h_inmin = _props_cached(ref, T_min)["enthalpy_liquid2"]
 
-        h_inlet = props.get_properties(ref, T_cond)["enthalpy_liquid"]
-        h_inletmin = props.get_properties(ref, T_min)["enthalpy_liquid"]
+        h_inlet = _props_cached(ref, T_cond)["enthalpy_liquid"]
+        h_inletmin = _props_cached(ref, T_min)["enthalpy_liquid"]
 
-        h_evap = props.get_properties(ref, T_evap)["enthalpy_vapor"]
-        h_10K = props.get_properties(ref, T_evap)["enthalpy_super"]
+        h_evap = _props_cached(ref, T_evap)["enthalpy_vapor"]
+        h_10K = _props_cached(ref, T_evap)["enthalpy_super"]
 
     hdiff_10K = h_10K - h_evap
     h_super = h_evap + hdiff_10K * min(max(SH, 5.0), 30.0) / 10.0
@@ -183,20 +222,20 @@ def pipe_results_for_massflow(
     m_min = Q / Δh_min if Δh_min > 0 else 0.01
 
     if ref == "R744 TC":
-        density_super = dens.get_density("R744", T_evap - penalty + 273.15, SH)
-        ds2a = dens.get_density("R744", T_evap + 273.15, ((SH + 5) / 2))
-        ds2b = dens.get_density("R744", T_evap - penalty + 273.15, ((SH + 5) / 2))
+        density_super = _density_cached("R744", T_evap - penalty + 273.15, SH)
+        ds2a = _density_cached("R744", T_evap + 273.15, ((SH + 5) / 2))
+        ds2b = _density_cached("R744", T_evap - penalty + 273.15, ((SH + 5) / 2))
         density_super2 = (ds2a + ds2b) / 2
-        density_sat = props.get_properties("R744", T_evap)["density_vapor"]
-        density_5K = dens.get_density("R744", T_evap + 273.15, 5)
+        density_sat = _props_cached("R744", T_evap)["density_vapor"]
+        density_5K = _density_cached("R744", T_evap + 273.15, 5)
 
     else:
-        density_super = dens.get_density(ref, T_evap - penalty + 273.15, SH)
-        ds2a = dens.get_density(ref, T_evap + 273.15, ((SH + 5) / 2))
-        ds2b = dens.get_density(ref, T_evap - penalty + 273.15, ((SH + 5) / 2))
+        density_super = _density_cached(ref, T_evap - penalty + 273.15, SH)
+        ds2a = _density_cached(ref, T_evap + 273.15, ((SH + 5) / 2))
+        ds2b = _density_cached(ref, T_evap - penalty + 273.15, ((SH + 5) / 2))
         density_super2 = (ds2a + ds2b) / 2
-        density_sat = props.get_properties(ref, T_evap)["density_vapor"]
-        density_5K = dens.get_density(ref, T_evap + 273.15, 5)
+        density_sat = _props_cached(ref, T_evap)["density_vapor"]
+        density_5K = _density_cached(ref, T_evap + 273.15, 5)
 
     density_mix = (density_super + density_5K) / 2
 
@@ -209,17 +248,17 @@ def pipe_results_for_massflow(
     v = max(v1*w + v2*(1-w), v1min*w + v2min*(1-w))
 
     if ref == "R744 TC":
-        vis_sup = visc.get_viscosity("R744", T_evap - penalty + 273.15, SH)
-        vs2a = visc.get_viscosity("R744", T_evap + 273.15, ((SH+5)/2))
-        vs2b = visc.get_viscosity("R744", T_evap - penalty + 273.15, ((SH+5)/2))
+        vis_sup = _visc_cached("R744", T_evap - penalty + 273.15, SH)
+        vs2a = _visc_cached("R744", T_evap + 273.15, ((SH+5)/2))
+        vs2b = _visc_cached("R744", T_evap - penalty + 273.15, ((SH+5)/2))
         vis2 = (vs2a + vs2b) / 2
-        vis5 = visc.get_viscosity("R744", T_evap + 273.15, 5)
+        vis5 = _visc_cached("R744", T_evap + 273.15, 5)
     else:
-        vis_sup = visc.get_viscosity(ref, T_evap - penalty + 273.15, SH)
-        vs2a = visc.get_viscosity(ref, T_evap + 273.15, ((SH+5)/2))
-        vs2b = visc.get_viscosity(ref, T_evap - penalty + 273.15, ((SH+5)/2))
+        vis_sup = _visc_cached(ref, T_evap - penalty + 273.15, SH)
+        vs2a = _visc_cached(ref, T_evap + 273.15, ((SH+5)/2))
+        vs2b = _visc_cached(ref, T_evap - penalty + 273.15, ((SH+5)/2))
         vis2 = (vs2a + vs2b) / 2
-        vis5 = visc.get_viscosity(ref, T_evap + 273.15, 5)
+        vis5 = _visc_cached(ref, T_evap + 273.15, 5)
 
     vis = (vis_sup + vis5)/2
     vis_final = vis*w + vis2*(1-w)
@@ -231,17 +270,7 @@ def pipe_results_for_massflow(
     # friction factor
     eps = 0.00004572 if ctx.selected_material in ["Steel SCH40","Steel SCH80"] else 0.000001524
 
-    if 0 < Re < 2000:
-        f = 64/Re
-    else:
-        f = 0.02
-        for _ in range(50):
-            lhs = 1/math.sqrt(f)
-            rhs = -2*math.log10((eps/(3.7*ID_m)) + 2.51/(Re*math.sqrt(f)))
-            if abs(lhs-rhs) < 1e-5:
-                break
-            # simple relaxation
-            f = ((1/rhs)**2)
+    f = _friction_factor(Re, eps, ID_m)
 
     # K-factors
     K_SRB = float(row["SRB"])
@@ -262,13 +291,13 @@ def pipe_results_for_massflow(
     DP = dp_pipe + dp_fit + dp_valve + dp_plf
 
     if ref == "R744 TC":
-        Pevap = conv.temp_to_pressure("R744", T_evap)
+        Pevap = _t2p_cached("R744", T_evap)
         P2 = Pevap - DP/100
-        T2 = conv.pressure_to_temp("R744", P2)
+        T2 = _p2t_cached("R744", P2)
     else:
-        Pevap = conv.temp_to_pressure(ref, T_evap)
+        Pevap = _t2p_cached(ref, T_evap)
         P2 = Pevap - DP/100
-        T2 = conv.pressure_to_temp(ref, P2)
+        T2 = _p2t_cached(ref, P2)
 
     DT = T_evap - T2
 
@@ -292,8 +321,8 @@ def balance_double_riser(
     ctx: RiserContext,
     gauge_small: Optional[str] = None,
     gauge_large: Optional[str] = None,
-    tol_kPa: float = 0.001,
-    max_iter: int = 100,
+    tol_kPa: float = 0.05,
+    max_iter: int = 30,
 ) -> DoubleRiserResult:
 
     if M_total_kg_s <= 0:
@@ -420,7 +449,3 @@ def compute_double_riser_oil_metrics(
     SST = T_evap - dr.DT_K
 
     return MOR_full_flow, MOR_large, SST, M_largeprop
-
-
-
-
