@@ -2261,8 +2261,6 @@ elif tool_selection == "Manual Calculation":
         
         with col5:
             if st.button("Double Riser") and double_trouble:
-                MOR_full_cached.cache_clear()
-                eval_pair_cached.cache_clear()
                 sizes_asc = sorted(pipe_sizes, key=lambda s: mm_map[s])
             
                 def eval_pair(small, large):
