@@ -2341,28 +2341,31 @@ elif tool_selection == "Manual Calculation":
             
                 while idx > 0:
                     candidate_small = sizes_asc[idx - 1]
-            
+                
                     MOR_s = MOR_full_cached(candidate_small)
-                    if not math.isfinite(MOR_s) or MOR_s > target:
+                    if not math.isfinite(MOR_s):
                         break
-            
+                
+                    if MOR_s < 0.5 * target:
+                        break
+                
                     candidate_large, dr_c, MOR_f, MOR_l = resolve_large(
                         candidate_small,
                         start_large=prev_large,
                     )
-            
+                
                     if candidate_large is None:
                         break
-            
-                    if mm_map[candidate_large] > mm_map[prev_large]:
+                
+                    if mm_map[candidate_large] >= mm_map[prev_large]:
                         break
-            
+                
                     best_small = candidate_small
                     best_large = candidate_large
                     best_dr = dr_c
                     best_MOR_full = MOR_f
                     best_MOR_large = MOR_l
-            
+                
                     prev_large = candidate_large
                     idx -= 1
             
