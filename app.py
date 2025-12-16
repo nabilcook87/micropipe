@@ -2227,6 +2227,7 @@ elif tool_selection == "Manual Calculation":
         
         with col5:
             if st.button("Double Riser") and double_trouble:
+            
                 sizes_asc = sorted(pipe_sizes, key=lambda s: mm_map[s])
             
                 def eval_pair(small, large):
@@ -2255,27 +2256,26 @@ elif tool_selection == "Manual Calculation":
             
                     return dr, MOR_full, MOR_large
             
-                small = None
-                last_ok = None
+                small_candidates = []
             
                 for s in sizes_asc:
                     MOR_s, _ = get_pipe_results(s)
-                    if not math.isfinite(MOR_s):
-                        break
-                    if MOR_s <= required_oil_duty_pct:
-                        last_ok = s
-                    else:
-                        break
             
-                if last_ok is None:
+                    if not math.isfinite(MOR_s):
+                        continue  # ← critical fix
+            
+                    if MOR_s <= required_oil_duty_pct:
+                        small_candidates.append(s)
+            
+                if not small_candidates:
                     st.error("❌ No pipe size satisfies full-flow oil return duty.")
                     st.stop()
             
-                small = last_ok
+                small = max(small_candidates, key=lambda s: mm_map[s])
             
-                def resolve_large(small, start_large):
+                def resolve_large(small):
                     for large in sizes_asc:
-                        if mm_map[large] < mm_map[start_large]:
+                        if mm_map[large] < mm_map[small]:
                             continue
             
                         dr, MOR_full, MOR_large = eval_pair(small, large)
@@ -2288,7 +2288,7 @@ elif tool_selection == "Manual Calculation":
             
                     return None, None, None, None
             
-                large, dr, MOR_full, MOR_large = resolve_large(small, small)
+                large, dr, MOR_full, MOR_large = resolve_large(small)
             
                 if large is None:
                     st.error("❌ No valid large riser meets ΔT and MOR limits.")
@@ -2309,8 +2309,7 @@ elif tool_selection == "Manual Calculation":
                     if not math.isfinite(MOR_s) or MOR_s > required_oil_duty_pct:
                         break
             
-                    candidate_large, dr_c, MOR_f, MOR_l = resolve_large(candidate_small, candidate_small)
-            
+                    candidate_large, dr_c, MOR_f, MOR_l = resolve_large(candidate_small)
                     if candidate_large is None:
                         break
             
