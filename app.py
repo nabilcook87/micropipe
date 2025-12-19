@@ -2314,15 +2314,20 @@ elif tool_selection == "Manual Calculation":
                     for large in sizes_asc:
                         if mm_map[large] < min_large_mm:
                             continue
-            
+                
                         dr, MOR_full, MOR_large = eval_pair_cached(small, large)
-            
+                
                         if MOR_full is None or MOR_large is None:
                             continue
-            
-                        if MOR_large <= 100.0 and dr.DT_K <= max_penalty:
-                            return large, dr, MOR_full, MOR_large
-            
+                
+                        if dr.DT_K > max_penalty:
+                            continue
+                
+                        if MOR_large > 100.0:
+                            continue
+                
+                        return large, dr, MOR_full, MOR_large
+                
                     return None, None, None, None
             
                 large, dr, MOR_full, MOR_large = resolve_large(small, mm_map[small])
