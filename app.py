@@ -2293,6 +2293,7 @@ elif tool_selection == "Manual Calculation":
             
                     return dr, MOR_full, MOR_large
             
+                # --- build candidate small list (UNCHANGED, incl. 49% cap) ---
                 small_candidates = []
             
                 for s in sizes_asc:
@@ -2308,70 +2309,70 @@ elif tool_selection == "Manual Calculation":
                     st.error("❌ No pipe size satisfies full-flow oil return duty.")
                     st.stop()
             
-                small = max(small_candidates, key=lambda s: mm_map[s])
+                # Sort small candidates from largest to smallest (existing intent preserved)
+                small_candidates = sorted(small_candidates, key=lambda s: mm_map[s], reverse=True)
             
-                def resolve_large(small, min_large_mm):
+                def resolve_large_hydraulic_only(small, min_large_mm):
+                    """
+                    Resolve hydraulically ONLY.
+                    MOR_large is intentionally ignored here (Option C).
+                    """
                     for large in sizes_asc:
                         if mm_map[large] < min_large_mm:
                             continue
-                
+            
                         dr, MOR_full, MOR_large = eval_pair_cached(small, large)
-                
+            
                         if MOR_full is None or MOR_large is None:
                             continue
-                
+            
                         if dr.DT_K > max_penalty:
                             continue
-                
-                        if MOR_large > 100.0:
-                            continue
-                
+            
+                        # IMPORTANT: MOR_large NOT checked here
                         return large, dr, MOR_full, MOR_large
-                
+            
                     return None, None, None, None
             
-                large, dr, MOR_full, MOR_large = resolve_large(small, mm_map[small])
+                # --- Option C-1 search ---
+                best_small = None
+                best_large = None
+                best_dr = None
+                best_MOR_full = None
+                best_MOR_large = None
             
-                if large is None:
-                    st.error("❌ No valid large riser meets ΔT and MOR limits.")
-                    st.stop()
+                prev_large_mm = None
             
-                best_small = small
-                best_large = large
-                best_dr = dr
-                best_MOR_full = MOR_full
-                best_MOR_large = MOR_large
-            
-                prev_large_mm = mm_map[best_large]
-            
-                idx = sizes_asc.index(small)
-            
-                while idx > 0:
-                    candidate_small = sizes_asc[idx - 1]
-            
-                    MOR_s = MOR_full_cached(candidate_small)
-                    if not math.isfinite(MOR_s) or MOR_s > min(required_oil_duty_pct, 49.0):
-                        break
-            
-                    candidate_large, dr_c, MOR_f, MOR_l = resolve_large(
-                        candidate_small,
-                        min_large_mm=mm_map[candidate_small],
+                for small in small_candidates:
+                    large, dr, MOR_full, MOR_large = resolve_large_hydraulic_only(
+                        small, mm_map[small]
                     )
             
-                    if candidate_large is None:
-                        break
-
-                    if mm_map[candidate_large] > prev_large_mm:
-                        break
+                    if large is None:
+                        continue
             
-                    best_small = candidate_small
-                    best_large = candidate_large
-                    best_dr = dr_c
-                    best_MOR_full = MOR_f
-                    best_MOR_large = MOR_l
+                    # --- POST-CONVERGENCE MOR_large ENFORCEMENT (Option C-1) ---
+                    if MOR_large > 100.0:
+                        continue
             
-                    prev_large_mm = mm_map[candidate_large]
-                    idx -= 1
+                    # --- monotonic preference preserved exactly ---
+                    if prev_large_mm is not None and mm_map[large] > prev_large_mm:
+                        continue
+            
+                    best_small = small
+                    best_large = large
+                    best_dr = dr
+                    best_MOR_full = MOR_full
+                    best_MOR_large = MOR_large
+            
+                    prev_large_mm = mm_map[large]
+            
+                    # Found first fully compliant solution
+                    break
+            
+                if best_large is None:
+                    st.error("❌ No valid double riser meets ΔT and MOR limits.")
+                    st.stop()
             
                 st.session_state["_next_double_riser"] = True
                 st.session_state["_next_manual_small"] = best_small
