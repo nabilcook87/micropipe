@@ -239,7 +239,7 @@ elif tool_selection == "Oil Return Checker":
     # 1) Pipe material
     with col2:
         if refrigerant == "R717":
-            excluded_materials = ["Copper ASTM", "Copper EN12735"]
+            excluded_materials = ["Copper ASTM", "Copper EN12735", "K65 Copper"]
             pipe_materials = sorted(m for m in pipe_data["Material"].dropna().unique()
                                     if m not in excluded_materials)
         else:
@@ -999,7 +999,7 @@ elif tool_selection == "Manual Calculation":
         # 1) Pipe material
         with col2:
             if refrigerant == "R717":
-                excluded_materials = ["Copper ASTM", "Copper EN12735"]
+                excluded_materials = ["Copper ASTM", "Copper EN12735", "K65 Copper"]
                 pipe_materials = sorted(m for m in pipe_data["Material"].dropna().unique()
                                         if m not in excluded_materials)
             else:
@@ -2543,7 +2543,7 @@ elif tool_selection == "Manual Calculation":
         # 1) Pipe material
         with col2:
             if refrigerant == "R717":
-                excluded_materials = ["Copper ASTM", "Copper EN12735"]
+                excluded_materials = ["Copper ASTM", "Copper EN12735", "K65 Copper"]
                 pipe_materials = sorted(m for m in pipe_data["Material"].dropna().unique()
                                         if m not in excluded_materials)
             else:
@@ -3192,7 +3192,7 @@ elif tool_selection == "Manual Calculation":
         # 1) Pipe material
         with col2:
             if refrigerant == "R717":
-                excluded_materials = ["Copper ASTM", "Copper EN12735"]
+                excluded_materials = ["Copper ASTM", "Copper EN12735", "K65 Copper"]
                 pipe_materials = sorted(m for m in pipe_data["Material"].dropna().unique()
                                         if m not in excluded_materials)
             else:
@@ -3835,7 +3835,7 @@ elif tool_selection == "Manual Calculation":
         # 1) Pipe material
         with col2:
             if refrigerant == "R717":
-                excluded_materials = ["Copper ASTM", "Copper EN12735"]
+                excluded_materials = ["Copper ASTM", "Copper EN12735", "K65 Copper"]
                 pipe_materials = sorted(m for m in pipe_data["Material"].dropna().unique()
                                         if m not in excluded_materials)
             else:
@@ -4300,7 +4300,7 @@ elif tool_selection == "Manual Calculation":
         # 1) Pipe material
         with col2:
             if refrigerant == "R717":
-                excluded_materials = ["Copper ASTM", "Copper EN12735"]
+                excluded_materials = ["Copper ASTM", "Copper EN12735", "K65 Copper"]
                 pipe_materials = sorted(m for m in pipe_data["Material"].dropna().unique()
                                         if m not in excluded_materials)
             else:
@@ -4854,7 +4854,7 @@ elif tool_selection == "Manual Calculation":
         # 1) Pipe material
         with col2:
             if refrigerant == "R717":
-                excluded_materials = ["Copper ASTM", "Copper EN12735"]
+                excluded_materials = ["Copper ASTM", "Copper EN12735", "K65 Copper"]
                 pipe_materials = sorted(m for m in pipe_data["Material"].dropna().unique()
                                         if m not in excluded_materials)
             else:
