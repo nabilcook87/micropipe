@@ -220,25 +220,6 @@ def system_pressure_checker_ui():
                 f"Design {result['design_pressure_bar_g']:.2f} bar"
             )
 
-    with st.expander("Show calculation details"):
-        st.json({
-            "material": selected_material,
-            "pipe_index": pipe_index,
-            "nominal_size_in": str(selected_size),
-            "od_mm": od_mm,
-            "id_mm": id_mm,
-            "gauge": gauge,
-            "allowable_stress": {
-                "value": result["allowable_stress"].value,
-                "unit": result["allowable_stress"].unit,
-            },
-            "wall_thickness_mm": result["wall_thickness"].mm,
-            "wall_thickness_in": result["wall_thickness"].inch,
-        })
-
-    with st.expander("Selected CSV row (OD/ID source)"):
-        st.dataframe(pd.DataFrame([selected_row]))
-
 if tool_selection == "Pipe Network Builder":
     builder = NetworkBuilder()
     builder.run()
