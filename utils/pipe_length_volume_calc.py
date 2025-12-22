@@ -1,7 +1,6 @@
 # utils/pipe_length_volume_calc.py
 
 import math
-from utils.system_pressure_checker import _pipe_rating_data
 
 def calculate_pipe_volume_liters(diameter_mm, length_m):
     """
