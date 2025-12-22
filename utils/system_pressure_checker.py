@@ -143,54 +143,54 @@ def calc_wall_thickness(
 
 def calc_mwp(
     *,
+    pipe_index: int,
     stress: Stress,
     wall: WallThickness,
     od_mm: float,
+    id_mm: float | None,
+    design_temp_c: float,
     copper_calc: Optional[str],
 ) -> float:
 
+    PSI_TO_BAR = 0.0689476
+
+    if pipe_index == 6:
+        if id_mm is None:
+            raise ValueError("ASTM B280 requires id_mm")
+
+        od_in = od_mm / 25.4
+        id_in = id_mm / 25.4
+
+        wall_in = (od_in - id_in) / 2.0
+        wall_in *= COPPER_WALL_TOL
+
+        temp_f = design_temp_c * 9.0 / 5.0 + 32.0
+        if temp_f < 100.0:
+            temp_f = 100.0
+
+        stress_psi = pipe_stress_psi(temp_f)
+
+        return (
+            (2.0 * stress_psi * wall_in)
+            / (od_in - 0.8 * wall_in)
+            * PSI_TO_BAR
+        )
+
     if stress.unit == "MPa":
         wall_mm = wall.mm
-        od = od_mm
-        stress_val = stress.value
-
-        mwp_bar = (20.0 * stress_val * wall_mm) / (od - wall_mm)
+        mwp_bar = (20.0 * stress.value * wall_mm) / (od_mm - wall_mm)
 
     elif stress.unit == "psi":
         wall_in = wall.inch
         od_in = od_mm / 25.4
-        stress_val = stress.value
-
-        mwp_psi = (20.0 * stress_val * wall_in) / (od_in - wall_in)
-
-        # psi → bar
-        mwp_bar = mwp_psi * 0.0689476
+        mwp_psi = (20.0 * stress.value * wall_in) / (od_in - wall_in)
+        mwp_bar = mwp_psi * PSI_TO_BAR
 
     else:
         raise ValueError(f"Unsupported stress unit: {stress.unit}")
 
     if copper_calc == "DKI":
         mwp_bar /= 3.5
-
-    PSI_TO_BAR = 0.0689476
-
-    if pipe_index == 6:
-        od_in = od_mm / 25.4
-        if id_mm is None:
-            raise ValueError("ASTM B280 requires id_mm to compute wall thickness.")
-        id_in = id_mm / 25.4
-    
-        wall_in = (od_in - id_in) / 2.0
-    
-        wall_in *= COPPER_WALL_TOL
-    
-        temp_f = design_temp_c * 9.0 / 5.0 + 32.0
-        if temp_f < 100.0:
-            temp_f = 100.0
-    
-        stress_psi = pipe_stress_psi(temp_f)
-    
-        mwp_bar = (2.0 * stress_psi * wall_in) / (od_in - 0.8 * wall_in) * PSI_TO_BAR
 
     return mwp_bar
 
@@ -276,9 +276,12 @@ def system_pressure_check(
     )
 
     mwp = calc_mwp(
+        pipe_index=pipe_index,
         stress=stress,
         wall=wall,
         od_mm=od_mm,
+        id_mm=id_mm,
+        design_temp_c=design_temp_c,
         copper_calc=copper_calc,
     )
 
