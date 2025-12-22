@@ -1,6 +1,6 @@
 from utils.refrigerant_properties import RefrigerantProperties
 from utils.friction_calculations import get_equivalent_length
-from utils.system_pressure_checker import check_pipe_rating
+from utils.system_pressure_checker import system_pressure_check
 from utils.oil_return_checker import check_oil_return
 from utils.pipe_length_volume_calc import calculate_pipe_volume_liters
 import math
