@@ -102,6 +102,8 @@ def system_pressure_checker_ui():
 
     with col2:
 
+        st.markdown("### Pipe Parameters")
+
         mwp_temp_c = st.selectbox(
             "MWP reference temperature (°C)",
             [50, 100, 150],
