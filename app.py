@@ -52,8 +52,6 @@ st.sidebar.image("assets/logo.png", use_container_width=True)
 
 def system_pressure_checker_ui():
 
-    st.subheader("System Pressure Checker")
-
     pipe_data = pd.read_csv("data/pipe_pressure_ratings_full.csv")
 
     required_cols = {"Material", "Nominal Size (inch)", "Nominal Size (mm)", "ID_mm"}
@@ -66,7 +64,7 @@ def system_pressure_checker_ui():
 
     with col1:
 
-        st.markdown("### Design Basis")
+        st.markdown("### System Pressure Checker")
     
         refrigerant = st.selectbox("Refrigerant", [
             "R404A", "R134a", "R407F", "R744", "R410A",
