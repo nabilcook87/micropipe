@@ -176,7 +176,7 @@ def calc_mwp(
         return mwp_psi * PSI_TO_BAR
 
     if pipe_index in (2, 5):
-        deduction = 0.025 if (id_mm / 25.4) <= 2 else 0.065
+        deduction = 0.025 if od_mm <= 61 else 0.065
 
         wall_in_nom = _nom_wall_in()
         wall_eff = (wall_in_nom * MILD_STEEL_WALL_TOL) - deduction
