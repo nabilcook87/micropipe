@@ -101,8 +101,12 @@ def system_pressure_checker_ui():
             )
 
     with col2:
-    
-        st.markdown("### Pipe Definition")
+
+        mwp_temp_c = st.selectbox(
+            "MWP reference temperature (°C)",
+            [50, 100, 150],
+            index=0,
+        )
     
         pipe_materials = sorted(pipe_data["Material"].dropna().unique())
         selected_material = st.selectbox("Pipe Material", pipe_materials)
@@ -198,6 +202,7 @@ def system_pressure_checker_ui():
         gauge=gauge,
         copper_calc=copper_calc,
         r744_tc_pressure_bar_g=r744_tc_pressure_bar_g,
+        mwp_temp_c=mwp_temp_c,     # ← NEW
     )
 
     limits = result["pressure_limits_bar"]
