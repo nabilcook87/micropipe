@@ -172,6 +172,26 @@ def calc_mwp(
     if copper_calc == "DKI":
         mwp_bar /= 3.5
 
+    PSI_TO_BAR = 0.0689476
+
+    if pipe_index == 6:
+        od_in = od_mm / 25.4
+        if id_mm is None:
+            raise ValueError("ASTM B280 requires id_mm to compute wall thickness.")
+        id_in = id_mm / 25.4
+    
+        wall_in = (od_in - id_in) / 2.0
+    
+        wall_in *= COPPER_WALL_TOL
+    
+        temp_f = design_temp_c * 9.0 / 5.0 + 32.0
+        if temp_f < 100.0:
+            temp_f = 100.0
+    
+        stress_psi = pipe_stress_psi(temp_f)
+    
+        mwp_bar = (2.0 * stress_psi * wall_in) / (od_in - 0.8 * wall_in) * PSI_TO_BAR
+
     return mwp_bar
 
 from utils.refrigerant_properties import RefrigerantProperties
