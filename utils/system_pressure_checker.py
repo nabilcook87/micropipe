@@ -174,33 +174,34 @@ def calc_mwp(
 
     return mwp_bar
 
+from utils.refrigerant_properties import RefrigerantProperties
+
 def calc_design_pressure_bar_g(
     *,
     refrigerant: str,
     design_temp_c: float,
     circuit: str,
-    saturation_pressure_func,
     r744_tc_pressure_bar_g: float | None = None,
 ) -> float:
 
+    # CO₂ transcritical override
     if refrigerant.upper() in ("R744", "CO2"):
         if r744_tc_pressure_bar_g is None:
-            raise ValueError(
-                "R744 transcritical design pressure must be provided"
-            )
+            raise ValueError("R744 transcritical design pressure must be provided")
         return r744_tc_pressure_bar_g
 
+    props = RefrigerantProperties()
+    data = props.get_properties(refrigerant, design_temp_c)
+
+    # VB logic:
+    # Liquid / Pumped → bubble point
+    # Suction / Discharge → dew point
     if circuit in ("Liquid", "Pumped"):
-        phase = "bubble"
+        p_abs = data["pressure_bar2"]   # bubble
     else:
-        phase = "dew"
+        p_abs = data["pressure_bar"]    # dew
 
-    p_abs = saturation_pressure_func(
-        refrigerant=refrigerant,
-        temp_c=design_temp_c,
-        phase=phase,
-    )
-
+    # Convert abs → gauge
     return p_abs - 1.0
 
 def calc_pressure_limits(
@@ -226,7 +227,6 @@ def system_pressure_check(
     id_mm: float | None = None,
     gauge: int | None = None,
     copper_calc: str | None = None,
-    saturation_pressure_func=None,
     r744_tc_pressure_bar_g: float | None = None,
 ) -> dict:
 
@@ -234,7 +234,6 @@ def system_pressure_check(
         refrigerant=refrigerant,
         design_temp_c=design_temp_c,
         circuit=circuit,
-        saturation_pressure_func=saturation_pressure_func,
         r744_tc_pressure_bar_g=r744_tc_pressure_bar_g,
     )
 
