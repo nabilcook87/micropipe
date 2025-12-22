@@ -113,14 +113,14 @@ def system_pressure_checker_ui():
             if "en12735" in m or ("copper" in m and "12735" in m):
                 return 1
     
-            if "steel" in m and ("sch 40" in m or "sched 40" in m or "schedule 40" in m):
+            if "steel" in m and ("sch 40" in m or "sched 40" in m or "schedule 40" in m or "sch40" in m or "sched40" in m or "schedule40" in m):
                 return 2
-            if "steel" in m and ("sch 80" in m or "sched 80" in m or "schedule 80" in m):
+            if "steel" in m and ("sch 80" in m or "sched 80" in m or "schedule 80" in m or "sch80" in m or "sched80" in m or "schedule80" in m):
                 return 5
     
-            if "stainless" in m and ("sch 10" in m or "sched 10" in m or "schedule 10" in m):
+            if "stainless" in m and ("sch 10" in m or "sched 10" in m or "schedule 10" in m or "sch10" in m or "sched10" in m or "schedule10" in m):
                 return 3
-            if "stainless" in m and ("sch 40" in m or "sched 40" in m or "schedule 40" in m):
+            if "stainless" in m and ("sch 40" in m or "sched 40" in m or "schedule 40" in m or "sch40" in m or "sched40" in m or "schedule40" in m):
                 return 4
     
             if "b280" in m or ("copper" in m and "astm" in m):
