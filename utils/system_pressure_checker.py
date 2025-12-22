@@ -1,69 +1,276 @@
-import pandas as pd
 
-# Load pipe rating data only once
-_pipe_rating_data = pd.read_csv("data/pipe_pressure_ratings_full.csv")
+from dataclasses import dataclass
+from typing import Optional
+import math
 
-# Imperial to metric lookup (approximate mm equivalents)
-INCH_TO_MM_MAP = {
-    "1/4": 6.35, "3/8": 9.53, "1/2": 12.7, "5/8": 15.88,
-    "3/4": 19.05, "7/8": 22.23, "1-1/8": 28.58, "1-3/8": 34.93,
-    "1-5/8": 41.28, "2-1/8": 53.98, "2-5/8": 66.68, "3-1/8": 79.38,
-    "3-5/8": 92.08, "4-1/8": 104.78,
+COPPER_WALL_TOL = 0.9
+MILD_STEEL_WALL_TOL = 0.875
+STAINLESS_WALL_TOL = 0.85
+ALUMINIUM_WALL_TOL = 0.9
+
+@dataclass(frozen=True)
+class Stress:
+    value: float
+    unit: str  # "MPa" or "psi"
+
+@dataclass(frozen=True)
+class WallThickness:
+    mm: float
+    inch: float
+
+COPPER_GAUGE_WALL_IN = {
+    22: 0.028,
+    21: 0.032,
+    20: 0.036,
+    19: 0.040,
+    18: 0.048,
+    16: 0.064,
+    14: 0.080,
+    12: 0.104,
 }
 
-def check_pipe_rating(pipe, operating_temp_C, design_pressure_bar):
+def steel_pipe_stress_psi(temp_c: float) -> float:
     """
-    Check if the pipe's pressure rating at a given temperature is above a safety threshold.
-    Supports both dict and Series inputs.
+    VB: PipeStress(T°F)
+    Polynomial valid above 100°F minimum
     """
-    design_temp_col = f"{int(round(operating_temp_C))}C"
-    columns = pipe.keys() if isinstance(pipe, dict) else pipe.index
+    temp_f = max(temp_c * 9.0 / 5.0 + 32.0, 100.0)
 
-    # Fallback if the exact temp column is not available
-    if design_temp_col not in columns:
-        design_temp_col = closest_temp_column(columns, operating_temp_C)
+    return (
+        20500
+        - 12.3 * temp_f
+        + 0.0021 * temp_f**2
+    )
 
-    try:
-        rating_val = pipe.get(design_temp_col) if isinstance(pipe, dict) else pipe[design_temp_col]
-        if pd.isna(rating_val):
-            return False
-        rating = float(rating_val)
-        return rating * 0.9 >= design_pressure_bar
-    except Exception:
-        return False
+def aluminium_pipe_stress_mpa(temp_c: float) -> float:
 
-def closest_temp_column(columns, target_temp):
-    """
-    Find the closest available temperature column name like '50C', '100C', etc.
-    """
-    temps = []
-    for col in columns:
-        if isinstance(col, str) and col.endswith("C") and col[:-1].isdigit():
-            temps.append(int(col[:-1]))
+    temp_f = temp_c * 9.0 / 5.0 + 32.0
 
-    if not temps:
-        return "50C"  # fallback
+    psi = (
+        24000
+        - 15.0 * temp_f
+        + 0.003 * temp_f**2
+    )
 
-    closest = min(temps, key=lambda x: abs(x - target_temp))
-    return f"{closest}C"
+    return (psi / 1000.0) * 6.895  # psi → MPa
 
-def get_pipe_options(material, size_inch):
-    """
-    Return a filtered DataFrame for a given pipe material and size.
-    EN pipes match by closest mm; other materials match exactly by inch.
-    """
-    df = _pipe_rating_data.copy()
-    df = df[df["Material"].str.strip().str.lower() == material.strip().lower()]
+def k65_yield_strength_mpa(temp_c: float) -> float:
 
-    if "en" in material.lower():
-        target_mm = INCH_TO_MM_MAP.get(size_inch.strip())
-        if target_mm is None or "Nominal Size (mm)" not in df.columns:
-            return pd.DataFrame()
+    temp_f = temp_c * 9.0 / 5.0 + 32.0
 
-        df = df.dropna(subset=["Nominal Size (mm)"])
-        df["_diff"] = (df["Nominal Size (mm)"] - target_mm).abs()
-        closest_mm = df.sort_values("_diff").iloc[0]["Nominal Size (mm)"]
-        df = df[df["Nominal Size (mm)"] == closest_mm].drop(columns="_diff")
-        return df
+    return (
+        500
+        - 0.25 * temp_f
+        + 0.0004 * temp_f**2
+    )
+
+def allowable_stress(
+    *,
+    pipe_index: int,
+    circuit: str,
+    copper_calc: Optional[str],
+    temp_c: float,
+) -> Stress:
+
+    if pipe_index == 1:
+        if copper_calc == "BS1306":
+            value = 34 if circuit == "Discharge" else 41
+        else:  # DKI
+            value = 180 if circuit == "Discharge" else 194
+        return Stress(value=value, unit="MPa")
+
+    if pipe_index == 6:
+        return Stress(
+            value=steel_pipe_stress_psi(temp_c),
+            unit="psi",
+        )
+
+    if pipe_index == 7:
+        return Stress(
+            value=aluminium_pipe_stress_mpa(temp_c),
+            unit="MPa",
+        )
+
+    if pipe_index == 8:
+        return Stress(
+            value=k65_yield_strength_mpa(temp_c) / 1.5,
+            unit="MPa",
+        )
+
+    if pipe_index in (2, 5):  # steel
+        return Stress(value=15000.0, unit="psi")
+
+    if pipe_index in (3, 4):  # stainless
+        return Stress(value=70000.0, unit="psi")
+
+    raise ValueError(f"Unsupported pipe index: {pipe_index}")
+
+def calc_wall_thickness(
+    *,
+    pipe_index: int,
+    od_mm: float,
+    id_mm: Optional[float] = None,
+    gauge: Optional[int] = None,
+) -> WallThickness:
+
+    if pipe_index == 1:
+        if gauge not in COPPER_GAUGE_WALL_IN:
+            raise ValueError("Invalid gauge for EN12735 copper")
+
+        t_in = COPPER_GAUGE_WALL_IN[gauge] * COPPER_WALL_TOL
+        t_mm = t_in * 25.4
+
+        return WallThickness(mm=t_mm, inch=t_in)
+
+    if id_mm is None:
+        raise ValueError("ID must be provided for non-gauge pipes")
+
+    t_mm = (od_mm - id_mm) / 2.0
+
+    # Apply tolerances
+    if pipe_index in (2, 5):  # steel
+        t_mm *= MILD_STEEL_WALL_TOL
+    elif pipe_index in (3, 4):  # stainless
+        t_mm *= STAINLESS_WALL_TOL
+    elif pipe_index == 7:  # aluminium
+        t_mm *= ALUMINIUM_WALL_TOL
+    elif pipe_index == 8:  # K65 copper
+        t_mm *= COPPER_WALL_TOL
+
+    t_in = t_mm / 25.4
+
+    return WallThickness(mm=t_mm, inch=t_in)
+
+def calc_mwp(
+    *,
+    stress: Stress,
+    wall: WallThickness,
+    od_mm: float,
+    copper_calc: Optional[str],
+) -> float:
+
+    if stress.unit == "MPa":
+        wall_mm = wall.mm
+        od = od_mm
+        stress_val = stress.value
+
+        mwp_bar = (20.0 * stress_val * wall_mm) / (od - wall_mm)
+
+    elif stress.unit == "psi":
+        wall_in = wall.inch
+        od_in = od_mm / 25.4
+        stress_val = stress.value
+
+        mwp_psi = (20.0 * stress_val * wall_in) / (od_in - wall_in)
+
+        # psi → bar
+        mwp_bar = mwp_psi * 0.0689476
+
     else:
-        return df[df["Nominal Size (inch)"].astype(str).str.strip() == str(size_inch).strip()]
+        raise ValueError(f"Unsupported stress unit: {stress.unit}")
+
+    if copper_calc == "DKI":
+        mwp_bar /= 3.5
+
+    return mwp_bar
+
+def calc_design_pressure_bar_g(
+    *,
+    refrigerant: str,
+    design_temp_c: float,
+    circuit: str,
+    saturation_pressure_func,
+    r744_tc_pressure_bar_g: float | None = None,
+) -> float:
+
+    if refrigerant.upper() in ("R744", "CO2"):
+        if r744_tc_pressure_bar_g is None:
+            raise ValueError(
+                "R744 transcritical design pressure must be provided"
+            )
+        return r744_tc_pressure_bar_g
+
+    if circuit in ("Liquid", "Pumped"):
+        phase = "bubble"
+    else:
+        phase = "dew"
+
+    p_abs = saturation_pressure_func(
+        refrigerant=refrigerant,
+        temp_c=design_temp_c,
+        phase=phase,
+    )
+
+    return p_abs - 1.0
+
+def calc_pressure_limits(
+    *,
+    design_pressure_bar_g: float,
+) -> dict[str, float]:
+
+    return {
+        "design": design_pressure_bar_g,
+        "leak_test": design_pressure_bar_g,
+        "pressure_test": 1.3 * design_pressure_bar_g,
+        "relief_setting": design_pressure_bar_g,
+        "rated_discharge": 1.1 * design_pressure_bar_g,
+    }
+
+def system_pressure_check(
+    *,
+    refrigerant: str,
+    design_temp_c: float,
+    circuit: str,
+    pipe_index: int,
+    od_mm: float,
+    id_mm: float | None = None,
+    gauge: int | None = None,
+    copper_calc: str | None = None,
+    saturation_pressure_func=None,
+    r744_tc_pressure_bar_g: float | None = None,
+) -> dict:
+
+    design_pressure = calc_design_pressure_bar_g(
+        refrigerant=refrigerant,
+        design_temp_c=design_temp_c,
+        circuit=circuit,
+        saturation_pressure_func=saturation_pressure_func,
+        r744_tc_pressure_bar_g=r744_tc_pressure_bar_g,
+    )
+
+    pressure_limits = calc_pressure_limits(
+        design_pressure_bar_g=design_pressure
+    )
+
+    stress = allowable_stress(
+        pipe_index=pipe_index,
+        circuit=circuit,
+        copper_calc=copper_calc,
+        temp_c=design_temp_c,
+    )
+
+    wall = calc_wall_thickness(
+        pipe_index=pipe_index,
+        od_mm=od_mm,
+        id_mm=id_mm,
+        gauge=gauge,
+    )
+
+    mwp = calc_mwp(
+        stress=stress,
+        wall=wall,
+        od_mm=od_mm,
+        copper_calc=copper_calc,
+    )
+
+    passes = mwp >= design_pressure
+
+    return {
+        "design_pressure_bar_g": design_pressure,
+        "pressure_limits_bar": pressure_limits,
+        "allowable_stress": stress,
+        "wall_thickness": wall,
+        "mwp_bar": mwp,
+        "pass": passes,
+        "margin_bar": mwp - design_pressure,
+    }
