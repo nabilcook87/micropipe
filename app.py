@@ -62,125 +62,131 @@ def system_pressure_checker_ui():
         st.error(f"Pipe CSV missing required columns: {sorted(missing)}")
         return
 
-    st.markdown("### Design Basis")
+    col1, col2 = st.columns(2)
 
-    refrigerant = st.selectbox("Refrigerant", [
-        "R404A", "R134a", "R407F", "R744", "R410A",
-        "R407C", "R507A", "R448A", "R449A", "R22", "R32", "R454A", "R454C", "R455A", "R407A",
-        "R290", "R1270", "R600a", "R717", "R1234ze", "R1234yf", "R12", "R11", "R454B", "R450A", "R513A", "R23", "R508B", "R502"
-    ])
+    with col1:
 
-    design_temp_c = st.number_input(
-        "Design temperature (°C)",
-        min_value=20.0,
-        max_value=50.0,
-        value=32.0,
-        step=1.0,
-    )
-
-    circuit = st.selectbox(
-        "Circuit type",
-        ["Suction", "Liquid", "Discharge", "Pumped"],
-    )
-
-    copper_calc = st.selectbox(
-        "Copper MWP calculation standard",
-        ["BS1306", "DKI"],
-        index=0,
-    )
-
-    r744_tc_pressure_bar_g = None
-    if refrigerant.upper() in ("R744", "CO2"):
-        r744_tc_pressure_bar_g = st.number_input(
-            "R744 transcritical design pressure (bar g)",
-            min_value=0.0,
+        st.markdown("### Design Basis")
+    
+        refrigerant = st.selectbox("Refrigerant", [
+            "R404A", "R134a", "R407F", "R744", "R410A",
+            "R407C", "R507A", "R448A", "R449A", "R22", "R32", "R454A", "R454C", "R455A", "R407A",
+            "R290", "R1270", "R600a", "R717", "R1234ze", "R1234yf", "R12", "R11", "R454B", "R450A", "R513A", "R23", "R508B", "R502"
+        ])
+    
+        design_temp_c = st.number_input(
+            "Design temperature (°C)",
+            min_value=20.0,
+            max_value=50.0,
+            value=32.0,
             step=1.0,
-            value=90.0,
         )
-
-    st.markdown("### Pipe Definition")
-
-    pipe_materials = sorted(pipe_data["Material"].dropna().unique())
-    selected_material = st.selectbox("Pipe Material", pipe_materials)
-
-    def material_to_pipe_index(material: str) -> int:
-        m = (material or "").strip().lower()
-
-        if "en12735" in m or ("copper" in m and "12735" in m):
-            return 1
-
-        if "steel" in m and ("sch 40" in m or "sched 40" in m or "schedule 40" in m):
-            return 2
-        if "steel" in m and ("sch 80" in m or "sched 80" in m or "schedule 80" in m):
-            return 5
-
-        if "stainless" in m and ("sch 10" in m or "sched 10" in m or "schedule 10" in m):
-            return 3
-        if "stainless" in m and ("sch 40" in m or "sched 40" in m or "schedule 40" in m):
-            return 4
-
-        if "b280" in m:
-            return 6
-
-        if "aluminium" in m or "aluminum" in m or "6061" in m:
-            return 7
-
-        if "k65" in m:
-            return 8
-
-        raise ValueError(f"Unmapped Material value: {material!r}")
-
-    try:
-        pipe_index = material_to_pipe_index(selected_material)
-    except ValueError as e:
-        st.error(str(e))
-        st.info(
-            "Fix: either rename the Material entry in the CSV to match a known pattern "
-            "(e.g. 'Copper EN12735') or extend material_to_pipe_index()."
+    
+        circuit = st.selectbox(
+            "Circuit type",
+            ["Suction", "Liquid", "Discharge", "Pumped"],
         )
-        return
+    
+        copper_calc = st.selectbox(
+            "Copper MWP calculation standard",
+            ["BS1306", "DKI"],
+            index=0,
+        )
+    
+        r744_tc_pressure_bar_g = None
+        if refrigerant.upper() in ("R744", "CO2"):
+            r744_tc_pressure_bar_g = st.number_input(
+                "R744 transcritical design pressure (bar g)",
+                min_value=0.0,
+                step=1.0,
+                value=90.0,
+            )
 
-    material_df = pipe_data[pipe_data["Material"] == selected_material].copy()
-
-    material_df["Nominal Size (inch)"] = material_df["Nominal Size (inch)"].astype(str)
-    pipe_sizes = sorted(material_df["Nominal Size (inch)"].dropna().unique())
-    selected_size = st.selectbox("Nominal Pipe Size (inch)", pipe_sizes)
-
-    size_df = material_df[material_df["Nominal Size (inch)"] == str(selected_size)].copy()
-    if size_df.empty:
-        st.error("No rows found for the selected material + nominal size.")
-        return
-
-    gauge = None
-    if "Gauge" in size_df.columns and size_df["Gauge"].notna().any():
-        # Only prompt for gauge if multiple gauge options exist
-        gauges = sorted(size_df["Gauge"].dropna().unique())
-        if len(gauges) > 1:
-            gauge = st.selectbox("Gauge", gauges)
-            selected_row = size_df[size_df["Gauge"] == gauge].iloc[0]
-        else:
-            gauge = gauges[0]
-            selected_row = size_df.iloc[0]
-    else:
-        selected_row = size_df.iloc[0]
-
-    try:
-        od_mm = float(selected_row["Nominal Size (mm)"])
-    except Exception:
-        st.error("Could not parse OD from 'Nominal Size (mm)'.")
-        return
-
-    id_mm = None
-    if pd.notna(selected_row["ID_mm"]):
+    with col2:
+    
+        st.markdown("### Pipe Definition")
+    
+        pipe_materials = sorted(pipe_data["Material"].dropna().unique())
+        selected_material = st.selectbox("Pipe Material", pipe_materials)
+    
+        def material_to_pipe_index(material: str) -> int:
+            m = (material or "").strip().lower()
+    
+            if "en12735" in m or ("copper" in m and "12735" in m):
+                return 1
+    
+            if "steel" in m and ("sch 40" in m or "sched 40" in m or "schedule 40" in m):
+                return 2
+            if "steel" in m and ("sch 80" in m or "sched 80" in m or "schedule 80" in m):
+                return 5
+    
+            if "stainless" in m and ("sch 10" in m or "sched 10" in m or "schedule 10" in m):
+                return 3
+            if "stainless" in m and ("sch 40" in m or "sched 40" in m or "schedule 40" in m):
+                return 4
+    
+            if "b280" in m:
+                return 6
+    
+            if "aluminium" in m or "aluminum" in m or "6061" in m:
+                return 7
+    
+            if "k65" in m:
+                return 8
+    
+            raise ValueError(f"Unmapped Material value: {material!r}")
+    
         try:
-            id_mm = float(selected_row["ID_mm"])
-        except Exception:
-            st.error("Could not parse ID from 'ID_mm'.")
+            pipe_index = material_to_pipe_index(selected_material)
+        except ValueError as e:
+            st.error(str(e))
+            st.info(
+                "Fix: either rename the Material entry in the CSV to match a known pattern "
+                "(e.g. 'Copper EN12735') or extend material_to_pipe_index()."
+            )
             return
-
-    if pipe_index != 1 and id_mm is None:
-        st.error("This pipe type requires ID_mm in the CSV to calculate wall thickness.")
-        return
+    
+        material_df = pipe_data[pipe_data["Material"] == selected_material].copy()
+    
+        material_df["Nominal Size (inch)"] = material_df["Nominal Size (inch)"].astype(str)
+        pipe_sizes = sorted(material_df["Nominal Size (inch)"].dropna().unique())
+        selected_size = st.selectbox("Nominal Pipe Size (inch)", pipe_sizes)
+    
+        size_df = material_df[material_df["Nominal Size (inch)"] == str(selected_size)].copy()
+        if size_df.empty:
+            st.error("No rows found for the selected material + nominal size.")
+            return
+    
+        gauge = None
+        if "Gauge" in size_df.columns and size_df["Gauge"].notna().any():
+            # Only prompt for gauge if multiple gauge options exist
+            gauges = sorted(size_df["Gauge"].dropna().unique())
+            if len(gauges) > 1:
+                gauge = st.selectbox("Gauge", gauges)
+                selected_row = size_df[size_df["Gauge"] == gauge].iloc[0]
+            else:
+                gauge = gauges[0]
+                selected_row = size_df.iloc[0]
+        else:
+            selected_row = size_df.iloc[0]
+    
+        try:
+            od_mm = float(selected_row["Nominal Size (mm)"])
+        except Exception:
+            st.error("Could not parse OD from 'Nominal Size (mm)'.")
+            return
+    
+        id_mm = None
+        if pd.notna(selected_row["ID_mm"]):
+            try:
+                id_mm = float(selected_row["ID_mm"])
+            except Exception:
+                st.error("Could not parse ID from 'ID_mm'.")
+                return
+    
+        if pipe_index != 1 and id_mm is None:
+            st.error("This pipe type requires ID_mm in the CSV to calculate wall thickness.")
+            return
 
     from utils.system_pressure_checker import system_pressure_check
 
