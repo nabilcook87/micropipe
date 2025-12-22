@@ -2,7 +2,7 @@
 import streamlit as st
 from utils.network_builder import NetworkBuilder
 from utils.pressure_temp_converter import PressureTemperatureConverter
-from utils.system_pressure_checker import check_pipe_rating, _pipe_rating_data, get_pipe_options
+from utils.system_pressure_checker import system_pressure_check
 import pandas as pd
 import math
 import bisect
