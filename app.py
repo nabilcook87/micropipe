@@ -123,7 +123,7 @@ def system_pressure_checker_ui():
             if "stainless" in m and ("sch 40" in m or "sched 40" in m or "schedule 40" in m):
                 return 4
     
-            if "b280" in m:
+            if "b280" in m or ("copper" in m and "astm" in m):
                 return 6
     
             if "aluminium" in m or "aluminum" in m or "6061" in m:
