@@ -183,7 +183,6 @@ def system_pressure_checker_ui():
         return
 
     from utils.system_pressure_checker import system_pressure_check
-    from utils.refrigerant_properties import saturation_pressure_bar_abs
 
     result = system_pressure_check(
         refrigerant=refrigerant,
@@ -194,7 +193,6 @@ def system_pressure_checker_ui():
         id_mm=id_mm,
         gauge=gauge,
         copper_calc=copper_calc,
-        saturation_pressure_func=saturation_pressure_bar_abs,
         r744_tc_pressure_bar_g=r744_tc_pressure_bar_g,
     )
 
