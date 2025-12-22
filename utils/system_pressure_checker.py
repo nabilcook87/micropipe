@@ -148,21 +148,22 @@ def calc_mwp(
     wall: WallThickness,
     od_mm: float,
     id_mm: float | None,
-    mwp_temp_c: float,          # ← NEW
+    mwp_temp_c: float,
     copper_calc: Optional[str],
 ) -> float:
-
     PSI_TO_BAR = 0.0689476
 
-    if pipe_index == 6:
+    # Helpers
+    def _od_in() -> float:
+        return od_mm / 25.4
+
+    def _nom_wall_in() -> float:
         if id_mm is None:
-            raise ValueError("ASTM B280 requires id_mm")
+            raise ValueError("This pipe type requires id_mm.")
+        return (_od_in() - (id_mm / 25.4)) / 2.0
 
-        od_in = od_mm / 25.4
-        id_in = id_mm / 25.4
-
-        wall_in = (od_in - id_in) / 2.0
-        wall_in *= COPPER_WALL_TOL
+    if pipe_index == 6:
+        wall_in = _nom_wall_in() * COPPER_WALL_TOL
 
         temp_f = mwp_temp_c * 9.0 / 5.0 + 32.0
         if temp_f < 100.0:
@@ -170,26 +171,33 @@ def calc_mwp(
 
         stress_psi = pipe_stress_psi(temp_f)
 
-        return (
-            (2.0 * stress_psi * wall_in)
-            / (od_in - 0.8 * wall_in)
-            * PSI_TO_BAR
-        )
+        mwp_psi = (2.0 * stress_psi * wall_in) / (_od_in() - 0.8 * wall_in)
+        return mwp_psi * PSI_TO_BAR
+
+    if pipe_index in (2, 5):
+        deduction = 0.025 if _od_in() <= 1.5 else 0.065
+
+        wall_in_nom = _nom_wall_in()
+        wall_eff = (wall_in_nom * MILD_STEEL_WALL_TOL) - deduction
+
+        mwp_psi = (2.0 * 15000.0 * wall_eff) / _od_in()
+        return mwp_psi * PSI_TO_BAR
+
+    if pipe_index in (3, 4):
+        wall_in_nom = _nom_wall_in()
+
+        mwp_psi = ((wall_in_nom * 2.0 * 70000.0 * STAINLESS_WALL_TOL) / _od_in()) / 4.0 * 0.7
+        return mwp_psi * PSI_TO_BAR
 
     if stress.unit == "MPa":
-        wall_mm = wall.mm
-        mwp_bar = (20.0 * stress.value * wall_mm) / (od_mm - wall_mm)
-
+        mwp_bar = (20.0 * stress.value * wall.mm) / (od_mm - wall.mm)
     elif stress.unit == "psi":
-        wall_in = wall.inch
-        od_in = od_mm / 25.4
-        mwp_psi = (20.0 * stress.value * wall_in) / (od_in - wall_in)
+        mwp_psi = (20.0 * stress.value * wall.inch) / (_od_in() - wall.inch)
         mwp_bar = mwp_psi * PSI_TO_BAR
-
     else:
         raise ValueError(f"Unsupported stress unit: {stress.unit}")
 
-    if copper_calc == "DKI":
+    if copper_calc == "DKI" and pipe_index == 1:
         mwp_bar /= 3.5
 
     return mwp_bar
