@@ -648,7 +648,6 @@ elif tool_selection == "Oil Return Checker":
     from utils.refrigerant_densities import RefrigerantDensities
     from utils.refrigerant_viscosities import RefrigerantViscosities
     from utils.supercompliq_co2 import RefrigerantProps
-    from utils.pipe_length_volume_calc import get_pipe_id_mm
     from utils.oil_return_checker import check_oil_return
 
     T_evap = evaporating_temp
@@ -1426,7 +1425,6 @@ elif tool_selection == "Manual Calculation":
         from utils.refrigerant_densities import RefrigerantDensities
         from utils.refrigerant_viscosities import RefrigerantViscosities
         from utils.supercompliq_co2 import RefrigerantProps
-        from utils.pipe_length_volume_calc import get_pipe_id_mm
         from utils.oil_return_checker import check_oil_return
     
         T_evap = evaporating_temp
@@ -2912,7 +2910,6 @@ elif tool_selection == "Manual Calculation":
         from utils.refrigerant_densities import RefrigerantDensities
         from utils.refrigerant_viscosities import RefrigerantViscosities
         from utils.supercompliq_co2 import RefrigerantProps
-        from utils.pipe_length_volume_calc import get_pipe_id_mm
     
         if refrigerant == "R744 TC":
             T_evap = evaporating_temp
@@ -3308,7 +3305,6 @@ elif tool_selection == "Manual Calculation":
         from utils.refrigerant_properties import RefrigerantProperties
         from utils.refrigerant_densities import RefrigerantDensities
         from utils.refrigerant_viscosities import RefrigerantViscosities
-        from utils.pipe_length_volume_calc import get_pipe_id_mm
         from utils.refrigerant_entropies import RefrigerantEntropies
         from utils.refrigerant_enthalpies import RefrigerantEnthalpies
         from utils.supercompliq_co2 import RefrigerantProps
@@ -3952,7 +3948,6 @@ elif tool_selection == "Manual Calculation":
         from utils.refrigerant_properties import RefrigerantProperties
         from utils.refrigerant_densities import RefrigerantDensities
         from utils.refrigerant_viscosities import RefrigerantViscosities
-        from utils.pipe_length_volume_calc import get_pipe_id_mm
         from utils.refrigerant_entropies import RefrigerantEntropies
         from utils.refrigerant_enthalpies import RefrigerantEnthalpies
 
@@ -4605,7 +4600,6 @@ elif tool_selection == "Manual Calculation":
         from utils.refrigerant_properties import RefrigerantProperties
         from utils.refrigerant_densities import RefrigerantDensities
         from utils.refrigerant_viscosities import RefrigerantViscosities
-        from utils.pipe_length_volume_calc import get_pipe_id_mm
     
         D_int = ID_mm / 1000
         A_total = math.pi * (D_int / 2)**2
@@ -5250,7 +5244,6 @@ elif tool_selection == "Manual Calculation":
         from utils.refrigerant_properties import RefrigerantProperties
         from utils.refrigerant_densities import RefrigerantDensities
         from utils.refrigerant_viscosities import RefrigerantViscosities
-        from utils.pipe_length_volume_calc import get_pipe_id_mm
     
         T_evap = evaporating_temp
     
