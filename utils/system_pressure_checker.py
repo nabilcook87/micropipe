@@ -273,3 +273,14 @@ def system_pressure_check(
         "pass": passes,
         "margin_bar": mwp - design_pressure,
     }
+
+def pipe_stress_psi(temp_f: float) -> float:
+    T2 = temp_f
+    A0 = 37600.0274576506
+    A1 = -878.367490116384
+    A2 = 9.83034307114902
+    A3 = -5.78667251130062E-02
+    A4 = 1.87333522081964E-04
+    A5 = -3.14666979085113E-07
+    A6 = 2.13333541253137E-10
+    return A0 + (A1 * T2) + (A2 * T2**2) + (A3 * T2**3) + (A4 * T2**4) + (A5 * T2**5) + (A6 * T2**6)
