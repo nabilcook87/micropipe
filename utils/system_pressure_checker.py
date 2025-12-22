@@ -80,8 +80,9 @@ def allowable_stress(
         return Stress(value=value, unit="MPa")
 
     if pipe_index == 6:
+        temp_f = max(temp_c * 9.0 / 5.0 + 32.0, 100.0)
         return Stress(
-            value=steel_pipe_stress_psi(temp_c),
+            value=pipe_stress_psi(temp_f),
             unit="psi",
         )
 
