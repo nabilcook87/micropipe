@@ -148,7 +148,7 @@ def calc_mwp(
     wall: WallThickness,
     od_mm: float,
     id_mm: float | None,
-    design_temp_c: float,
+    mwp_temp_c: float,          # ← NEW
     copper_calc: Optional[str],
 ) -> float:
 
@@ -164,7 +164,7 @@ def calc_mwp(
         wall_in = (od_in - id_in) / 2.0
         wall_in *= COPPER_WALL_TOL
 
-        temp_f = design_temp_c * 9.0 / 5.0 + 32.0
+        temp_f = mwp_temp_c * 9.0 / 5.0 + 32.0
         if temp_f < 100.0:
             temp_f = 100.0
 
@@ -241,6 +241,7 @@ def system_pressure_check(
     *,
     refrigerant: str,
     design_temp_c: float,
+    mwp_temp_c: float,        # ← NEW
     circuit: str,
     pipe_index: int,
     od_mm: float,
@@ -281,7 +282,7 @@ def system_pressure_check(
         wall=wall,
         od_mm=od_mm,
         id_mm=id_mm,
-        design_temp_c=design_temp_c,
+        mwp_temp_c=mwp_temp_c,   # ← pass separately
         copper_calc=copper_calc,
     )
 
