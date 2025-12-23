@@ -29,6 +29,29 @@ COPPER_GAUGE_WALL_IN = {
     12: 0.104,
 }
 
+def k65_wall_tolerance(od_mm: float, wall_mm_nom: float) -> float:
+    # VB logic
+    if od_mm < 18 and wall_mm_nom < 1:
+        return 0.9
+    if od_mm < 18 and wall_mm_nom >= 1:
+        return 0.87
+    if od_mm >= 18 and wall_mm_nom < 1:
+        return 0.9
+    return 0.85
+
+def k65_copper_pipe_stress_mpa(temp_c: float) -> float:
+    T2 = temp_c  # same as VB's (T°F-32)/1.8
+
+    A0 = 350.000000000019
+    A1 = -0.363883782161995
+    A2 = -5.60566148650349E-04
+    A3 = -2.22112681890077E-06
+    A4 = 4.7315606824367E-08
+    A5 = -2.00885764117952E-10
+    A6 = 2.5573812776535E-13
+
+    return A0 + (A1 * T2) + (A2 * T2**2) + (A3 * T2**3) + (A4 * T2**4) + (A5 * T2**5) + (A6 * T2**6)
+
 def steel_pipe_stress_psi(temp_c: float) -> float:
     """
     VB: PipeStress(T°F)
@@ -94,7 +117,7 @@ def allowable_stress(
 
     if pipe_index == 8:
         return Stress(
-            value=k65_yield_strength_mpa(temp_c) / 1.5,
+            value=k65_copper_pipe_stress_mpa(temp_c),  # MPa
             unit="MPa",
         )
 
@@ -135,8 +158,9 @@ def calc_wall_thickness(
         t_mm *= STAINLESS_WALL_TOL
     elif pipe_index == 7:  # aluminium
         t_mm *= ALUMINIUM_WALL_TOL
-    elif pipe_index == 8:  # K65 copper
-        t_mm *= COPPER_WALL_TOL
+    elif pipe_index == 8:  # K65 copper (VB piecewise tolerance)
+        wall_mm_nom = (od_mm - id_mm) / 2.0
+        t_mm = wall_mm_nom * k65_wall_tolerance(od_mm, wall_mm_nom)
 
     t_in = t_mm / 25.4
 
@@ -197,7 +221,7 @@ def calc_mwp(
     else:
         raise ValueError(f"Unsupported stress unit: {stress.unit}")
 
-    if copper_calc == "DKI" and pipe_index == 1:
+    if copper_calc == "DKI" and pipe_index in (1, 8):
         mwp_bar /= 3.5
 
     return mwp_bar
