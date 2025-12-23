@@ -40,7 +40,7 @@ def k65_wall_tolerance(od_mm: float, wall_mm_nom: float) -> float:
     return 0.85
 
 def k65_copper_pipe_stress_mpa(temp_c: float) -> float:
-    T2 = temp_c  # same as VB's (T°F-32)/1.8
+    T2 = (temp_c - 32.0) / 1.8
 
     A0 = 350.000000000019
     A1 = -0.363883782161995
