@@ -209,9 +209,14 @@ def calc_mwp(
     
         wall_mm = wall.mm
         od = od_mm
-        safety = 1.5
     
-        return (20.0 * (ys_mpa / safety) * wall_mm) / (od - wall_mm)
+        safety = 1.5
+        asme_factor = 3.5   # ← THIS WAS MISSING
+    
+        return (
+            (20.0 * (ys_mpa / safety) * wall_mm)
+            / (od - wall_mm)
+        ) * asme_factor
 
     if stress.unit == "MPa":
         mwp_bar = (20.0 * stress.value * wall.mm) / (od_mm - wall.mm)
