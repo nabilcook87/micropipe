@@ -72,8 +72,8 @@ def k65_yield_strength_mpa(temp_f: float) -> float:
     A3 = 1.14870520783601e-05
     A4 = -3.386048733876e-08
 
-    ksi = A0 + A1*T2 + A2*T2**2 + A3*T2**3 + A4*T2**4
-    return ksi * 6.894757293
+    # VB: returns MPa (N/mm²) directly
+    return A0 + A1*T2 + A2*T2**2 + A3*T2**3 + A4*T2**4
 
 def allowable_stress(
     *,
@@ -207,30 +207,25 @@ def calc_mwp(
         if id_mm is None:
             raise ValueError("K65 requires id_mm")
     
-        # Geometry
+        # Wall thickness with K65 tolerance (matches VB)
         wall_nom_mm = (od_mm - id_mm) / 2.0
-        tol = k65_wall_tolerance(od_mm, wall_nom_mm)
-        wall_mm = wall_nom_mm * tol
+        wall_mm = wall_nom_mm * k65_wall_tolerance(od_mm, wall_nom_mm)
     
-        # Yield strength (VB: DesignTemp passed directly)
         temp_f = mwp_temp_c * 9.0 / 5.0 + 32.0
-        ys_mpa = k65_yield_strength_mpa(temp_f)
+        ys_mpa = k65_yield_strength_mpa(temp_f)  # MPa, no extra conversion
     
         safety = 1.5
     
-        # VB PressCalc = 1 (BSI)
-        #return (
-            #20.0 * ys_mpa * wall_mm
-        #) / (
-            #(od_mm - wall_mm) * safety
-        #)
-
-        # VB PressCalc = 2 (ASME)
-        return (
-            20.0 * (ys_mpa / safety) * wall_mm
-        ) / (
-            (od_mm - wall_mm) * 3.5
-        )
+        # Map your UI choice to VB PressCalc:
+        # BSI -> 1, DKI -> 2 (same idea as VB flags)
+        press_calc = 1 if copper_calc == "BS1306" else 2
+    
+        if press_calc == 1:
+            # VB PressCalc=1
+            return (20.0 * ys_mpa * wall_mm) / ((od_mm - wall_mm) * safety)
+    
+        # VB PressCalc=2 (ASME)
+        return (20.0 * (ys_mpa / safety) * wall_mm) / ((od_mm - wall_mm) * 3.5)
 
     if stress.unit == "MPa":
         mwp_bar = (20.0 * stress.value * wall.mm) / (od_mm - wall.mm)
