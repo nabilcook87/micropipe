@@ -32,12 +32,12 @@ COPPER_GAUGE_WALL_IN = {
 def k65_wall_tolerance(od_mm: float, wall_mm_nom: float) -> float:
     # VB logic
     if od_mm < 18 and wall_mm_nom < 1:
-        return 0.9
+        return 0.95
     if od_mm < 18 and wall_mm_nom >= 1:
-        return 0.9
+        return 0.95
     if od_mm >= 18 and wall_mm_nom < 1:
-        return 0.9
-    return 0.9
+        return 0.95
+    return 0.95
 
 def k65_copper_pipe_stress_mpa(temp_c: float) -> float:
     T2 = temp_c  # same as VB's (T°F-32)/1.8
