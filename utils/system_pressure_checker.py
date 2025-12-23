@@ -207,7 +207,7 @@ def calc_mwp(
             raise ValueError("K65 requires id_mm")
     
         temp_f = mwp_temp_c * 9.0 / 5.0 + 32.0
-        ys_mpa = k65_yield_strength_mpa_from_temp_f(temp_f)
+        ys_mpa = k65_yield_strength_mpa(temp_f)
     
         safety = 1.5
         wall_mm = wall.mm
