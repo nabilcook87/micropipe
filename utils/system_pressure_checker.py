@@ -204,19 +204,35 @@ def calc_mwp(
         return mwp_psi * PSI_TO_BAR
 
     if pipe_index == 8:
+        if id_mm is None:
+            raise ValueError("K65 requires id_mm")
+    
+        # Geometry
+        wall_nom_mm = (od_mm - id_mm) / 2.0
+        tol = k65_wall_tolerance(od_mm, wall_nom_mm)
+        wall_mm = wall_nom_mm * tol
+    
+        # Yield strength (VB: DesignTemp passed directly)
         temp_f = mwp_temp_c * 9.0 / 5.0 + 32.0
         ys_mpa = k65_yield_strength_mpa(temp_f)
     
-        wall_mm = wall.mm
-        od = od_mm
-    
         safety = 1.5
-        asme_factor = 3.5   # ← THIS WAS MISSING
     
-        return (
-            (20.0 * (ys_mpa / safety) * wall_mm)
-            / (od - wall_mm)
-        ) * asme_factor
+        if PressCalc == 1:
+            # VB PressCalc = 1 (BSI)
+            return (
+                20.0 * ys_mpa * wall_mm
+            ) / (
+                (od_mm - wall_mm) * safety
+            )
+    
+        else:
+            # VB PressCalc = 2 (ASME)
+            return (
+                20.0 * (ys_mpa / safety) * wall_mm
+            ) / (
+                (od_mm - wall_mm) * 3.5
+            )
 
     if stress.unit == "MPa":
         mwp_bar = (20.0 * stress.value * wall.mm) / (od_mm - wall.mm)
