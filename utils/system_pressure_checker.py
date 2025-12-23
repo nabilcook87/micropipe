@@ -218,21 +218,19 @@ def calc_mwp(
     
         safety = 1.5
     
-        if PressCalc == 1:
-            # VB PressCalc = 1 (BSI)
-            return (
-                20.0 * ys_mpa * wall_mm
-            ) / (
-                (od_mm - wall_mm) * safety
-            )
-    
-        else:
-            # VB PressCalc = 2 (ASME)
-            return (
-                20.0 * (ys_mpa / safety) * wall_mm
-            ) / (
-                (od_mm - wall_mm) * 3.5
-            )
+        # VB PressCalc = 1 (BSI)
+        return (
+            20.0 * ys_mpa * wall_mm
+        ) / (
+            (od_mm - wall_mm) * safety
+        )
+
+        # VB PressCalc = 2 (ASME)
+        # return (
+            # 20.0 * (ys_mpa / safety) * wall_mm
+        # ) / (
+            # (od_mm - wall_mm) * 3.5
+        # )
 
     if stress.unit == "MPa":
         mwp_bar = (20.0 * stress.value * wall.mm) / (od_mm - wall.mm)
