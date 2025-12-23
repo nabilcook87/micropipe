@@ -208,7 +208,7 @@ def calc_mwp(
     
         # Use MWP reference temperature (50/100/150), converted to °F (VB expects °F input)
         temp_f = mwp_temp_c * 9.0 / 5.0 + 32.0
-        ys_mpa = k65_yield_strength_mpa_from_temp_f(temp_f)
+        ys_mpa = k65_yield_strength_mpa(temp_f)
     
         # Wall thickness should already include the K65 tolerance from calc_wall_thickness()
         wall_mm = wall.mm
