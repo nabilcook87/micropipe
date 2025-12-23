@@ -64,7 +64,6 @@ def aluminium_pipe_stress_mpa(temp_c: float) -> float:
     return (psi / 1000.0) * 6.895  # psi → MPa
 
 def k65_yield_strength_mpa(temp_f: float) -> float:
-    # VB: T2 = (T - 32) / 1.8
     T2 = (temp_f - 32.0) / 1.8
 
     A0 = 153.411968466317
@@ -73,7 +72,8 @@ def k65_yield_strength_mpa(temp_f: float) -> float:
     A3 = 1.14870520783601e-05
     A4 = -3.386048733876e-08
 
-    return A0 + (A1 * T2) + (A2 * T2**2) + (A3 * T2**3) + (A4 * T2**4)
+    ksi = A0 + A1*T2 + A2*T2**2 + A3*T2**3 + A4*T2**4
+    return ksi * 6.894757293
 
 def allowable_stress(
     *,
