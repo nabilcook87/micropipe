@@ -115,29 +115,35 @@ def system_pressure_checker_ui():
     
         def material_to_pipe_index(material: str) -> int:
             m = (material or "").strip().lower()
-    
+        
+            # --- Copper ---
             if "en12735" in m or ("copper" in m and "12735" in m):
                 return 1
-    
-            if "steel" in m and ("sch 40" in m or "sched 40" in m or "schedule 40" in m or "sch40" in m or "sched40" in m or "schedule40" in m):
-                return 2
-            if "steel" in m and ("sch 80" in m or "sched 80" in m or "schedule 80" in m or "sch80" in m or "sched80" in m or "schedule80" in m):
-                return 5
-    
-            if "stainless" in m and ("sch 10" in m or "sched 10" in m or "schedule 10" in m or "sch10" in m or "sched10" in m or "schedule10" in m):
-                return 3
-            if "stainless" in m and ("sch 40" in m or "sched 40" in m or "schedule 40" in m or "sch40" in m or "sched40" in m or "schedule40" in m):
-                return 4
-    
             if "b280" in m or ("copper" in m and "astm" in m):
                 return 6
-    
-            if "aluminium" in m or "aluminum" in m or "6061" in m:
-                return 7
-    
             if "k65" in m:
                 return 8
-    
+        
+            # --- Aluminium ---
+            if "aluminium" in m or "aluminum" in m or "6061" in m:
+                return 7
+        
+            # --- Stainless MUST come before steel ---
+            if "stainless" in m:
+                if "sch10" in m or "sch 10" in m or "schedule 10" in m:
+                    return 3
+                if "sch40" in m or "sch 40" in m or "schedule 40" in m:
+                    return 4
+                raise ValueError(f"Unmapped stainless schedule: {material!r}")
+        
+            # --- Carbon steel (explicitly excludes stainless now) ---
+            if "steel" in m:
+                if "sch40" in m or "sch 40" in m or "schedule 40" in m:
+                    return 2
+                if "sch80" in m or "sch 80" in m or "schedule 80" in m:
+                    return 5
+                raise ValueError(f"Unmapped steel schedule: {material!r}")
+        
             raise ValueError(f"Unmapped Material value: {material!r}")
     
         try:
