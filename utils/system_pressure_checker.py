@@ -104,6 +104,7 @@ def allowable_stress(
         )
 
     if pipe_index == 8:
+        temp_f = temp_c * 9.0 / 5.0 + 32.0
         return Stress(
             value=k65_yield_strength_mpa(temp_f) / 1.5,
             unit="MPa",
