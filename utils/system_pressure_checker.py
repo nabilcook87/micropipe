@@ -77,16 +77,6 @@ def aluminium_pipe_stress_mpa(temp_c: float) -> float:
 
     return (psi / 1000.0) * 6.895  # psi → MPa
 
-def k65_yield_strength_mpa(temp_c: float) -> float:
-
-    temp_f = temp_c * 9.0 / 5.0 + 32.0
-
-    return (
-        500
-        - 0.25 * temp_f
-        + 0.0004 * temp_f**2
-    )
-
 def allowable_stress(
     *,
     pipe_index: int,
@@ -117,7 +107,7 @@ def allowable_stress(
 
     if pipe_index == 8:
         return Stress(
-            value=k65_copper_pipe_stress_mpa(temp_c),  # MPa
+            value=k65_copper_pipe_stress_mpa(mwp_temp_c),  # MPa
             unit="MPa",
         )
 
