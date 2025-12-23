@@ -83,6 +83,7 @@ def allowable_stress(
     circuit: str,
     copper_calc: Optional[str],
     temp_c: float,
+    mwp_temp_c: float | None = None,
 ) -> Stress:
 
     if pipe_index == 1:
@@ -289,6 +290,7 @@ def system_pressure_check(
         circuit=circuit,
         copper_calc=copper_calc,
         temp_c=design_temp_c,
+        mwp_temp_c=mwp_temp_c,
     )
 
     wall = calc_wall_thickness(
