@@ -207,18 +207,12 @@ def calc_mwp(
             raise ValueError("K65 requires id_mm")
     
         temp_f = mwp_temp_c * 9.0 / 5.0 + 32.0
-        ys_mpa = k65_yield_strength_mpa(temp_f)
+        ys_mpa = k65_yield_strength_mpa_from_temp_f(temp_f)
     
-        wall_mm = wall.mm
-        od = od_mm
         safety = 1.5
-    
-        presscalc = 1 if (copper_calc == "BS1306") else 2
-    
-        if presscalc == 1:
-            return (20.0 * ys_mpa * wall_mm) / ((od - wall_mm) * safety)
-        else:
-            return (20.0 * (ys_mpa / safety) * wall_mm) / ((od - wall_mm) * 3.5)
+        wall_mm = wall.mm
+        mwp_bar = (20.0 * ys_mpa * wall_mm) / ((od_mm - wall_mm) * safety)
+        return mwp_bar
 
     if stress.unit == "MPa":
         mwp_bar = (20.0 * stress.value * wall.mm) / (od_mm - wall.mm)
