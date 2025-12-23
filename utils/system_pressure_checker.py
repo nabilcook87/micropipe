@@ -29,6 +29,15 @@ COPPER_GAUGE_WALL_IN = {
     12: 0.104,
 }
 
+def k65_wall_tolerance(od_mm: float, wall_mm_nom: float) -> float:
+    if od_mm < 18 and wall_mm_nom < 1:
+        return 0.9
+    if od_mm < 18 and wall_mm_nom >= 1:
+        return 0.87
+    if od_mm >= 18 and wall_mm_nom < 1:
+        return 0.9
+    return 0.85
+
 def steel_pipe_stress_psi(temp_c: float) -> float:
     """
     VB: PipeStress(T°F)
@@ -54,15 +63,17 @@ def aluminium_pipe_stress_mpa(temp_c: float) -> float:
 
     return (psi / 1000.0) * 6.895  # psi → MPa
 
-def k65_yield_strength_mpa(temp_c: float) -> float:
+def k65_yield_strength_mpa(temp_f: float) -> float:
+    # VB: T2 = (T - 32) / 1.8
+    T2 = (temp_f - 32.0) / 1.8
 
-    temp_f = temp_c * 9.0 / 5.0 + 32.0
+    A0 = 153.411968466317
+    A1 = -0.164870520783605
+    A2 = -5.02591973244193e-04
+    A3 = 1.14870520783601e-05
+    A4 = -3.386048733876e-08
 
-    return (
-        500
-        - 0.25 * temp_f
-        + 0.0004 * temp_f**2
-    )
+    return A0 + (A1 * T2) + (A2 * T2**2) + (A3 * T2**3) + (A4 * T2**4)
 
 def allowable_stress(
     *,
@@ -136,7 +147,9 @@ def calc_wall_thickness(
     elif pipe_index == 7:  # aluminium
         t_mm *= ALUMINIUM_WALL_TOL
     elif pipe_index == 8:  # K65 copper
-        t_mm *= COPPER_WALL_TOL
+        wall_mm_nom = (od_mm - id_mm) / 2.0
+        tol = k65_wall_tolerance(od_mm, wall_mm_nom)
+        t_mm = wall_mm_nom * tol
 
     t_in = t_mm / 25.4
 
@@ -188,6 +201,24 @@ def calc_mwp(
         wall_in_nom = _nom_wall_in()
         mwp_psi = ((wall_in_nom * 2.0 * 70000.0 * STAINLESS_WALL_TOL) / _od_in()) / 4.0 * 0.7
         return mwp_psi * PSI_TO_BAR
+
+    if pipe_index == 8:
+        if id_mm is None:
+            raise ValueError("K65 requires id_mm")
+    
+        temp_f = mwp_temp_c * 9.0 / 5.0 + 32.0
+        ys_mpa = k65_yield_strength_mpa(temp_f)
+    
+        wall_mm = wall.mm
+        od = od_mm
+        safety = 1.5
+    
+        presscalc = 1 if (copper_calc == "BS1306") else 2
+    
+        if presscalc == 1:
+            return (20.0 * ys_mpa * wall_mm) / ((od - wall_mm) * safety)
+        else:
+            return (20.0 * (ys_mpa / safety) * wall_mm) / ((od - wall_mm) * 3.5)
 
     if stress.unit == "MPa":
         mwp_bar = (20.0 * stress.value * wall.mm) / (od_mm - wall.mm)
