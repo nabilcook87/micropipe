@@ -108,7 +108,7 @@ def allowable_stress(
 
     if pipe_index == 8:
         return Stress(
-            value=k65_copper_pipe_stress_mpa(mwp_temp_c),  # MPa
+            value=int(round(k65_copper_pipe_stress_mpa(mwp_temp_c))),  # MPa
             unit="MPa",
         )
 
