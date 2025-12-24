@@ -150,7 +150,8 @@ def calc_wall_thickness(
     elif pipe_index == 7:  # aluminium
         t_mm *= ALUMINIUM_WALL_TOL
     elif pipe_index == 8:  # K65 copper (VB piecewise tolerance)
-        wall_mm_nom = (od_mm - id_mm) / 2.0
+        pre_wall_mm_nom = (od_mm - id_mm) / 2.0
+        wall_mm_nom = round(pre_wall_mm_nom, 3)
         t_mm = wall_mm_nom * k65_wall_tolerance(od_mm, wall_mm_nom)
 
     t_in = t_mm / 25.4
