@@ -216,11 +216,11 @@ def calc_mwp(
         mwp_bar /= 3.5
 
     if copper_calc == "DKI" and pipe_index == 8:
-        if mwp_temp_c = 50
+        if mwp_temp_c == 50:
             mwp_bar = mwp_bar * 1.5
-        if mwp_temp_c = 100
+        if mwp_temp_c == 100:
             mwp_bar = mwp_bar * 1.5
-        if mwp_temp_c = 150
+        if mwp_temp_c == 150:
             mwp_bar = mwp_bar * 1.357
 
     return mwp_bar
