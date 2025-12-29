@@ -56,6 +56,19 @@ def k65_copper_pipe_stress_mpa(temp_c: float) -> float:
 
     return A0 + (A1 * T2) + (A2 * T2**2) + (A3 * T2**3) + (A4 * T2**4) + (A5 * T2**5) + (A6 * T2**6)
 
+def aluminium_pipe_stress_mpa(temp_c: float) -> float:
+    T2 = (temp_c * 1.8) + 32
+
+    A0 = 8499.99990167723
+    A1 = 4.16666961650599
+    A2 = -5.83333682318413E-02
+    A3 = 3.33333542883621E-04
+    A4 = -6.66667343674366E-07
+    A5 = 1.12102053282222E-15
+    A6 = -7.46321063659667E-19
+    
+    return ((A0 + (A1 * T2) + (A2 * T2**2) + (A3 * T2**3) + (A4 * T2**4) + (A5 * T2**5) + (A6 * T2**6)) / 1000) * 6.895
+
 def steel_pipe_stress_psi(temp_c: float) -> float:
     """
     VB: PipeStress(T°F)
@@ -68,18 +81,6 @@ def steel_pipe_stress_psi(temp_c: float) -> float:
         - 12.3 * temp_f
         + 0.0021 * temp_f**2
     )
-
-def aluminium_pipe_stress_mpa(temp_c: float) -> float:
-
-    temp_f = temp_c * 9.0 / 5.0 + 32.0
-
-    psi = (
-        24000
-        - 15.0 * temp_f
-        + 0.003 * temp_f**2
-    )
-
-    return (psi / 1000.0) * 6.895  # psi → MPa
 
 def allowable_stress(
     *,
