@@ -250,7 +250,10 @@ def system_pressure_checker_ui():
         st.metric("Pressure test", f"{limits['pressure_test']:.2f} bar")
 
     with col2:
-        st.metric("High pressure cut-out", f"{limits['hp_cutout']:.2f} bar")
+        if circuit in ("Suction", "Pumped"):
+            st.metric("High pressure cut-out", "N/A")
+        else:
+            st.metric("High pressure cut-out", f"{limits['hp_cutout']:.2f} bar")
         st.metric("Relief valve setting", f"{limits['relief_setting']:.2f} bar")
         st.metric("Relief valve rated discharge", f"{limits['rated_discharge']:.2f} bar")
 
