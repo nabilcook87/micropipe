@@ -189,7 +189,7 @@ def calc_mwp(
         stress_psi = pipe_stress_psi(temp_f)
 
         mwp_psi = (2.0 * stress_psi * wall_in) / (_od_in() - 0.8 * wall_in)
-        return mwp_psi * PSI_TO_BAR
+        mwp_bar = mwp_psi * PSI_TO_BAR
 
     if pipe_index in (2, 5):
         deduction = 0.025 if od_mm <= 61 else 0.065
@@ -198,12 +198,12 @@ def calc_mwp(
         wall_eff = (wall_in_nom * MILD_STEEL_WALL_TOL) - deduction
 
         mwp_psi = (2.0 * 15000.0 * wall_eff) / _od_in()
-        return mwp_psi * PSI_TO_BAR
+        mwp_bar = mwp_psi * PSI_TO_BAR
 
     if pipe_index in (3, 4):
         wall_in_nom = _nom_wall_in()
         mwp_psi = ((wall_in_nom * 2.0 * 70000.0 * STAINLESS_WALL_TOL) / _od_in()) / 4.0 * 0.7
-        return mwp_psi * PSI_TO_BAR
+        mwp_bar = mwp_psi * PSI_TO_BAR
 
     if stress.unit == "MPa":
         mwp_bar = (20.0 * stress.value * wall.mm) / (od_mm - wall.mm)
