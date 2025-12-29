@@ -196,12 +196,16 @@ def calc_mwp(
 
     if pipe_index in (2, 5):
         deduction = 0.025 if od_mm <= 61 else 0.065
-
+    
         wall_in_nom = _nom_wall_in()
         wall_eff = (wall_in_nom * MILD_STEEL_WALL_TOL) - deduction
-
-        mwp_psi = (2.0 * 15000.0 * wall_eff) / _od_in()
-        return mwp_psi * PSI_TO_BAR
+    
+        mwps = {}
+        for weld, stress_psi in steel_weld_stresses_by_size(od_mm).items():
+            mwp_psi = (2.0 * stress_psi * wall_eff) / _od_in()
+            mwps[weld] = mwp_psi * PSI_TO_BAR
+    
+        return mwps
 
     if pipe_index in (3, 4):
         wall_in_nom = _nom_wall_in()
