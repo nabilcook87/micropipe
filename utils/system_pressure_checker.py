@@ -340,6 +340,9 @@ def system_pressure_check(
         "mwp_bar": mwp,
         "pass": passes,
         "margin_bar": mwp - design_pressure,
+        "mwp_50": mwp_50,
+        "mwp_100": mwp_100,
+        "mwp_150": mwp_150,
     }
 
 def pipe_stress_psi(temp_f: float) -> float:
