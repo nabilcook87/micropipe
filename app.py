@@ -227,15 +227,43 @@ def system_pressure_checker_ui():
         st.metric("Relief valve rated discharge", f"{limits['rated_discharge']:.2f} bar")
 
     with col2:
-        st.metric("Maximum Working Pressure (MWP)", f"{result['mwp_bar']:.2f} bar")
-
-        if result["pass"]:
-            st.success(f"✅ Pipe rated for system pressure (margin {result['margin_bar']:.2f} bar)")
+        mwp = result["mwp_bar"]
+        passed = result["pass"]
+        margin = result["margin_bar"]
+    
+        # Steel now returns multiple MWPs (seamless/erw/cw). Others return a single float.
+        if isinstance(mwp, dict):
+            # Show each available weld type
+            for weld_key in ["seamless", "erw", "cw"]:
+                if weld_key in mwp:
+                    st.metric(f"MWP – {weld_key.upper()}", f"{mwp[weld_key]:.2f} bar")
+    
+            # Governing (lowest) value for overall pass/fail messaging
+            gov_weld, gov_mwp = min(mwp.items(), key=lambda kv: kv[1])
+            gov_pass = passed[gov_weld]
+            gov_margin = margin[gov_weld]
+    
+            st.metric("Governing MWP", f"{gov_mwp:.2f} bar", help=f"Lowest value ({gov_weld.upper()})")
+    
+            if gov_pass:
+                st.success(f"✅ Pipe rated (governing: {gov_weld.upper()}, margin {gov_margin:.2f} bar)")
+            else:
+                st.error(
+                    f"❌ Pipe NOT rated (governing: {gov_weld.upper()}): "
+                    f"MWP {gov_mwp:.2f} bar < Design {result['design_pressure_bar_g']:.2f} bar"
+                )
+    
         else:
-            st.error(
-                f"❌ Pipe NOT rated: MWP {result['mwp_bar']:.2f} bar < "
-                f"Design {result['design_pressure_bar_g']:.2f} bar"
-            )
+            # Non-steel: original behaviour
+            st.metric("Maximum Working Pressure (MWP)", f"{mwp:.2f} bar")
+    
+            if passed:
+                st.success(f"✅ Pipe rated for system pressure (margin {margin:.2f} bar)")
+            else:
+                st.error(
+                    f"❌ Pipe NOT rated: MWP {mwp:.2f} bar < "
+                    f"Design {result['design_pressure_bar_g']:.2f} bar"
+                )
 
 if tool_selection == "Pipe Network Builder":
     builder = NetworkBuilder()
