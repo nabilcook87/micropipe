@@ -272,6 +272,7 @@ def calc_pressure_limits(
         "design": design_pressure_bar_g,
         "leak_test": design_pressure_bar_g,
         "pressure_test": 1.3 * design_pressure_bar_g,
+        "hp_cutout": 0.9 * design_pressure_bar_g,
         "relief_setting": design_pressure_bar_g,
         "rated_discharge": 1.1 * design_pressure_bar_g,
     }
