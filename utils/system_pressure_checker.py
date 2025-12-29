@@ -225,6 +225,18 @@ def calc_mwp(
 
     return mwp_bar
 
+    if pipe_index == 1 and copper_calc == "BS1306":
+        mwp_50 = (20.0 * 41.0 * wall.mm) / (od_mm - wall.mm)
+        mwp_100 = (20.0 * 40.0 * wall.mm) / (od_mm - wall.mm)
+        mwp_150 = (20.0 * 34.0 * wall.mm) / (od_mm - wall.mm)
+        return mwp_50, mwp_100, mwp_150
+
+    if pipe_index == 1 and copper_calc == "DKI":
+        mwp_50 = ((20.0 * 194.0 * wall.mm) / (od_mm - wall.mm)) / 3.5
+        mwp_100 = ((20.0 * 192.0 * wall.mm) / (od_mm - wall.mm)) / 3.5
+        mwp_150 = ((20.0 * 180.0 * wall.mm) / (od_mm - wall.mm)) / 3.5
+        return mwp_50, mwp_100, mwp_150
+
 from utils.refrigerant_properties import RefrigerantProperties
 
 def calc_design_pressure_bar_g(
