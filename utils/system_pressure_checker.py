@@ -8,6 +8,10 @@ MILD_STEEL_WALL_TOL = 0.875
 STAINLESS_WALL_TOL = 0.85
 ALUMINIUM_WALL_TOL = 0.9
 
+SEAMLESS_STEEL_STRESS_PSI = 15000.0
+ERW_STEEL_STRESS_PSI = 12800.0
+CW_STEEL_STRESS_PSI = 6800.0
+
 @dataclass(frozen=True)
 class Stress:
     value: float
@@ -340,3 +344,26 @@ def pipe_stress_psi(temp_f: float) -> float:
     A5 = -3.14666979085113E-07
     A6 = 2.13333541253137E-10
     return A0 + (A1 * T2) + (A2 * T2**2) + (A3 * T2**3) + (A4 * T2**4) + (A5 * T2**5) + (A6 * T2**6)
+
+def steel_weld_stresses_by_size(od_mm: float) -> dict[str, float]:
+    """
+    Returns applicable steel stresses (psi) keyed by weld type.
+    Always includes 'seamless'.
+    """
+    stresses = {
+        "seamless": SEAMLESS_STEEL_STRESS_PSI,
+    }
+
+    # OD thresholds correspond to ~2" and ~4"
+    # 2" OD ≈ 60.3 mm
+    # 4" OD ≈ 114.3 mm
+
+    if od_mm < 60.3:
+        stresses["cw"] = CW_STEEL_STRESS_PSI
+    elif 60.3 <= od_mm <= 114.3:
+        stresses["cw"] = CW_STEEL_STRESS_PSI
+        stresses["erw"] = ERW_STEEL_STRESS_PSI
+    else:
+        stresses["erw"] = ERW_STEEL_STRESS_PSI
+
+    return stresses
