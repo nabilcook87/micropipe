@@ -217,16 +217,18 @@ def system_pressure_checker_ui():
 
     st.markdown("### Results")
 
-    col1, col2 = st.columns(2)
+    col1, col2, col3 = st.columns(3)
 
     with col1:
         st.metric("System design pressure", f"{result['design_pressure_bar_g']:.2f} bar(g)")
         st.metric("Leak test pressure", f"{limits['leak_test']:.2f} bar")
         st.metric("Pressure test", f"{limits['pressure_test']:.2f} bar")
+
+    with col2:
         st.metric("Relief valve setting", f"{limits['relief_setting']:.2f} bar")
         st.metric("Relief valve rated discharge", f"{limits['rated_discharge']:.2f} bar")
 
-    with col2:
+    with col3:
         mwp = result["mwp_bar"]
         passed = result["pass"]
         margin = result["margin_bar"]
