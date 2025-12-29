@@ -71,19 +71,44 @@ def system_pressure_checker_ui():
             "R407C", "R507A", "R448A", "R449A", "R22", "R32", "R454A", "R454C", "R455A", "R407A",
             "R290", "R1270", "R600a", "R717", "R1234ze", "R1234yf", "R12", "R11", "R454B", "R450A", "R513A", "R23", "R508B", "R502"
         ])
-    
-        design_temp_c = st.number_input(
-            "Design temperature (°C)",
-            min_value=20.0,
-            max_value=50.0,
-            value=32.0,
-            step=1.0,
-        )
-    
+
         circuit = st.selectbox(
             "Circuit type",
             ["Suction", "Liquid", "Discharge", "Pumped"],
         )
+
+        if circuit == "Suction":
+            design_temp_c = st.number_input(
+                "Design temperature (°C)",
+                min_value=20.0,
+                max_value=50.0,
+                value=32.0,
+                step=1.0,
+            )
+        elif circuit == "Liquid":
+            design_temp_c = st.number_input(
+                "Design temperature (°C)",
+                min_value=25.0,
+                max_value=60.0,
+                value=55.0,
+                step=1.0,
+            )
+        elif circuit == "Discharge":
+            design_temp_c = st.number_input(
+                "Design temperature (°C)",
+                min_value=25.0,
+                max_value=60.0,
+                value=55.0,
+                step=1.0,
+            )
+        else:
+            design_temp_c = st.number_input(
+                "Design temperature (°C)",
+                min_value=20.0,
+                max_value=50.0,
+                value=32.0,
+                step=1.0,
+            )
     
         copper_calc = st.selectbox(
             "Copper MWP calculation standard",
