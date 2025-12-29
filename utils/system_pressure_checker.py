@@ -168,7 +168,6 @@ def calc_mwp(
     copper_calc: Optional[str],
 ) -> float:
     PSI_TO_BAR = 0.0689476
-    mwp_50 = mwp_100 = mwp_150 = None
 
     # Helpers
     def _od_in() -> float:
@@ -189,7 +188,7 @@ def calc_mwp(
         stress_psi = pipe_stress_psi(temp_f)
 
         mwp_psi = (2.0 * stress_psi * wall_in) / (_od_in() - 0.8 * wall_in)
-        mwp_bar = mwp_psi * PSI_TO_BAR
+        return mwp_psi * PSI_TO_BAR
 
     if pipe_index in (2, 5):
         deduction = 0.025 if od_mm <= 61 else 0.065
@@ -198,12 +197,12 @@ def calc_mwp(
         wall_eff = (wall_in_nom * MILD_STEEL_WALL_TOL) - deduction
 
         mwp_psi = (2.0 * 15000.0 * wall_eff) / _od_in()
-        mwp_bar = mwp_psi * PSI_TO_BAR
+        return mwp_psi * PSI_TO_BAR
 
     if pipe_index in (3, 4):
         wall_in_nom = _nom_wall_in()
         mwp_psi = ((wall_in_nom * 2.0 * 70000.0 * STAINLESS_WALL_TOL) / _od_in()) / 4.0 * 0.7
-        mwp_bar = mwp_psi * PSI_TO_BAR
+        return mwp_psi * PSI_TO_BAR
 
     if stress.unit == "MPa":
         mwp_bar = (20.0 * stress.value * wall.mm) / (od_mm - wall.mm)
@@ -223,18 +222,8 @@ def calc_mwp(
             mwp_bar = mwp_bar * 1.5
         if mwp_temp_c == 150:
             mwp_bar = mwp_bar * 1.357
-    
-    if pipe_index == 1 and copper_calc == "BS1306":
-        mwp_50 = (20.0 * 41.0 * wall.mm) / (od_mm - wall.mm)
-        mwp_100 = (20.0 * 40.0 * wall.mm) / (od_mm - wall.mm)
-        mwp_150 = (20.0 * 34.0 * wall.mm) / (od_mm - wall.mm)
 
-    if pipe_index == 1 and copper_calc == "DKI":
-        mwp_50 = ((20.0 * 194.0 * wall.mm) / (od_mm - wall.mm)) / 3.5
-        mwp_100 = ((20.0 * 192.0 * wall.mm) / (od_mm - wall.mm)) / 3.5
-        mwp_150 = ((20.0 * 180.0 * wall.mm) / (od_mm - wall.mm)) / 3.5
-
-    return mwp_bar, mwp_50, mwp_100, mwp_150
+    return mwp_bar
 
 from utils.refrigerant_properties import RefrigerantProperties
 
@@ -319,7 +308,7 @@ def system_pressure_check(
         gauge=gauge,
     )
 
-    mwp_bar, mwp_50, mwp_100, mwp_150 = calc_mwp(
+    mwp = calc_mwp(
         pipe_index=pipe_index,
         stress=stress,
         wall=wall,
@@ -329,19 +318,16 @@ def system_pressure_check(
         copper_calc=copper_calc,
     )
 
-    passes = mwp_bar >= design_pressure
+    passes = mwp >= design_pressure
 
     return {
         "design_pressure_bar_g": design_pressure,
         "pressure_limits_bar": pressure_limits,
         "allowable_stress": stress,
         "wall_thickness": wall,
-        "mwp_bar": mwp_bar,
+        "mwp_bar": mwp,
         "pass": passes,
-        "margin_bar": mwp_bar - design_pressure,
-        "mwp_50": mwp_50,
-        "mwp_100": mwp_100,
-        "mwp_150": mwp_150,
+        "margin_bar": mwp - design_pressure,
     }
 
 def pipe_stress_psi(temp_f: float) -> float:
