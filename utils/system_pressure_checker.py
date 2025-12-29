@@ -168,6 +168,7 @@ def calc_mwp(
     copper_calc: Optional[str],
 ) -> float:
     PSI_TO_BAR = 0.0689476
+    mwp_50 = mwp_100 = mwp_150 = None
 
     # Helpers
     def _od_in() -> float:
@@ -318,7 +319,7 @@ def system_pressure_check(
         gauge=gauge,
     )
 
-    mwp = calc_mwp(
+    mwp_bar, mwp_50, mwp_100, mwp_150 = calc_mwp(
         pipe_index=pipe_index,
         stress=stress,
         wall=wall,
@@ -328,16 +329,16 @@ def system_pressure_check(
         copper_calc=copper_calc,
     )
 
-    passes = mwp >= design_pressure
+    passes = mwp_bar >= design_pressure
 
     return {
         "design_pressure_bar_g": design_pressure,
         "pressure_limits_bar": pressure_limits,
         "allowable_stress": stress,
         "wall_thickness": wall,
-        "mwp_bar": mwp,
+        "mwp_bar": mwp_bar,
         "pass": passes,
-        "margin_bar": mwp - design_pressure,
+        "margin_bar": mwp_bar - design_pressure,
         "mwp_50": mwp_50,
         "mwp_100": mwp_100,
         "mwp_150": mwp_150,
