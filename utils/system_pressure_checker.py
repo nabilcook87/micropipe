@@ -326,7 +326,12 @@ def system_pressure_check(
         copper_calc=copper_calc,
     )
 
-    passes = mwp >= design_pressure
+    if isinstance(mwp, dict):
+        passes = {k: v >= design_pressure for k, v in mwp.items()}
+        margin = {k: v - design_pressure for k, v in mwp.items()}
+    else:
+        passes = mwp >= design_pressure
+        margin = mwp - design_pressure
 
     return {
         "design_pressure_bar_g": design_pressure,
@@ -335,7 +340,7 @@ def system_pressure_check(
         "wall_thickness": wall,
         "mwp_bar": mwp,
         "pass": passes,
-        "margin_bar": mwp - design_pressure,
+        "margin_bar": margin,
     }
 
 def pipe_stress_psi(temp_f: float) -> float:
