@@ -240,24 +240,39 @@ def system_pressure_checker_ui():
 
     limits = result["pressure_limits_bar"]
 
+    if circuit in ("Suction", "Discharge"):
+        design_32 = converter.temp_to_pressure(refrigerant, 32) - 1.01325
+        design_43 = converter.temp_to_pressure(refrigerant, 43) - 1.01325
+        design_55 = converter.temp_to_pressure(refrigerant, 55) - 1.01325
+
+    else:
+        design_32 = converter.temp_to_pressure2(refrigerant, 32) - 1.01325
+        design_43 = converter.temp_to_pressure2(refrigerant, 43) - 1.01325
+        design_55 = converter.temp_to_pressure2(refrigerant, 55) - 1.01325
+
     st.markdown("### Results")
 
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
 
     with col1:
-        st.metric("System design pressure", f"{result['design_pressure_bar_g']:.2f} bar(g)")
-        st.metric("Leak test pressure", f"{limits['leak_test']:.2f} bar")
-        st.metric("Pressure test", f"{limits['pressure_test']:.2f} bar")
+        st.metric("55°C", f"{design_55:.2f} bar(g)")
+        st.metric("43°C", f"{design_43:.2f} bar(g)")
+        st.metric("32°C", f"{design_32:.2f} bar(g)")
 
     with col2:
+        st.metric("System design pressure", f"{result['design_pressure_bar_g']:.2f} bar(g)")
+        st.metric("Leak test pressure", f"{limits['leak_test']:.2f} bar(g)")
+        st.metric("Pressure test", f"{limits['pressure_test']:.2f} bar(g)")
+
+    with col3:
         if circuit in ("Suction", "Pumped"):
             st.metric("High pressure cut-out", "N/A")
         else:
-            st.metric("High pressure cut-out", f"{limits['hp_cutout']:.2f} bar")
-        st.metric("Relief valve setting", f"{limits['relief_setting']:.2f} bar")
-        st.metric("Relief valve rated discharge", f"{limits['rated_discharge']:.2f} bar")
+            st.metric("High pressure cut-out", f"{limits['hp_cutout']:.2f} bar(g)")
+        st.metric("Relief valve setting", f"{limits['relief_setting']:.2f} bar(g)")
+        st.metric("Relief valve rated discharge", f"{limits['rated_discharge']:.2f} bar(g)")
 
-    with col3:
+    with col4:
         mwp = result["mwp_bar"]
         passed = result["pass"]
         margin = result["margin_bar"]
