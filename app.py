@@ -253,7 +253,7 @@ def system_pressure_checker_ui():
 
     st.markdown("### Results")
 
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3, col4, col5 = st.columns(5)
 
     with col1:
         st.metric("55°C", f"{design_55:.2f} bar(g)")
@@ -274,6 +274,13 @@ def system_pressure_checker_ui():
         st.metric("Relief valve rated discharge", f"{limits['rated_discharge']:.2f} bar(g)")
 
     with col4:
+        mwp_multi = result.get("mwp_multi_temp", {})
+        if mwp_multi:
+            st.metric("MWP @ 50°C", f"{mwp_multi[50]:.2f} bar(g)")
+            st.metric("MWP @ 100°C", f"{mwp_multi[100]:.2f} bar(g)")
+            st.metric("MWP @ 150°C", f"{mwp_multi[150]:.2f} bar(g)")
+
+    with col5:
         mwp = result["mwp_bar"]
         passed = result["pass"]
         margin = result["margin_bar"]
@@ -283,18 +290,18 @@ def system_pressure_checker_ui():
             # Show each available weld type
             for weld_key in ["seamless", "erw", "cw"]:
                 if weld_key in mwp:
-                    st.metric(f"MWP – {weld_key.upper()}", f"{mwp[weld_key]:.2f} bar")
+                    st.metric(f"MWP – {weld_key.upper()}", f"{mwp[weld_key]:.2f} bar(g)")
     
         else:
             # Non-steel: original behaviour
-            st.metric("Maximum Working Pressure (MWP)", f"{mwp:.2f} bar")
+            st.metric("Maximum Working Pressure (MWP)", f"{mwp:.2f} bar(g)")
     
             if passed:
                 st.success(f"✅ Pipe rated for system pressure (margin {margin:.2f} bar)")
             else:
                 st.error(
                     f"❌ Pipe NOT rated: MWP {mwp:.2f} bar < "
-                    f"Design {result['design_pressure_bar_g']:.2f} bar"
+                    f"Design {result['design_pressure_bar_g']:.2f} bar(g)"
                 )
 
 if tool_selection == "Pipe Network Builder":
