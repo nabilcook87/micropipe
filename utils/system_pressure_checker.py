@@ -230,6 +230,14 @@ def calc_mwp(
         if mwp_temp_c == 150:
             mwp_bar = mwp_bar * 1.357
 
+    if copper_calc == "DKI" and pipe_index == 7:
+        if mwp_temp_c == 50:
+            mwp_bar = mwp_bar * 1.357
+        if mwp_temp_c == 100:
+            mwp_bar = mwp_bar * 1.357
+        if mwp_temp_c == 150:
+            mwp_bar = mwp_bar * 1.357
+
     return mwp_bar
 
 from utils.refrigerant_properties import RefrigerantProperties
