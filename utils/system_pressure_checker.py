@@ -328,6 +328,15 @@ def system_pressure_check(
         copper_calc=copper_calc,
     )
 
+    mwp_multi = calc_mwp_multi_temp(
+        pipe_index=pipe_index,
+        stress=stress,
+        wall=wall,
+        od_mm=od_mm,
+        id_mm=id_mm,
+        copper_calc=copper_calc,
+    )
+
     if isinstance(mwp, dict):
         passes = {k: v >= design_pressure for k, v in mwp.items()}
         margin = {k: v - design_pressure for k, v in mwp.items()}
@@ -341,6 +350,7 @@ def system_pressure_check(
         "allowable_stress": stress,
         "wall_thickness": wall,
         "mwp_bar": mwp,
+        "mwp_multi_temp": mwp_multi,
         "pass": passes,
         "margin_bar": margin,
     }
@@ -378,3 +388,45 @@ def steel_weld_stresses_by_size(od_mm: float) -> dict[str, float]:
         stresses["erw"] = ERW_STEEL_STRESS_PSI
 
     return stresses
+
+def calc_mwp_multi_temp(
+    *,
+    pipe_index: int,
+    stress: Stress,
+    wall: WallThickness,
+    od_mm: float,
+    id_mm: float | None,
+    copper_calc: Optional[str],
+    temps: tuple[int, ...] = (50, 100, 150),
+) -> dict[int, float]:
+    """
+    Returns MWP at multiple reference temperatures.
+    Only applicable to Copper ASTM (6), K65 (8), Aluminium (7).
+    """
+    results = {}
+
+    if pipe_index not in (6, 7, 8):
+        return results
+
+    for t in temps:
+        stress_t = allowable_stress(
+            pipe_index=pipe_index,
+            circuit="Discharge",      # stress tables are temp-based, not circuit-limited
+            copper_calc=copper_calc,
+            temp_c=t,
+            mwp_temp_c=t,
+        )
+
+        mwp_t = calc_mwp(
+            pipe_index=pipe_index,
+            stress=stress_t,
+            wall=wall,
+            od_mm=od_mm,
+            id_mm=id_mm,
+            mwp_temp_c=t,
+            copper_calc=copper_calc,
+        )
+
+        results[t] = mwp_t
+
+    return results
