@@ -81,6 +81,18 @@ def bsen_mpa(temp_c: float) -> float:
     
     return A0 + (A1 * T2) + (A2 * T2**2) + (A3 * T2**3) + (A4 * T2**4) + (A5 * T2**5)
 
+def bsen_dki_mpa(temp_c: float) -> float:
+    T2 = temp_c
+    
+    A0 = 194.000000048478
+    A1 = 0.445238094392317
+    A2 = -0.0186904761925291
+    A3 = 0.000266666666762984
+    A4 = -0.0000015752380957499
+    A5 = 3.12380952442043E-09
+    
+    return A0 + (A1 * T2) + (A2 * T2**2) + (A3 * T2**3) + (A4 * T2**4) + (A5 * T2**5)
+
 def allowable_stress(
     *,
     pipe_index: int,
