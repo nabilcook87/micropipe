@@ -69,18 +69,17 @@ def aluminium_pipe_stress_mpa(temp_c: float) -> float:
     
     return ((A0 + (A1 * T2) + (A2 * T2**2) + (A3 * T2**3) + (A4 * T2**4) + (A5 * T2**5) + (A6 * T2**6)) / 1000) * 6.895
 
-def steel_pipe_stress_psi(temp_c: float) -> float:
-    """
-    VB: PipeStress(T°F)
-    Polynomial valid above 100°F minimum
-    """
-    temp_f = max(temp_c * 9.0 / 5.0 + 32.0, 100.0)
-
-    return (
-        20500
-        - 12.3 * temp_f
-        + 0.0021 * temp_f**2
-    )
+def bsen_mpa(temp_c: float) -> float:
+    T2 = temp_c
+    
+    A0 = 40.9999999999807
+    A1 = 0.222619047772079
+    A2 = -9.34523810126485E-03
+    A3 = 1.33333333413095E-04
+    A4 = -7.87619048051395E-07
+    A5 = 1.56190476273047E-09
+    
+    return A0 + (A1 * T2) + (A2 * T2**2) + (A3 * T2**3) + (A4 * T2**4) + (A5 * T2**5)
 
 def allowable_stress(
     *,
@@ -92,11 +91,10 @@ def allowable_stress(
 ) -> Stress:
 
     if pipe_index == 1:
-        if copper_calc == "BS1306":
-            value = 34 if circuit == "Discharge" else 41
-        else:  # DKI
-            value = 180 if circuit == "Discharge" else 194
-        return Stress(value=value, unit="MPa")
+        return Stress(
+            value=int(round(bsen_mpa(mwp_temp_c))),
+            unit="MPa",
+        )
 
     if pipe_index == 6:
         temp_f = max(temp_c * 9.0 / 5.0 + 32.0, 100.0)
