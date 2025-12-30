@@ -262,7 +262,7 @@ def calc_design_pressure_bar_g(
         p_abs = data["pressure_bar"]    # dew
 
     # Convert abs → gauge
-    return p_abs - 1.0
+    return p_abs - 1.01325
 
 def calc_pressure_limits(
     *,
