@@ -397,13 +397,10 @@ def calc_mwp_multi_temp(
     copper_calc: Optional[str],
     temps: tuple[int, ...] = (50, 100, 150),
 ) -> dict[int, float]:
-    """
-    Returns MWP at multiple reference temperatures.
-    Only applicable to Copper ASTM (6), K65 (8), Aluminium (7).
-    """
+
     results = {}
 
-    if pipe_index not in (6, 7, 8):
+    if pipe_index not in (6, 7, 8, 1):
         return results
 
     for t in temps:
