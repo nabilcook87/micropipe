@@ -103,10 +103,16 @@ def allowable_stress(
 ) -> Stress:
 
     if pipe_index == 1:
-        return Stress(
-            value=int(round(bsen_mpa(mwp_temp_c))),
-            unit="MPa",
-        )
+        if copper_calc == "DKI":
+            return Stress(
+                value=int(round(bsen_dki_mpa(mwp_temp_c))),
+                unit="MPa",
+            )
+        else:
+            return Stress(
+                value=int(round(bsen_mpa(mwp_temp_c))),
+                unit="MPa",
+            )
 
     if pipe_index == 6:
         temp_f = max(temp_c * 9.0 / 5.0 + 32.0, 100.0)
