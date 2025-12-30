@@ -224,6 +224,7 @@ def system_pressure_checker_ui():
             return
 
     from utils.system_pressure_checker import system_pressure_check
+    converter = PressureTemperatureConverter()
 
     result = system_pressure_check(
         refrigerant=refrigerant,
