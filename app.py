@@ -109,12 +109,22 @@ def system_pressure_checker_ui():
                 value=32.0,
                 step=1.0,
             )
-    
-        copper_calc = st.selectbox(
-            "Copper MWP calculation standard",
-            ["BS1306", "DKI"],
-            index=0,
-        )
+
+        cola, colb = st.columns(2)
+
+        with cola:
+            copper_calc = st.selectbox(
+                "Copper MWP calculation standard",
+                ["BS1306", "DKI"],
+                index=0,
+            )
+
+        with colb:
+            dp_standard = st.selectbox(
+                "Design pressures standard",
+                ["BS EN 378", "ASME B31.5 - 2006"],
+                index=0,
+            )
     
         r744_tc_pressure_bar_g = None
         if refrigerant.upper() in ("R744", "CO2"):
