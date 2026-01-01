@@ -279,9 +279,14 @@ def system_pressure_checker_ui():
     col1, col2, col3, col4, col5 = st.columns(5)
 
     with col1:
-        st.metric("55°C", f"{design_55:.2f} bar(g)")
-        st.metric("43°C", f"{design_43:.2f} bar(g)")
-        st.metric("32°C", f"{design_32:.2f} bar(g)")
+        if dp_standard == "BS EN 378":
+            st.metric("55°C", f"{design_55:.2f} bar(g)")
+            st.metric("43°C", f"{design_43:.2f} bar(g)")
+            st.metric("32°C", f"{design_32:.2f} bar(g)")
+        else:
+            st.metric("50°C", f"{design_55:.2f} bar(g)")
+            st.metric("40°C", f"{design_43:.2f} bar(g)")
+            st.metric("27°C", f"{design_32:.2f} bar(g)")
 
     with col2:
         st.metric("System design pressure", f"{result['design_pressure_bar_g']:.2f} bar(g)")
