@@ -77,6 +77,22 @@ def system_pressure_checker_ui():
             ["Suction", "Liquid", "Discharge", "Pumped"],
         )
 
+        cola, colb = st.columns(2)
+
+        with cola:
+            copper_calc = st.selectbox(
+                "Copper MWP calculation standard",
+                ["BS1306", "DKI"],
+                index=0,
+            )
+
+        with colb:
+            dp_standard = st.selectbox(
+                "Design pressures standard",
+                ["BS EN 378", "ASME B31.5 - 2006"],
+                index=0,
+            )
+
         if dp_standard == "BS EN 378":
             default_high_dt = 55.0
             default_low_dt = 32.0
@@ -115,22 +131,6 @@ def system_pressure_checker_ui():
                 max_value=50.0,
                 value=default_low_dt,
                 step=1.0,
-            )
-
-        cola, colb = st.columns(2)
-
-        with cola:
-            copper_calc = st.selectbox(
-                "Copper MWP calculation standard",
-                ["BS1306", "DKI"],
-                index=0,
-            )
-
-        with colb:
-            dp_standard = st.selectbox(
-                "Design pressures standard",
-                ["BS EN 378", "ASME B31.5 - 2006"],
-                index=0,
             )
     
         r744_tc_pressure_bar_g = None
