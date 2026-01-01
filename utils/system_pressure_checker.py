@@ -304,11 +304,11 @@ def calc_pressure_limits(
     if dp_standard == "ASME B31.5 - 2006":
         return {
             "design": design_pressure_bar_g,
-            "leak_test": design_pressure_bar_g * 1.1,
-            "pressure_test": design_pressure_bar_g * 1.5,
-            "hp_cutout": design_pressure_bar_g * 0.95,
+            "leak_test": design_pressure_bar_g,
+            "pressure_test": 1.3 * design_pressure_bar_g,
+            "hp_cutout": 0.9 * design_pressure_bar_g,
             "relief_setting": design_pressure_bar_g,
-            "rated_discharge": design_pressure_bar_g * 1.21,
+            "rated_discharge": 1.1 * design_pressure_bar_g,
         }
 
     raise ValueError(f"Unknown design pressure standard: {dp_standard}")
