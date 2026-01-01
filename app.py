@@ -246,7 +246,8 @@ def system_pressure_checker_ui():
         gauge=gauge,
         copper_calc=copper_calc,
         r744_tc_pressure_bar_g=r744_tc_pressure_bar_g,
-        mwp_temp_c=mwp_temp_c,     # ← NEW
+        mwp_temp_c=mwp_temp_c,
+        dp_standard=dp_standard,
     )
 
     limits = result["pressure_limits_bar"]
