@@ -252,15 +252,27 @@ def system_pressure_checker_ui():
 
     limits = result["pressure_limits_bar"]
 
-    if circuit in ("Suction", "Discharge"):
-        design_32 = converter.temp_to_pressure(refrigerant, 32) - 1.01325
-        design_43 = converter.temp_to_pressure(refrigerant, 43) - 1.01325
-        design_55 = converter.temp_to_pressure(refrigerant, 55) - 1.01325
+    if dp_standard == "BS EN 378":
+        if circuit in ("Suction", "Discharge"):
+            design_32 = converter.temp_to_pressure(refrigerant, 32) - 1.01325
+            design_43 = converter.temp_to_pressure(refrigerant, 43) - 1.01325
+            design_55 = converter.temp_to_pressure(refrigerant, 55) - 1.01325
+    
+        else:
+            design_32 = converter.temp_to_pressure2(refrigerant, 32) - 1.01325
+            design_43 = converter.temp_to_pressure2(refrigerant, 43) - 1.01325
+            design_55 = converter.temp_to_pressure2(refrigerant, 55) - 1.01325
 
     else:
-        design_32 = converter.temp_to_pressure2(refrigerant, 32) - 1.01325
-        design_43 = converter.temp_to_pressure2(refrigerant, 43) - 1.01325
-        design_55 = converter.temp_to_pressure2(refrigerant, 55) - 1.01325
+        if circuit in ("Suction", "Discharge"):
+            design_32 = converter.temp_to_pressure(refrigerant, 27) - 1.01325
+            design_43 = converter.temp_to_pressure(refrigerant, 40) - 1.01325
+            design_55 = converter.temp_to_pressure(refrigerant, 50) - 1.01325
+    
+        else:
+            design_32 = converter.temp_to_pressure2(refrigerant, 27) - 1.01325
+            design_43 = converter.temp_to_pressure2(refrigerant, 40) - 1.01325
+            design_55 = converter.temp_to_pressure2(refrigerant, 50) - 1.01325
 
     st.markdown("### Results")
 
