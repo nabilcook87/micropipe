@@ -334,7 +334,8 @@ def system_pressure_check(
         raise ValueError(f"Unknown design pressure standard: {dp_standard}")
 
     pressure_limits = calc_pressure_limits(
-        design_pressure_bar_g=design_pressure
+        design_pressure_bar_g=design_pressure,
+        dp_standard=dp_standard,
     )
 
     stress = allowable_stress(
