@@ -288,16 +288,30 @@ def calc_design_pressure_bar_g(
 def calc_pressure_limits(
     *,
     design_pressure_bar_g: float,
+    dp_standard: str,
 ) -> dict[str, float]:
 
-    return {
-        "design": design_pressure_bar_g,
-        "leak_test": design_pressure_bar_g,
-        "pressure_test": 1.3 * design_pressure_bar_g,
-        "hp_cutout": 0.9 * design_pressure_bar_g,
-        "relief_setting": design_pressure_bar_g,
-        "rated_discharge": 1.1 * design_pressure_bar_g,
-    }
+    if dp_standard == "BS EN 378":
+        return {
+            "design": design_pressure_bar_g,
+            "leak_test": design_pressure_bar_g,
+            "pressure_test": 1.3 * design_pressure_bar_g,
+            "hp_cutout": 0.9 * design_pressure_bar_g,
+            "relief_setting": design_pressure_bar_g,
+            "rated_discharge": 1.1 * design_pressure_bar_g,
+        }
+
+    if dp_standard == "ASME B31.5 - 2006":
+        return {
+            "design": design_pressure_bar_g,
+            "leak_test": design_pressure_bar_g * 1.1,
+            "pressure_test": design_pressure_bar_g * 1.5,
+            "hp_cutout": design_pressure_bar_g * 0.95,
+            "relief_setting": design_pressure_bar_g,
+            "rated_discharge": design_pressure_bar_g * 1.21,
+        }
+
+    raise ValueError(f"Unknown design pressure standard: {dp_standard}")
 
 def system_pressure_check(
     *,
