@@ -77,12 +77,19 @@ def system_pressure_checker_ui():
             ["Suction", "Liquid", "Discharge", "Pumped"],
         )
 
+        if dp_standard == "BS EN 378":
+            default_high_dt = 55.0
+            default_low_dt = 32.0
+        else:
+            default_high_dt = 50.0
+            default_low_dt = 27.0
+        
         if circuit == "Suction":
             design_temp_c = st.number_input(
                 "Design temperature (°C)",
                 min_value=20.0,
                 max_value=50.0,
-                value=32.0,
+                value=default_low_dt,
                 step=1.0,
             )
         elif circuit == "Liquid":
@@ -90,7 +97,7 @@ def system_pressure_checker_ui():
                 "Design temperature (°C)",
                 min_value=25.0,
                 max_value=60.0,
-                value=55.0,
+                value=default_high_dt,
                 step=1.0,
             )
         elif circuit == "Discharge":
@@ -98,7 +105,7 @@ def system_pressure_checker_ui():
                 "Design temperature (°C)",
                 min_value=25.0,
                 max_value=60.0,
-                value=55.0,
+                value=default_high_dt,
                 step=1.0,
             )
         else:
@@ -106,7 +113,7 @@ def system_pressure_checker_ui():
                 "Design temperature (°C)",
                 min_value=20.0,
                 max_value=50.0,
-                value=32.0,
+                value=default_low_dt,
                 step=1.0,
             )
 
