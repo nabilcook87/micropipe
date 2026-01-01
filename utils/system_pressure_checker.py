@@ -314,12 +314,24 @@ def system_pressure_check(
     dp_standard: str = "BS EN 378",
 ) -> dict:
 
-    design_pressure = calc_design_pressure_bar_g(
-        refrigerant=refrigerant,
-        design_temp_c=design_temp_c,
-        circuit=circuit,
-        r744_tc_pressure_bar_g=r744_tc_pressure_bar_g,
-    )
+    if dp_standard == "BS EN 378":
+        design_pressure = calc_design_pressure_bar_g(
+            refrigerant=refrigerant,
+            design_temp_c=design_temp_c,
+            circuit=circuit,
+            r744_tc_pressure_bar_g=r744_tc_pressure_bar_g,
+        )
+    
+    elif dp_standard == "ASME B31.5 - 2006":
+        design_pressure = calc_design_pressure_bar_g(
+            refrigerant=refrigerant,
+            design_temp_c=design_temp_c,
+            circuit=circuit,
+            r744_tc_pressure_bar_g=r744_tc_pressure_bar_g,
+        )
+    
+    else:
+        raise ValueError(f"Unknown design pressure standard: {dp_standard}")
 
     pressure_limits = calc_pressure_limits(
         design_pressure_bar_g=design_pressure
