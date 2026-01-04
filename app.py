@@ -73,7 +73,7 @@ def system_pressure_checker_ui():
         ])
 
         circuit = st.selectbox(
-            "Circuit type",
+            "Circuit Type",
             ["Suction", "Liquid", "Discharge", "Pumped"],
         )
 
@@ -81,14 +81,14 @@ def system_pressure_checker_ui():
 
         with cola:
             copper_calc = st.selectbox(
-                "Copper MWP calculation standard",
+                "Copper MWP Calculation Standard",
                 ["BS1306", "DKI"],
                 index=0,
             )
 
         with colb:
             dp_standard = st.selectbox(
-                "Design pressures standard",
+                "Design Pressure Standard",
                 ["BS EN 378", "ASME B31.5 - 2006"],
                 index=0,
             )
@@ -118,7 +118,7 @@ def system_pressure_checker_ui():
         if refrigerant == "R744 TC":
             design_temp_c = None
             r744_tc_pressure_bar_g = st.number_input(
-                "R744 transcritical design pressure (bar(g))",
+                "R744 Transcritical Design Pressure (bar(g))",
                 min_value=0.0,
                 step=1.0,
                 value=90.0,
@@ -126,7 +126,7 @@ def system_pressure_checker_ui():
         else:
             if circuit == "Suction":
                 design_temp_c = st.number_input(
-                    "Design temperature (°C)",
+                    "Design Temperature (°C)",
                     min_value=range_min_low,
                     max_value=range_max_low,
                     value=default_low_dt,
@@ -134,7 +134,7 @@ def system_pressure_checker_ui():
                 )
             elif circuit == "Liquid":
                 design_temp_c = st.number_input(
-                    "Design temperature (°C)",
+                    "Design Temperature (°C)",
                     min_value=range_min_high,
                     max_value=range_max_high,
                     value=default_high_dt,
@@ -142,7 +142,7 @@ def system_pressure_checker_ui():
                 )
             elif circuit == "Discharge":
                 design_temp_c = st.number_input(
-                    "Design temperature (°C)",
+                    "Design Temperature (°C)",
                     min_value=range_min_high,
                     max_value=range_max_high,
                     value=default_high_dt,
@@ -150,7 +150,7 @@ def system_pressure_checker_ui():
                 )
             else:
                 design_temp_c = st.number_input(
-                    "Design temperature (°C)",
+                    "Design Temperature (°C)",
                     min_value=range_min_low,
                     max_value=range_max_low,
                     value=default_low_dt,
@@ -162,7 +162,7 @@ def system_pressure_checker_ui():
         st.markdown("### Pipe Parameters")
 
         mwp_temp_c = st.selectbox(
-            "MWP reference temperature (°C)",
+            "MWP Reference Temperature (°C)",
             [50, 100, 150],
             index=0,
         )
