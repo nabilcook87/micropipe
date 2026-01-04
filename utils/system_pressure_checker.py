@@ -266,7 +266,7 @@ def calc_design_pressure_bar_g(
 ) -> float:
 
     # CO₂ transcritical override
-    if refrigerant.upper() in ("R744", "CO2"):
+    if refrigerant.upper() == "R744 TC":
         if r744_tc_pressure_bar_g is None:
             raise ValueError("R744 transcritical design pressure must be provided")
         return r744_tc_pressure_bar_g
