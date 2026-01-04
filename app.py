@@ -102,36 +102,47 @@ def system_pressure_checker_ui():
         else:
             default_high_dt = 50.0
             default_low_dt = 27.0
+
+        if refrigerant == "R744":
+            range_min_low = -20.0
+            range_max_low = 25.0
+            range_min_high = 0.0
+            range_max_high = 25.0
+        else:
+            range_min_low = 20.0
+            range_max_low = 50.0
+            range_min_high = 25.0
+            range_max_high = 60.0
         
         if circuit == "Suction":
             design_temp_c = st.number_input(
                 "Design temperature (°C)",
-                min_value=20.0,
-                max_value=50.0,
+                min_value=range_min_low,
+                max_value=range_max_low,
                 value=default_low_dt,
                 step=1.0,
             )
         elif circuit == "Liquid":
             design_temp_c = st.number_input(
                 "Design temperature (°C)",
-                min_value=25.0,
-                max_value=60.0,
+                min_value=range_min_high,
+                max_value=range_max_high,
                 value=default_high_dt,
                 step=1.0,
             )
         elif circuit == "Discharge":
             design_temp_c = st.number_input(
                 "Design temperature (°C)",
-                min_value=25.0,
-                max_value=60.0,
+                min_value=range_min_high,
+                max_value=range_max_high,
                 value=default_high_dt,
                 step=1.0,
             )
         else:
             design_temp_c = st.number_input(
                 "Design temperature (°C)",
-                min_value=20.0,
-                max_value=50.0,
+                min_value=range_min_low,
+                max_value=range_max_low,
                 value=default_low_dt,
                 step=1.0,
             )
