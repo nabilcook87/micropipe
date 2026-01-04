@@ -286,7 +286,11 @@ def system_pressure_checker_ui():
     col1, col2, col3, col4, col5 = st.columns(5)
 
     with col1:
-        if dp_standard == "BS EN 378":
+        if refrigerant == "R744":
+            st.metric("30°C", f"{design_55:.2f} bar(g)")
+            st.metric("30°C", f"{design_43:.2f} bar(g)")
+            st.metric("30°C", f"{design_32:.2f} bar(g)")
+        elif dp_standard == "BS EN 378":
             st.metric("55°C", f"{design_55:.2f} bar(g)")
             st.metric("43°C", f"{design_43:.2f} bar(g)")
             st.metric("32°C", f"{design_32:.2f} bar(g)")
