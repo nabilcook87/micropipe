@@ -116,6 +116,7 @@ def system_pressure_checker_ui():
         
         r744_tc_pressure_bar_g = None
         if refrigerant == "R744 TC":
+            design_temp_c = None
             r744_tc_pressure_bar_g = st.number_input(
                 "R744 transcritical design pressure (bar g)",
                 min_value=0.0,
