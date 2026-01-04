@@ -93,7 +93,10 @@ def system_pressure_checker_ui():
                 index=0,
             )
 
-        if dp_standard == "BS EN 378":
+        if refrigerant == "R744":
+            default_high_dt = 25.0
+            default_low_dt = 25.0
+        elif dp_standard == "BS EN 378":
             default_high_dt = 55.0
             default_low_dt = 32.0
         else:
