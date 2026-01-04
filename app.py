@@ -67,7 +67,7 @@ def system_pressure_checker_ui():
         st.markdown("### System Pressure Checker")
     
         refrigerant = st.selectbox("Refrigerant", [
-            "R404A", "R134a", "R407F", "R744", "R410A",
+            "R404A", "R134a", "R407F", "R744", "R744 TC", "R410A",
             "R407C", "R507A", "R448A", "R449A", "R22", "R32", "R454A", "R454C", "R455A", "R407A",
             "R290", "R1270", "R600a", "R717", "R1234ze", "R1234yf", "R12", "R11", "R454B", "R450A", "R513A", "R23", "R508B", "R502"
         ])
@@ -137,7 +137,7 @@ def system_pressure_checker_ui():
             )
     
         r744_tc_pressure_bar_g = None
-        if refrigerant.upper() in ("R744", "CO2"):
+        if refrigerant.upper() == "R744 TC":
             r744_tc_pressure_bar_g = st.number_input(
                 "R744 transcritical design pressure (bar g)",
                 min_value=0.0,
