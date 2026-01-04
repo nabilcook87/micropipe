@@ -112,7 +112,7 @@ def allowable_stress(
             )
 
     if pipe_index == 6:
-        temp_f = max(temp_c * 9.0 / 5.0 + 32.0, 100.0)
+        temp_f = max(mwp_temp_c * 9.0 / 5.0 + 32.0, 100.0)
         return Stress(
             value=pipe_stress_psi(temp_f),
             unit="psi",
