@@ -119,9 +119,10 @@ def system_pressure_checker_ui():
             design_temp_c = None
             r744_tc_pressure_bar_g = st.number_input(
                 "R744 Transcritical Design Pressure (bar(g))",
-                min_value=0.0,
-                step=1.0,
-                value=90.0,
+                min_value=75.0,
+                max_value=150.0,
+                step=5.0,
+                value=120.0,
             )
         else:
             if circuit == "Suction":
