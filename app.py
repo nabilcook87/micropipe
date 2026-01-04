@@ -118,7 +118,7 @@ def system_pressure_checker_ui():
         if refrigerant == "R744 TC":
             design_temp_c = None
             r744_tc_pressure_bar_g = st.number_input(
-                "R744 transcritical design pressure (bar g)",
+                "R744 transcritical design pressure (bar(g))",
                 min_value=0.0,
                 step=1.0,
                 value=90.0,
@@ -324,16 +324,22 @@ def system_pressure_checker_ui():
 
     with col2:
         st.metric("System design pressure", f"{result['design_pressure_bar_g']:.2f} bar(g)")
-        st.metric("Leak test pressure", f"{limits['leak_test']:.2f} bar(g)")
-        st.metric("Pressure test", f"{limits['pressure_test']:.2f} bar(g)")
+        if refrigerant == "R744 TC":
+            st.metric("", "")
+        else:
+            st.metric("Leak test pressure", f"{limits['leak_test']:.2f} bar(g)")
+            st.metric("Pressure test", f"{limits['pressure_test']:.2f} bar(g)")
 
     with col3:
-        if circuit in ("Suction", "Pumped"):
-            st.metric("High pressure cut-out", "N/A")
+        if refrigerant == "R744 TC":
+            st.metric("", "")
         else:
-            st.metric("High pressure cut-out", f"{limits['hp_cutout']:.2f} bar(g)")
-        st.metric("Relief valve setting", f"{limits['relief_setting']:.2f} bar(g)")
-        st.metric("Relief valve rated discharge", f"{limits['rated_discharge']:.2f} bar(g)")
+            if circuit in ("Suction", "Pumped"):
+                st.metric("High pressure cut-out", "N/A")
+            else:
+                st.metric("High pressure cut-out", f"{limits['hp_cutout']:.2f} bar(g)")
+            st.metric("Relief valve setting", f"{limits['relief_setting']:.2f} bar(g)")
+            st.metric("Relief valve rated discharge", f"{limits['rated_discharge']:.2f} bar(g)")
 
     with col4:
         mwp_multi = result.get("mwp_multi_temp", {})
