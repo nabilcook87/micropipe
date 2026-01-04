@@ -113,48 +113,47 @@ def system_pressure_checker_ui():
             range_max_low = 50.0
             range_min_high = 25.0
             range_max_high = 60.0
-        
-        if circuit == "Suction":
-            design_temp_c = st.number_input(
-                "Design temperature (°C)",
-                min_value=range_min_low,
-                max_value=range_max_low,
-                value=default_low_dt,
-                step=1.0,
-            )
-        elif circuit == "Liquid":
-            design_temp_c = st.number_input(
-                "Design temperature (°C)",
-                min_value=range_min_high,
-                max_value=range_max_high,
-                value=default_high_dt,
-                step=1.0,
-            )
-        elif circuit == "Discharge":
-            design_temp_c = st.number_input(
-                "Design temperature (°C)",
-                min_value=range_min_high,
-                max_value=range_max_high,
-                value=default_high_dt,
-                step=1.0,
-            )
-        else:
-            design_temp_c = st.number_input(
-                "Design temperature (°C)",
-                min_value=range_min_low,
-                max_value=range_max_low,
-                value=default_low_dt,
-                step=1.0,
-            )
-    
-        r744_tc_pressure_bar_g = None
-        if refrigerant.upper() == "R744 TC":
+
+        if refrigerant == "R744 TC":
             r744_tc_pressure_bar_g = st.number_input(
                 "R744 transcritical design pressure (bar g)",
                 min_value=0.0,
                 step=1.0,
                 value=90.0,
             )
+        else:
+            if circuit == "Suction":
+                design_temp_c = st.number_input(
+                    "Design temperature (°C)",
+                    min_value=range_min_low,
+                    max_value=range_max_low,
+                    value=default_low_dt,
+                    step=1.0,
+                )
+            elif circuit == "Liquid":
+                design_temp_c = st.number_input(
+                    "Design temperature (°C)",
+                    min_value=range_min_high,
+                    max_value=range_max_high,
+                    value=default_high_dt,
+                    step=1.0,
+                )
+            elif circuit == "Discharge":
+                design_temp_c = st.number_input(
+                    "Design temperature (°C)",
+                    min_value=range_min_high,
+                    max_value=range_max_high,
+                    value=default_high_dt,
+                    step=1.0,
+                )
+            else:
+                design_temp_c = st.number_input(
+                    "Design temperature (°C)",
+                    min_value=range_min_low,
+                    max_value=range_max_low,
+                    value=default_low_dt,
+                    step=1.0,
+                )
 
     with col2:
 
