@@ -113,7 +113,8 @@ def system_pressure_checker_ui():
             range_max_low = 50.0
             range_min_high = 25.0
             range_max_high = 60.0
-
+        
+        r744_tc_pressure_bar_g = None
         if refrigerant == "R744 TC":
             r744_tc_pressure_bar_g = st.number_input(
                 "R744 transcritical design pressure (bar g)",
