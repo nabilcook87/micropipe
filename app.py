@@ -460,12 +460,25 @@ if tool_selection == "Pipe Network Builder":
 elif tool_selection == "Pressure ↔ Temperature Converter":
     st.subheader("Saturation Pressure ↔ Temperature Tool")
     converter = PressureTemperatureConverter()
+    ctx = st.session_state.get("active_circuit", {})
 
-    refrigerant = st.selectbox("Refrigerant", [
-        "R404A", "R134a", "R407F", "R744", "R410A",
-        "R407C", "R507A", "R448A", "R449A", "R22", "R32", "R454A", "R454C", "R455A", "R407A",
-        "R290", "R1270", "R600a", "R717", "R1234ze", "R1234yf", "R12", "R11", "R454B", "R450A", "R513A", "R23", "R508B", "R502"
-    ])
+    refrigerant_list = [
+        "R404A", "R134a", "R407F", "R744", "R744 TC", "R410A",
+        "R407C", "R507A", "R448A", "R449A", "R22", "R32",
+        "R454A", "R454C", "R455A", "R407A",
+        "R290", "R1270", "R600a", "R717",
+        "R1234ze", "R1234yf",
+        "R12", "R11",
+        "R454B", "R450A", "R513A",
+        "R23", "R508B", "R502",
+    ]
+
+    refrigerant = st.selectbox(
+        "Refrigerant",
+        refrigerant_list,
+        index=refrigerant_list.index(ctx["refrigerant"])
+        if ctx.get("refrigerant") in refrigerant_list else 0,
+    )
     
     col1, col2, col3 = st.columns(3)
 
@@ -514,12 +527,25 @@ elif tool_selection == "Pressure ↔ Temperature Converter":
 elif tool_selection == "Pressure Drop ↔ Temperature Penalty":
     st.subheader("Pressure Drop ⇄ Temperature Penalty Tool")
     converter = PressureTemperatureConverter()
+    ctx = st.session_state.get("active_circuit", {})
 
-    refrigerant = st.selectbox("Refrigerant", [
-        "R404A", "R134a", "R407F", "R744", "R410A",
-        "R407C", "R507A", "R448A", "R449A", "R22", "R32", "R454A", "R454C", "R455A", "R407A",
-        "R290", "R1270", "R600a", "R717", "R1234ze", "R1234yf", "R12", "R11", "R454B", "R450A", "R513A", "R23", "R508B", "R502"
-    ])
+    refrigerant_list = [
+        "R404A", "R134a", "R407F", "R744", "R744 TC", "R410A",
+        "R407C", "R507A", "R448A", "R449A", "R22", "R32",
+        "R454A", "R454C", "R455A", "R407A",
+        "R290", "R1270", "R600a", "R717",
+        "R1234ze", "R1234yf",
+        "R12", "R11",
+        "R454B", "R450A", "R513A",
+        "R23", "R508B", "R502",
+    ]
+
+    refrigerant = st.selectbox(
+        "Refrigerant",
+        refrigerant_list,
+        index=refrigerant_list.index(ctx["refrigerant"])
+        if ctx.get("refrigerant") in refrigerant_list else 0,
+    )
     T_sat = st.number_input("Saturation Temperature (°C)", value=-10.0)
     
     col1, col2 = st.columns(2)
@@ -552,15 +578,28 @@ elif tool_selection == "System Pressure Checker":
 
 elif tool_selection == "Oil Return Checker":
     st.subheader("Oil Return Checker")
+    ctx = st.session_state.get("active_circuit", {})
     
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
-        refrigerant = st.selectbox("Refrigerant", [
+        refrigerant_list = [
             "R404A", "R134a", "R407F", "R744", "R744 TC", "R410A",
-            "R407C", "R507A", "R448A", "R449A", "R22", "R32", "R454A", "R454C", "R455A", "R407A",
-            "R290", "R1270", "R600a", "R717", "R1234ze", "R1234yf", "R12", "R11", "R454B", "R450A", "R513A", "R23", "R508B", "R502"
-        ])
+            "R407C", "R507A", "R448A", "R449A", "R22", "R32",
+            "R454A", "R454C", "R455A", "R407A",
+            "R290", "R1270", "R600a", "R717",
+            "R1234ze", "R1234yf",
+            "R12", "R11",
+            "R454B", "R450A", "R513A",
+            "R23", "R508B", "R502",
+        ]
+    
+        refrigerant = st.selectbox(
+            "Refrigerant",
+            refrigerant_list,
+            index=refrigerant_list.index(ctx["refrigerant"])
+            if ctx.get("refrigerant") in refrigerant_list else 0,
+        )
 
     # Load pipe data
     pipe_data = pd.read_csv("data/pipe_pressure_ratings_full.csv")
