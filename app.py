@@ -77,6 +77,17 @@ def system_pressure_checker_ui():
     with col1:
 
         st.markdown("### System Pressure Checker")
+
+        refrigerant_list = [
+            "R404A", "R134a", "R407F", "R744", "R744 TC", "R410A",
+            "R407C", "R507A", "R448A", "R449A", "R22", "R32",
+            "R454A", "R454C", "R455A", "R407A",
+            "R290", "R1270", "R600a", "R717",
+            "R1234ze", "R1234yf",
+            "R12", "R11",
+            "R454B", "R450A", "R513A",
+            "R23", "R508B", "R502",
+        ]
     
         refrigerant = st.selectbox(
             "Refrigerant",
