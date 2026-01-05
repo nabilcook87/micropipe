@@ -1307,8 +1307,18 @@ elif tool_selection == "Oil Return Checker":
 
 elif tool_selection == "Manual Calculation":
     st.subheader("Manual Calculation")
+
+    ctx = get_active_circuit_context()
+
+    modes = ["Dry Suction", "Liquid", "Discharge", "Drain", "Pumped Liquid", "Wet Suction"]
     
-    mode = st.radio("", ["Dry Suction", "Liquid", "Discharge", "Drain", "Pumped Liquid", "Wet Suction"], index=0, horizontal=True, label_visibility="collapsed")
+    mode = st.radio(
+        "",
+        modes,
+        index=modes.index(ctx["mode"]) if ctx.get("mode") in modes else 0,
+        horizontal=True,
+        label_visibility="collapsed"
+    )
     
     if mode == "Dry Suction":
         
