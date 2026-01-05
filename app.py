@@ -1360,6 +1360,8 @@ elif tool_selection == "Manual Calculation":
     )
     
     if mode == "Dry Suction":
+
+        ctx = st.session_state.get("active_circuit", {})
         
         col1, col2, col3, col4 = st.columns(4)
     
@@ -2922,6 +2924,8 @@ elif tool_selection == "Manual Calculation":
                 st.error(f"{message}")
     
     if mode == "Liquid":
+
+        ctx = st.session_state.get("active_circuit", {})
         
         col1, col2, col3, col4 = st.columns(4)
     
@@ -3570,6 +3574,8 @@ elif tool_selection == "Manual Calculation":
         from utils.refrigerant_enthalpies import RefrigerantEnthalpies
         from utils.supercompliq_co2 import RefrigerantProps
 
+        ctx = st.session_state.get("active_circuit", {})
+
         col1, col2, col3, col4 = st.columns(4)
     
         with col1:
@@ -4212,6 +4218,8 @@ elif tool_selection == "Manual Calculation":
         from utils.refrigerant_entropies import RefrigerantEntropies
         from utils.refrigerant_enthalpies import RefrigerantEnthalpies
 
+        ctx = st.session_state.get("active_circuit", {})
+
         col1, col2, col3, col4 = st.columns(4)
     
         with col1:
@@ -4625,6 +4633,8 @@ elif tool_selection == "Manual Calculation":
             st.warning("Pipe size validation failed — calculations skipped.")
 
     if mode == "Wet Suction":
+
+        ctx = st.session_state.get("active_circuit", {})
 
         def find_pipe_diameter(PD, Vis, Den, MassF, choice, surface_roughness):
         
@@ -5229,6 +5239,8 @@ elif tool_selection == "Manual Calculation":
             st.metric("Velocity Pressure PD", f"{dp_plf_ws:.2f}kPa")
 
     if mode == "Pumped Liquid":
+
+        ctx = st.session_state.get("active_circuit", {})
         
         col1, col2, col3, col4 = st.columns(4)
     
