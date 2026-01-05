@@ -289,6 +289,9 @@ def system_pressure_checker_ui():
 
     limits = result["pressure_limits_bar"]
 
+    min_strength = 1.3 * result['design_pressure_bar_g']
+    max_strength = 1.5 * mwp_multi[50]
+
     if refrigerant == "R744 TC":
         design_32 = None
         design_43 = None
@@ -318,7 +321,7 @@ def system_pressure_checker_ui():
 
     st.markdown("### Results")
 
-    col1, col2, col3, col4, col5 = st.columns(5)
+    col1, col2, col3, col4, col5, col6 = st.columns(6)
 
     with col1:
         if refrigerant == "R744 TC":
@@ -342,23 +345,23 @@ def system_pressure_checker_ui():
                 st.metric("27°C", f"{design_32:.2f} bar(g)")
 
     with col2:
-        st.metric("System design pressure", f"{result['design_pressure_bar_g']:.2f} bar(g)")
+        st.metric("System Design Pressure", f"{result['design_pressure_bar_g']:.2f} bar(g)")
         if refrigerant == "R744 TC":
             st.metric("", "")
         else:
-            st.metric("Leak test pressure", f"{limits['leak_test']:.2f} bar(g)")
-            st.metric("Pressure test", f"{limits['pressure_test']:.2f} bar(g)")
+            st.metric("Leak Test Pressure", f"{limits['leak_test']:.2f} bar(g)")
+            st.metric("Pressure Test", f"{limits['pressure_test']:.2f} bar(g)")
 
     with col3:
         if refrigerant == "R744 TC":
             st.metric("", "")
         else:
             if circuit in ("Suction", "Pumped"):
-                st.metric("High pressure cut-out", "N/A")
+                st.metric("High Pressure Cut-out", "N/A")
             else:
-                st.metric("High pressure cut-out", f"{limits['hp_cutout']:.2f} bar(g)")
-            st.metric("Relief valve setting", f"{limits['relief_setting']:.2f} bar(g)")
-            st.metric("Relief valve rated discharge", f"{limits['rated_discharge']:.2f} bar(g)")
+                st.metric("High Pressure Cut-out", f"{limits['hp_cutout']:.2f} bar(g)")
+            st.metric("Relief Valve Setting", f"{limits['relief_setting']:.2f} bar(g)")
+            st.metric("Relief Valve Rated Discharge", f"{limits['rated_discharge']:.2f} bar(g)")
 
     with col4:
         mwp_multi = result.get("mwp_multi_temp", {})
@@ -390,6 +393,10 @@ def system_pressure_checker_ui():
                     f"❌ Pipe NOT rated: MWP {mwp:.2f} bar < "
                     f"Design {result['design_pressure_bar_g']:.2f} bar(g)"
                 )
+
+    with col6:
+        st.metric("Min Str Test", f"{min_strength:.2f} bar(g)")
+        st.metric("Max Str Test @50°C", f"{max_strength:.2f} bar(g)")
 
 if tool_selection == "Pipe Network Builder":
     builder = NetworkBuilder()
