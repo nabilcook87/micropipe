@@ -112,9 +112,9 @@ def system_pressure_checker_ui():
             range_min_high = 0.0
             range_max_high = 25.0
         elif refrigerant in ("R23", "R508B"):
-            range_min_low = -60
+            range_min_low = -60.0
             range_max_low = 10.0
-            range_min_high = -30
+            range_min_high = -30.0
             range_max_high = 10.0
         else:
             range_min_low = 20.0
