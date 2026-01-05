@@ -78,15 +78,20 @@ def system_pressure_checker_ui():
 
         st.markdown("### System Pressure Checker")
     
-        refrigerant = st.selectbox("Refrigerant", [
-            "R404A", "R134a", "R407F", "R744", "R744 TC", "R410A",
-            "R407C", "R507A", "R448A", "R449A", "R22", "R32", "R454A", "R454C", "R455A", "R407A",
-            "R290", "R1270", "R600a", "R717", "R1234ze", "R1234yf", "R12", "R11", "R454B", "R450A", "R513A", "R23", "R508B", "R502"
-        ])
+        refrigerant = st.selectbox(
+            "Refrigerant",
+            refrigerant_list,
+            index=refrigerant_list.index(ctx["refrigerant"])
+            if ctx.get("refrigerant") in refrigerant_list else 0
+        )
 
+        circuit_map = ["Suction", "Liquid", "Discharge", "Pumped"]
+        
         circuit = st.selectbox(
             "Circuit Type",
-            ["Suction", "Liquid", "Discharge", "Pumped"],
+            circuit_map,
+            index=circuit_map.index(ctx["circuit"])
+            if ctx.get("circuit") in circuit_map else 0
         )
 
         if circuit == "Discharge":
@@ -195,7 +200,13 @@ def system_pressure_checker_ui():
         )
     
         pipe_materials = sorted(pipe_data["Material"].dropna().unique())
-        selected_material = st.selectbox("Pipe Material", pipe_materials)
+        
+        selected_material = st.selectbox(
+            "Pipe Material",
+            pipe_materials,
+            index=pipe_materials.index(ctx["pipe_material"])
+            if ctx.get("pipe_material") in pipe_materials else 0
+        )
     
         def material_to_pipe_index(material: str) -> int:
             m = (material or "").strip().lower()
@@ -244,7 +255,13 @@ def system_pressure_checker_ui():
     
         material_df["Nominal Size (inch)"] = material_df["Nominal Size (inch)"].astype(str)
         pipe_sizes = sorted(material_df["Nominal Size (inch)"].dropna().unique())
-        selected_size = st.selectbox("Nominal Pipe Size (inch)", pipe_sizes)
+        
+        selected_size = st.selectbox(
+            "Nominal Pipe Size (inch)",
+            pipe_sizes,
+            index=pipe_sizes.index(ctx["pipe_size"])
+            if ctx.get("pipe_size") in pipe_sizes else 0
+        )
     
         size_df = material_df[material_df["Nominal Size (inch)"] == str(selected_size)].copy()
         if size_df.empty:
@@ -256,7 +273,12 @@ def system_pressure_checker_ui():
             # Only prompt for gauge if multiple gauge options exist
             gauges = sorted(size_df["Gauge"].dropna().unique())
             if len(gauges) > 1:
-                gauge = st.selectbox("Gauge", gauges)
+                gauge = st.selectbox(
+                    "Gauge",
+                    gauges,
+                    index=gauges.index(ctx["gauge"])
+                    if ctx.get("gauge") in gauges else 0
+                )
                 selected_row = size_df[size_df["Gauge"] == gauge].iloc[0]
             else:
                 gauge = gauges[0]
@@ -5622,8 +5644,8 @@ elif tool_selection == "Manual Calculation":
                 
             with col7:
                 st.metric("Velocity Pressure PD", f"{dp_plf_kPa:.2f}kPa")
-
-    ctx = st.session_state.setdefault("active_circuit", {})
+    
+    ctx = get_active_circuit_context()
     
     mode_to_circuit = {
         "Dry Suction": "Suction",
@@ -5631,13 +5653,14 @@ elif tool_selection == "Manual Calculation":
         "Liquid": "Liquid",
         "Discharge": "Discharge",
         "Pumped Liquid": "Pumped",
+        # "Drain" intentionally excluded
     }
     
     ctx.update({
-        "mode": selected_mode,
-        "circuit": mode_to_circuit.get(selected_mode),
+        "mode": mode,
+        "circuit": mode_to_circuit.get(mode),
         "refrigerant": refrigerant,
         "pipe_material": selected_material,
         "pipe_size": selected_size,
-        "gauge": selected_gauge,
+        "gauge": locals().get("selected_gauge"),
     })
