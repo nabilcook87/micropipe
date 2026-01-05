@@ -28,6 +28,16 @@ div[data-testid="stMetricDelta"] > div {
 </style>
 """, unsafe_allow_html=True)
 
+def get_active_circuit_context():
+    return st.session_state.setdefault("active_circuit", {
+        "mode": None,          # dry suction / wet suction / liquid / discharge / pumped
+        "circuit": None,       # Suction / Liquid / Discharge / Pumped
+        "refrigerant": None,
+        "pipe_material": None,
+        "pipe_size": None,
+        "gauge": None,
+    })
+
 st.set_page_config(page_title="Micropipe - Refrigeration Pipe Sizing", layout="wide")
 st.title("MicroPipe")
 
@@ -51,6 +61,8 @@ st.sidebar.text("")
 st.sidebar.image("assets/logo.png", use_container_width=True)
 
 def system_pressure_checker_ui():
+
+    ctx = st.session_state.get("active_circuit", {})
 
     pipe_data = pd.read_csv("data/pipe_pressure_ratings_full.csv")
 
@@ -5610,3 +5622,22 @@ elif tool_selection == "Manual Calculation":
                 
             with col7:
                 st.metric("Velocity Pressure PD", f"{dp_plf_kPa:.2f}kPa")
+
+    ctx = st.session_state.setdefault("active_circuit", {})
+    
+    mode_to_circuit = {
+        "Dry Suction": "Suction",
+        "Wet Suction": "Suction",
+        "Liquid": "Liquid",
+        "Discharge": "Discharge",
+        "Pumped Liquid": "Pumped",
+    }
+    
+    ctx.update({
+        "mode": selected_mode,
+        "circuit": mode_to_circuit.get(selected_mode),
+        "refrigerant": refrigerant,
+        "pipe_material": selected_material,
+        "pipe_size": selected_size,
+        "gauge": selected_gauge,
+    })
