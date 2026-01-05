@@ -290,8 +290,12 @@ def system_pressure_checker_ui():
     limits = result["pressure_limits_bar"]
     mwp_multi = result.get("mwp_multi_temp", {})
 
-    min_strength = 1.3 * result['design_pressure_bar_g']
-    max_strength = 1.5 * mwp_multi[50]
+    if mwp_multi[50] == None:
+        min_strength = 1.3 * result['design_pressure_bar_g']
+        max_strength = None
+    else:
+        min_strength = 1.3 * result['design_pressure_bar_g']
+        max_strength = 1.5 * mwp_multi[50]
 
     if refrigerant == "R744 TC":
         design_32 = None
@@ -395,8 +399,11 @@ def system_pressure_checker_ui():
                 )
 
     with col6:
-        st.metric("Minimum Strength Test", f"{min_strength:.2f} bar(g)")
-        st.metric("Maximum Strength Test @ 50°C", f"{max_strength:.2f} bar(g)")
+        if mwp_multi[50] == None:
+            st.metric("", "")
+        else:
+            st.metric("Minimum Strength Test", f"{min_strength:.2f} bar(g)")
+            st.metric("Maximum Strength Test @ 50°C", f"{max_strength:.2f} bar(g)")
 
 if tool_selection == "Pipe Network Builder":
     builder = NetworkBuilder()
