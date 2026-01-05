@@ -93,7 +93,8 @@ def system_pressure_checker_ui():
             "Refrigerant",
             refrigerant_list,
             index=refrigerant_list.index(ctx["refrigerant"])
-            if ctx.get("refrigerant") in refrigerant_list else 0
+            if ctx.get("refrigerant") in refrigerant_list else 0,
+            disabled=True
         )
 
         circuit_map = ["Suction", "Liquid", "Discharge", "Pumped"]
@@ -102,7 +103,8 @@ def system_pressure_checker_ui():
             "Circuit Type",
             circuit_map,
             index=circuit_map.index(ctx["circuit"])
-            if ctx.get("circuit") in circuit_map else 0
+            if ctx.get("circuit") in circuit_map else 0,
+            disabled=True
         )
 
         if circuit == "Discharge":
@@ -216,7 +218,8 @@ def system_pressure_checker_ui():
             "Pipe Material",
             pipe_materials,
             index=pipe_materials.index(ctx["pipe_material"])
-            if ctx.get("pipe_material") in pipe_materials else 0
+            if ctx.get("pipe_material") in pipe_materials else 0,
+            disabled=True
         )
     
         def material_to_pipe_index(material: str) -> int:
@@ -271,7 +274,8 @@ def system_pressure_checker_ui():
             "Nominal Pipe Size (inch)",
             pipe_sizes,
             index=pipe_sizes.index(ctx["pipe_size"])
-            if ctx.get("pipe_size") in pipe_sizes else 0
+            if ctx.get("pipe_size") in pipe_sizes else 0,
+            disabled=True
         )
     
         size_df = material_df[material_df["Nominal Size (inch)"] == str(selected_size)].copy()
@@ -288,7 +292,8 @@ def system_pressure_checker_ui():
                     "Gauge",
                     gauges,
                     index=gauges.index(ctx["gauge"])
-                    if ctx.get("gauge") in gauges else 0
+                    if ctx.get("gauge") in gauges else 0,
+                    disabled=True
                 )
                 selected_row = size_df[size_df["Gauge"] == gauge].iloc[0]
             else:
