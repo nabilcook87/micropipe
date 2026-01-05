@@ -290,7 +290,7 @@ def system_pressure_checker_ui():
     limits = result["pressure_limits_bar"]
     mwp_multi = result.get("mwp_multi_temp", {})
 
-    if mwp_multi[50] == None:
+    if mwp_multi == None:
         min_strength = 1.3 * result['design_pressure_bar_g']
         max_strength = None
     else:
@@ -399,7 +399,7 @@ def system_pressure_checker_ui():
                 )
 
     with col6:
-        if mwp_multi[50] == None:
+        if mwp_multi == None:
             st.metric("", "")
         else:
             st.metric("Minimum Strength Test", f"{min_strength:.2f} bar(g)")
