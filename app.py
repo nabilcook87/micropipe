@@ -396,7 +396,7 @@ def system_pressure_checker_ui():
 
     with col6:
         st.metric("Minimum Strength Test", f"{min_strength:.2f} bar(g)")
-        st.metric("Maximum Strength Test @50°C", f"{max_strength:.2f} bar(g)")
+        st.metric("Maximum Strength Test @ 50°C", f"{max_strength:.2f} bar(g)")
 
 if tool_selection == "Pipe Network Builder":
     builder = NetworkBuilder()
