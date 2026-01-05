@@ -77,6 +77,11 @@ def system_pressure_checker_ui():
             ["Suction", "Liquid", "Discharge", "Pumped"],
         )
 
+        if circuit == "Discharge":
+            mwp_options = 150
+        else:
+            mwp_options = 50
+        
         cola, colb = st.columns(2)
 
         with cola:
@@ -173,7 +178,8 @@ def system_pressure_checker_ui():
         mwp_temp_c = st.selectbox(
             "MWP Reference Temperature (°C)",
             [50, 100, 150],
-            index=0,
+            index=[50, 100, 150].index(mwp_options),
+            disabled=True
         )
     
         pipe_materials = sorted(pipe_data["Material"].dropna().unique())
