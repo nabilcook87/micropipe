@@ -634,7 +634,12 @@ elif tool_selection == "Oil Return Checker":
         else:
             pipe_materials = sorted(pipe_data["Material"].dropna().unique())
 
-        selected_material = st.selectbox("Pipe Material", pipe_materials, key="material")
+        selected_material = st.selectbox(
+            "Pipe Material",
+            pipe_materials,
+            index=pipe_materials.index(ctx["pipe_material"])
+            if ctx.get("pipe_material") in pipe_materials else 0,
+        )
     
     # detect material change
     material_changed = ss.get("last_material") is not None and ss.last_material != selected_material
@@ -1417,7 +1422,12 @@ elif tool_selection == "Manual Calculation":
             else:
                 pipe_materials = sorted(pipe_data["Material"].dropna().unique())
     
-            selected_material = st.selectbox("Pipe Material", pipe_materials, key="material")
+            selected_material = st.selectbox(
+                "Pipe Material",
+                pipe_materials,
+                index=pipe_materials.index(ctx["pipe_material"])
+                if ctx.get("pipe_material") in pipe_materials else 0,
+            )
         
         # detect material change
         material_changed = ss.get("last_material") is not None and ss.last_material != selected_material
@@ -2993,7 +3003,12 @@ elif tool_selection == "Manual Calculation":
             else:
                 pipe_materials = sorted(pipe_data["Material"].dropna().unique())
     
-            selected_material = st.selectbox("Pipe Material", pipe_materials, key="material")
+            selected_material = st.selectbox(
+                "Pipe Material",
+                pipe_materials,
+                index=pipe_materials.index(ctx["pipe_material"])
+                if ctx.get("pipe_material") in pipe_materials else 0,
+            )
         
         # detect material change
         material_changed = ss.get("last_material") is not None and ss.last_material != selected_material
@@ -3654,7 +3669,12 @@ elif tool_selection == "Manual Calculation":
             else:
                 pipe_materials = sorted(pipe_data["Material"].dropna().unique())
     
-            selected_material = st.selectbox("Pipe Material", pipe_materials, key="material")
+            selected_material = st.selectbox(
+                "Pipe Material",
+                pipe_materials,
+                index=pipe_materials.index(ctx["pipe_material"])
+                if ctx.get("pipe_material") in pipe_materials else 0,
+            )
         
         # detect material change
         material_changed = ss.get("last_material") is not None and ss.last_material != selected_material
@@ -4790,7 +4810,12 @@ elif tool_selection == "Manual Calculation":
             else:
                 pipe_materials = sorted(pipe_data["Material"].dropna().unique())
     
-            selected_material = st.selectbox("Pipe Material", pipe_materials, key="material")
+            selected_material = st.selectbox(
+                "Pipe Material",
+                pipe_materials,
+                index=pipe_materials.index(ctx["pipe_material"])
+                if ctx.get("pipe_material") in pipe_materials else 0,
+            )
         
         # detect material change
         material_changed = ss.get("last_material") is not None and ss.last_material != selected_material
@@ -5357,7 +5382,12 @@ elif tool_selection == "Manual Calculation":
             else:
                 pipe_materials = sorted(pipe_data["Material"].dropna().unique())
     
-            selected_material = st.selectbox("Pipe Material", pipe_materials, key="material")
+            selected_material = st.selectbox(
+                "Pipe Material",
+                pipe_materials,
+                index=pipe_materials.index(ctx["pipe_material"])
+                if ctx.get("pipe_material") in pipe_materials else 0,
+            )
         
         # detect material change
         material_changed = ss.get("last_material") is not None and ss.last_material != selected_material
