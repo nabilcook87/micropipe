@@ -288,6 +288,7 @@ def system_pressure_checker_ui():
     )
 
     limits = result["pressure_limits_bar"]
+    mwp_multi = result.get("mwp_multi_temp", {})
 
     min_strength = 1.3 * result['design_pressure_bar_g']
     max_strength = 1.5 * mwp_multi[50]
@@ -364,7 +365,6 @@ def system_pressure_checker_ui():
             st.metric("Relief Valve Rated Discharge", f"{limits['rated_discharge']:.2f} bar(g)")
 
     with col4:
-        mwp_multi = result.get("mwp_multi_temp", {})
         if mwp_multi:
             st.metric("MWP @ 50°C", f"{mwp_multi[50]:.2f} bar(g)")
             st.metric("MWP @ 100°C", f"{mwp_multi[100]:.2f} bar(g)")
