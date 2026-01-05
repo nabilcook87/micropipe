@@ -96,7 +96,7 @@ def system_pressure_checker_ui():
         if refrigerant == "R744":
             default_high_dt = 25.0
             default_low_dt = 25.0
-        if refrigerant in ("R23", "R508B"):
+        elif refrigerant in ("R23", "R508B"):
             default_high_dt = 10.0
             default_low_dt = 10.0
         elif dp_standard == "BS EN 378":
@@ -111,7 +111,7 @@ def system_pressure_checker_ui():
             range_max_low = 25.0
             range_min_high = 0.0
             range_max_high = 25.0
-        if refrigerant in ("R23", "R508B"):
+        elif refrigerant in ("R23", "R508B"):
             range_min_low = -60
             range_max_low = 10.0
             range_min_high = -30
@@ -322,6 +322,10 @@ def system_pressure_checker_ui():
                 st.metric("30°C", f"{design_55:.2f} bar(g)")
                 st.metric("30°C", f"{design_43:.2f} bar(g)")
                 st.metric("30°C", f"{design_43:.2f} bar(g)")
+            elif refrigerant in ("R23", "R508B"):
+                st.metric("10°C", f"{design_55:.2f} bar(g)")
+                st.metric("10°C", f"{design_43:.2f} bar(g)")
+                st.metric("10°C", f"{design_43:.2f} bar(g)")
             elif dp_standard == "BS EN 378":
                 st.metric("55°C", f"{design_55:.2f} bar(g)")
                 st.metric("43°C", f"{design_43:.2f} bar(g)")
