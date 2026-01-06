@@ -684,16 +684,24 @@ elif tool_selection == "Oil Return Checker":
         default_index = pipe_sizes.index(ss.selected_size)
 
     disable_valves = st.session_state.get("double_trouble", False)
+
+    mode_pipe_size = ctx.get("pipe_size_by_mode", {}).get(mode)
+
+    index = (
+        pipe_sizes.index(mode_pipe_size)
+        if mode_pipe_size in pipe_sizes
+        else default_index
+    )
     
     with col1:
         selected_size = st.selectbox(
             "Nominal Pipe Size (inch)",
             pipe_sizes,
-            index=default_index,
-            key="selected_size",
+            index=index,
+            key=f"selected_size_{mode}",
             disabled=disable_valves,
         )
-
+    
     ss.prev_pipe_mm = float(mm_map.get(selected_size, float("nan")))
 
     # 3) Gauge (if applicable)
@@ -1490,13 +1498,21 @@ elif tool_selection == "Manual Calculation":
             default_index = pipe_sizes.index(ss.selected_size)
 
         disable_valves = st.session_state.get("double_trouble", False)
+
+        mode_pipe_size = ctx.get("pipe_size_by_mode", {}).get(mode)
+
+        index = (
+            pipe_sizes.index(mode_pipe_size)
+            if mode_pipe_size in pipe_sizes
+            else default_index
+        )
         
         with col1:
             selected_size = st.selectbox(
                 "Nominal Pipe Size (inch)",
                 pipe_sizes,
-                index=default_index,
-                key="selected_size",
+                index=index,
+                key=f"selected_size_{mode}",
                 disabled=disable_valves,
             )
 
@@ -3061,13 +3077,21 @@ elif tool_selection == "Manual Calculation":
         elif "selected_size" in ss and ss.selected_size in pipe_sizes:
             # if Streamlit kept the selection, use it
             default_index = pipe_sizes.index(ss.selected_size)
+
+        mode_pipe_size = ctx.get("pipe_size_by_mode", {}).get(mode)
+
+        index = (
+            pipe_sizes.index(mode_pipe_size)
+            if mode_pipe_size in pipe_sizes
+            else default_index
+        )
         
         with col1:
             selected_size = st.selectbox(
                 "Nominal Pipe Size (inch)",
                 pipe_sizes,
-                index=default_index,
-                key="selected_size",
+                index=index,
+                key=f"selected_size_{mode}",
             )
     
         # remove the one-shot flag so future reruns don't keep forcing it
@@ -3724,13 +3748,21 @@ elif tool_selection == "Manual Calculation":
         elif "selected_size" in ss and ss.selected_size in pipe_sizes:
             # if Streamlit kept the selection, use it
             default_index = pipe_sizes.index(ss.selected_size)
+
+        mode_pipe_size = ctx.get("pipe_size_by_mode", {}).get(mode)
+
+        index = (
+            pipe_sizes.index(mode_pipe_size)
+            if mode_pipe_size in pipe_sizes
+            else default_index
+        )
     
         with col1:
             selected_size = st.selectbox(
                 "Nominal Pipe Size (inch)",
                 pipe_sizes,
-                index=default_index,
-                key="selected_size",
+                index=index,
+                key=f"selected_size_{mode}",
             )
     
         if st.session_state.get("_selected_size_just_set"):
@@ -4878,13 +4910,21 @@ elif tool_selection == "Manual Calculation":
         elif "selected_size" in ss and ss.selected_size in pipe_sizes:
             # if Streamlit kept the selection, use it
             default_index = pipe_sizes.index(ss.selected_size)
+
+        mode_pipe_size = ctx.get("pipe_size_by_mode", {}).get(mode)
+
+        index = (
+            pipe_sizes.index(mode_pipe_size)
+            if mode_pipe_size in pipe_sizes
+            else default_index
+        )
         
         with col1:
             selected_size = st.selectbox(
                 "Nominal Pipe Size (inch)",
                 pipe_sizes,
-                index=default_index,
-                key="selected_size",
+                index=index,
+                key=f"selected_size_{mode}",
             )
 
         # --- clean up one-shot flag ---
@@ -5545,13 +5585,21 @@ elif tool_selection == "Manual Calculation":
             if ss["_next_selected_size"] in pipe_sizes:
                 ss.selected_size = ss["_next_selected_size"]
             del ss["_next_selected_size"]
+
+        mode_pipe_size = ctx.get("pipe_size_by_mode", {}).get(mode)
+
+        index = (
+            pipe_sizes.index(mode_pipe_size)
+            if mode_pipe_size in pipe_sizes
+            else default_index
+        )
         
         with col1:
             selected_size = st.selectbox(
                 "Nominal Pipe Size (inch)",
                 pipe_sizes,
-                index=default_index,
-                key="selected_size",
+                index=index,
+                key=f"selected_size_{mode}",
             )
         
         # remember the selected size in mm for next material change
@@ -5829,6 +5877,8 @@ elif tool_selection == "Manual Calculation":
                 st.metric("Velocity Pressure PD", f"{dp_plf_kPa:.2f}kPa")
     
     ctx = get_active_circuit_context()
+    ctx.setdefault("pipe_size_by_mode", {})
+    ctx["pipe_size_by_mode"][mode] = selected_size
     
     mode_to_circuit = {
         "Dry Suction": "Suction",
@@ -5836,7 +5886,6 @@ elif tool_selection == "Manual Calculation":
         "Liquid": "Liquid",
         "Discharge": "Discharge",
         "Pumped Liquid": "Pumped",
-        # "Drain" intentionally excluded
     }
     
     ctx.update({
