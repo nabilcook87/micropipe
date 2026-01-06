@@ -1615,7 +1615,7 @@ elif tool_selection == "Manual Calculation":
         
         # you already have selected_gauge sometimes; otherwise None
         gauge = st.session_state.get("gauge")  # or whatever that mode uses
-        od_mm, id_mm = get_dimensions_for_row(selected_pipe_row, pipe_index, gauge, copper_calc)
+        od_mm, id_mm = get_dimensions_for_row(material_df, selected_size, gauge)
         
         result = system_pressure_check(
             refrigerant=refrigerant,
@@ -1847,8 +1847,8 @@ elif tool_selection == "Manual Calculation":
         pipe_index_large = material_to_pipe_index(selected_material)
         pipe_index_small = pipe_index_large  # same material
         
-        od_large, id_large = get_dimensions_for_row(row_large, pipe_index_large, gauge_large, copper_calc)
-        od_small, id_small = get_dimensions_for_row(row_small, pipe_index_small, gauge_small, copper_calc)
+        od_large, id_large = get_dimensions_for_row(material_df, large_size, gauge_large)
+        od_small, id_small = get_dimensions_for_row(material_df, small_size, gauge_small)
         
         result = system_pressure_check_double_riser(
             refrigerant=refrigerant,
@@ -3262,7 +3262,7 @@ elif tool_selection == "Manual Calculation":
         
         # you already have selected_gauge sometimes; otherwise None
         gauge = st.session_state.get("gauge")  # or whatever that mode uses
-        od_mm, id_mm = get_dimensions_for_row(selected_pipe_row, pipe_index, gauge, copper_calc)
+        od_mm, id_mm = get_dimensions_for_row(material_df, selected_size, gauge)
         
         result = system_pressure_check(
             refrigerant=refrigerant,
@@ -3953,7 +3953,7 @@ elif tool_selection == "Manual Calculation":
         
         # you already have selected_gauge sometimes; otherwise None
         gauge = st.session_state.get("gauge")  # or whatever that mode uses
-        od_mm, id_mm = get_dimensions_for_row(selected_pipe_row, pipe_index, gauge, copper_calc)
+        od_mm, id_mm = get_dimensions_for_row(material_df, selected_size, gauge)
         
         result = system_pressure_check(
             refrigerant=refrigerant,
@@ -4540,10 +4540,10 @@ elif tool_selection == "Manual Calculation":
         pipe_index = material_to_pipe_index(selected_material)
         
         g_main = st.session_state.get("gauge")
-        od_main, id_main = get_dimensions_for_row(selected_pipe_row, pipe_index, g_main, copper_calc)
+        od_main, id_main = get_dimensions_for_row(material_df, selected_size, g_main)
         
         g_branch = st.session_state.get("gauge_2")
-        od_branch, id_branch = get_dimensions_for_row(selected_pipe_row_2, pipe_index, g_branch, copper_calc)
+        od_branch, id_branch = get_dimensions_for_row(material_df, selected_size_2, g_branch)
         
         res_main = system_pressure_check(
             refrigerant=refrigerant,
@@ -5199,7 +5199,7 @@ elif tool_selection == "Manual Calculation":
         
         # you already have selected_gauge sometimes; otherwise None
         gauge = st.session_state.get("gauge")  # or whatever that mode uses
-        od_mm, id_mm = get_dimensions_for_row(selected_pipe_row, pipe_index, gauge, copper_calc)
+        od_mm, id_mm = get_dimensions_for_row(material_df, selected_size, gauge)
         
         result = system_pressure_check(
             refrigerant=refrigerant,
@@ -5891,7 +5891,7 @@ elif tool_selection == "Manual Calculation":
         
         # you already have selected_gauge sometimes; otherwise None
         gauge = st.session_state.get("gauge")  # or whatever that mode uses
-        od_mm, id_mm = get_dimensions_for_row(selected_pipe_row, pipe_index, gauge, copper_calc)
+        od_mm, id_mm = get_dimensions_for_row(material_df, selected_size, gauge)
         
         result = system_pressure_check(
             refrigerant=refrigerant,
