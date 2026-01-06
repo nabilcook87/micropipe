@@ -1493,17 +1493,17 @@ elif tool_selection == "Oil Return Checker":
 elif tool_selection == "Manual Calculation":
     st.subheader("Manual Calculation")
 
-    if manual_mode == "Dry suction":
+    if mode == "Dry suction":
         circuit = "Suction"
-    elif manual_mode == "Wet suction":
+    elif mode == "Wet suction":
         circuit = "Suction"
-    elif manual_mode == "Liquid":
+    elif mode == "Liquid":
         circuit = "Liquid"
-    elif manual_mode == "Pumped liquid":
+    elif mode == "Pumped liquid":
         circuit = "Pumped"
-    elif manual_mode == "Discharge":
+    elif mode == "Discharge":
         circuit = "Discharge"
-    elif manual_mode == "Drain":
+    elif mode == "Drain":
         circuit = "Pumped"
 
     ctx = pressure_checker_inputs(
