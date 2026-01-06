@@ -71,7 +71,7 @@ def render_pressure_result(result: dict):
     else:
         st.error("FAIL: MWP < Design pressure")
 
-def pipe_params_from_selection(material_df, size_inch: str, gauge: int | None):
+def get_dimensions_for_row(material_df, size_inch: str, gauge: int | None):
     rows = material_df[
         material_df["Nominal Size (inch)"].astype(str).str.strip() == str(size_inch)
     ]
