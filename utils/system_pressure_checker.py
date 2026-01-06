@@ -404,6 +404,91 @@ def system_pressure_check(
         "margin_bar": margin,
     }
 
+def system_pressure_check_double_riser(
+    *,
+    refrigerant: str,
+    design_temp_c: float,
+    mwp_temp_c: float,
+    circuit: str,
+    dp_standard: str,
+
+    # --- Branch A ---
+    pipe_index_a: int,
+    od_mm_a: float,
+    id_mm_a: float | None,
+    gauge_a: int | None,
+
+    # --- Branch B ---
+    pipe_index_b: int,
+    od_mm_b: float,
+    id_mm_b: float | None,
+    gauge_b: int | None,
+
+    copper_calc: str | None = None,
+    r744_tc_pressure_bar_g: float | None = None,
+) -> dict:
+    """
+    Double riser pressure check.
+    Evaluates both branches and carries forward the WORST (lowest) MWP.
+    """
+
+    # --- Run normal pressure check on each branch ---
+    res_a = system_pressure_check(
+        refrigerant=refrigerant,
+        design_temp_c=design_temp_c,
+        mwp_temp_c=mwp_temp_c,
+        circuit=circuit,
+        pipe_index=pipe_index_a,
+        od_mm=od_mm_a,
+        id_mm=id_mm_a,
+        gauge=gauge_a,
+        copper_calc=copper_calc,
+        r744_tc_pressure_bar_g=r744_tc_pressure_bar_g,
+        dp_standard=dp_standard,
+    )
+
+    res_b = system_pressure_check(
+        refrigerant=refrigerant,
+        design_temp_c=design_temp_c,
+        mwp_temp_c=mwp_temp_c,
+        circuit=circuit,
+        pipe_index=pipe_index_b,
+        od_mm=od_mm_b,
+        id_mm=id_mm_b,
+        gauge=gauge_b,
+        copper_calc=copper_calc,
+        r744_tc_pressure_bar_g=r744_tc_pressure_bar_g,
+        dp_standard=dp_standard,
+    )
+
+    design_p = res_a["design_pressure_bar_g"]  # identical for both
+
+    # --- Helper to extract governing MWP ---
+    def min_mwp(mwp):
+        if isinstance(mwp, dict):
+            return min(mwp.values())
+        return mwp
+
+    mwp_a = min_mwp(res_a["mwp_bar"])
+    mwp_b = min_mwp(res_b["mwp_bar"])
+
+    governing_mwp = min(mwp_a, mwp_b)
+
+    return {
+        "design_pressure_bar_g": design_p,
+        "pressure_limits_bar": res_a["pressure_limits_bar"],
+
+        # full detail retained
+        "branch_a": res_a,
+        "branch_b": res_b,
+
+        # governing values
+        "mwp_bar": governing_mwp,
+        "pass": governing_mwp >= design_p,
+        "margin_bar": governing_mwp - design_p,
+        "governing_branch": "A" if mwp_a <= mwp_b else "B",
+    }
+
 def pipe_stress_psi(temp_f: float) -> float:
     T2 = temp_f
     A0 = 37600.0274576506
