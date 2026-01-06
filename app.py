@@ -1507,7 +1507,14 @@ elif tool_selection == "Manual Calculation":
 
     circuit = circuit_for_manual_mode(mode)
 
-    cola, colb, colc = st.columns(3)
+    colx, cola, colb, colc = st.columns(4)
+
+    with colx:
+        refrigerant = st.selectbox("Refrigerant", [
+            "R404A", "R134a", "R407F", "R744", "R744 TC", "R410A",
+            "R407C", "R507A", "R448A", "R449A", "R22", "R32", "R454A", "R454C", "R455A", "R407A",
+            "R290", "R1270", "R600a", "R717", "R1234ze", "R1234yf", "R12", "R11", "R454B", "R450A", "R513A", "R23", "R508B", "R502"
+        ])
 
     with cola:
         dp_standard = st.selectbox(
@@ -1524,6 +1531,14 @@ elif tool_selection == "Manual Calculation":
             index=0,
             key="manual_copper_calc",
         )
+
+    ctx = pressure_checker_inputs(
+        refrigerant=refrigerant,
+        circuit=circuit,
+        dp_standard=dp_standard,
+    )
+    refrigerant_eff = ctx["refrigerant"]
+    mwp_temp_c = ctx["mwp_temp_c"]
 
     with colc:
        if refrigerant == "R744 TC":
@@ -1559,23 +1574,6 @@ elif tool_selection == "Manual Calculation":
             r744_tc_pressure_bar_g = None
     
     if mode == "Dry Suction":
-
-        col1, col2, col3, col4 = st.columns(4)
-    
-        with col1:
-            refrigerant = st.selectbox("Refrigerant", [
-                "R404A", "R134a", "R407F", "R744", "R744 TC", "R410A",
-                "R407C", "R507A", "R448A", "R449A", "R22", "R32", "R454A", "R454C", "R455A", "R407A",
-                "R290", "R1270", "R600a", "R717", "R1234ze", "R1234yf", "R12", "R11", "R454B", "R450A", "R513A", "R23", "R508B", "R502"
-            ])
-
-        ctx = pressure_checker_inputs(
-            refrigerant=refrigerant,
-            circuit=circuit,
-            dp_standard=dp_standard,
-        )
-        refrigerant_eff = ctx["refrigerant"]
-        mwp_temp_c = ctx["mwp_temp_c"]
         
         # Load pipe data
         pipe_data = pd.read_csv("data/pipe_pressure_ratings_full.csv")
@@ -1602,6 +1600,8 @@ elif tool_selection == "Manual Calculation":
         ss = st.session_state
     
         # 1) Pipe material
+
+        col1, col2, col3, col4 = st.columns(4)
         with col2:
             if refrigerant == "R717":
                 excluded_materials = ["Copper ASTM", " Copper EN12735", "K65 Copper", "Reflok Aluminium"]
@@ -3195,23 +3195,6 @@ elif tool_selection == "Manual Calculation":
     
     if mode == "Liquid":
         
-        col1, col2, col3, col4 = st.columns(4)
-    
-        with col1:
-            refrigerant = st.selectbox("Refrigerant", [
-                "R404A", "R134a", "R407F", "R744", "R744 TC", "R410A",
-                "R407C", "R507A", "R448A", "R449A", "R22", "R32", "R454A", "R454C", "R455A", "R407A",
-                "R290", "R1270", "R600a", "R717", "R1234ze", "R1234yf", "R12", "R11", "R454B", "R450A", "R513A", "R23", "R508B", "R502"
-            ])
-
-        ctx = pressure_checker_inputs(
-            refrigerant=refrigerant,
-            circuit=circuit,
-            dp_standard=dp_standard,
-        )
-        refrigerant_eff = ctx["refrigerant"]
-        mwp_temp_c = ctx["mwp_temp_c"]
-        
         # Load pipe data
         pipe_data = pd.read_csv("data/pipe_pressure_ratings_full.csv")
     
@@ -3237,6 +3220,7 @@ elif tool_selection == "Manual Calculation":
         ss = st.session_state
     
         # 1) Pipe material
+        col1, col2, col3, col4 = st.columns(4)
         with col2:
             if refrigerant == "R717":
                 excluded_materials = ["Copper ASTM", " Copper EN12735", "K65 Copper", "Reflok Aluminium"]
@@ -3871,23 +3855,6 @@ elif tool_selection == "Manual Calculation":
         from utils.refrigerant_entropies import RefrigerantEntropies
         from utils.refrigerant_enthalpies import RefrigerantEnthalpies
         from utils.supercompliq_co2 import RefrigerantProps
-
-        col1, col2, col3, col4 = st.columns(4)
-    
-        with col1:
-            refrigerant = st.selectbox("Refrigerant", [
-                "R404A", "R134a", "R407F", "R744", "R744 TC", "R410A",
-                "R407C", "R507A", "R448A", "R449A", "R22", "R32", "R454A", "R454C", "R455A", "R407A",
-                "R290", "R1270", "R600a", "R717", "R1234ze", "R1234yf", "R12", "R11", "R454B", "R450A", "R513A", "R23", "R508B", "R502"
-            ])
-        
-        ctx = pressure_checker_inputs(
-            refrigerant=refrigerant,
-            circuit=circuit,
-            dp_standard=dp_standard,
-        )
-        refrigerant_eff = ctx["refrigerant"]
-        mwp_temp_c = ctx["mwp_temp_c"]
         
         # Load pipe data
         pipe_data = pd.read_csv("data/pipe_pressure_ratings_full.csv")
@@ -3914,6 +3881,7 @@ elif tool_selection == "Manual Calculation":
         ss = st.session_state
     
         # 1) Pipe material
+        col1, col2, col3, col4 = st.columns(4)
         with col2:
             if refrigerant == "R717":
                 excluded_materials = ["Copper ASTM", " Copper EN12735", "K65 Copper", "Reflok Aluminium"]
@@ -4543,23 +4511,6 @@ elif tool_selection == "Manual Calculation":
         from utils.refrigerant_viscosities import RefrigerantViscosities
         from utils.refrigerant_entropies import RefrigerantEntropies
         from utils.refrigerant_enthalpies import RefrigerantEnthalpies
-
-        col1, col2, col3, col4 = st.columns(4)
-    
-        with col1:
-            refrigerant = st.selectbox("Refrigerant", [
-                "R404A", "R134a", "R407F", "R744", "R410A",
-                "R407C", "R507A", "R448A", "R449A", "R22", "R32", "R454A", "R454C", "R455A", "R407A",
-                "R290", "R1270", "R600a", "R717", "R1234ze", "R1234yf", "R12", "R11", "R454B", "R450A", "R513A", "R23", "R508B", "R502"
-            ], disabled=True)
-        
-        ctx = pressure_checker_inputs(
-            refrigerant=refrigerant,
-            circuit=circuit,
-            dp_standard=dp_standard,
-        )
-        refrigerant_eff = ctx["refrigerant"]
-        mwp_temp_c = ctx["mwp_temp_c"]
         
         pipe_index = material_to_pipe_index(selected_material)
         
@@ -4634,6 +4585,7 @@ elif tool_selection == "Manual Calculation":
         ss = st.session_state
     
         # 1) Pipe material
+        col1, col2, col3, col4 = st.columns(4)
         with col2:
             if refrigerant == "R717":
                 excluded_materials = ["Copper ASTM", " Copper EN12735", "K65 Copper", "Reflok Aluminium"]
@@ -5064,23 +5016,6 @@ elif tool_selection == "Manual Calculation":
                     break
         
             return PipeDia
-
-        col1, col2, col3, col4 = st.columns(4)
-    
-        with col1:
-            refrigerant = st.selectbox("Refrigerant", [
-                "R404A", "R134a", "R407F", "R744", "R410A",
-                "R407C", "R507A", "R448A", "R449A", "R22", "R32", "R454A", "R454C", "R455A", "R407A",
-                "R290", "R1270", "R600a", "R717", "R1234ze", "R1234yf", "R12", "R11", "R454B", "R450A", "R513A", "R23", "R508B", "R502"
-            ])
-    
-        ctx = pressure_checker_inputs(
-            refrigerant=refrigerant,
-            circuit=circuit,
-            dp_standard=dp_standard,
-        )
-        refrigerant_eff = ctx["refrigerant"]
-        mwp_temp_c = ctx["mwp_temp_c"]
         
         # Load pipe data
         pipe_data = pd.read_csv("data/pipe_pressure_ratings_full.csv")
@@ -5107,6 +5042,7 @@ elif tool_selection == "Manual Calculation":
         ss = st.session_state
     
         # 1) Pipe material
+        col1, col2, col3, col4 = st.columns(4)
         with col2:
             if refrigerant == "R717":
                 excluded_materials = ["Copper ASTM", " Copper EN12735", "K65 Copper", "Reflok Aluminium"]
@@ -5647,23 +5583,6 @@ elif tool_selection == "Manual Calculation":
             st.metric("Velocity Pressure PD", f"{dp_plf_ws:.2f}kPa")
 
     if mode == "Pumped Liquid":
-        
-        col1, col2, col3, col4 = st.columns(4)
-    
-        with col1:
-            refrigerant = st.selectbox("Refrigerant", [
-                "R404A", "R134a", "R407F", "R744", "R410A",
-                "R407C", "R507A", "R448A", "R449A", "R22", "R32", "R454A", "R454C", "R455A", "R407A",
-                "R290", "R1270", "R600a", "R717", "R1234ze", "R1234yf", "R12", "R11", "R454B", "R450A", "R513A", "R23", "R508B", "R502"
-            ])
-
-        ctx = pressure_checker_inputs(
-            refrigerant=refrigerant,
-            circuit=circuit,
-            dp_standard=dp_standard,
-        )
-        refrigerant_eff = ctx["refrigerant"]
-        mwp_temp_c = ctx["mwp_temp_c"]
 
         # Load pipe data
         pipe_data = pd.read_csv("data/pipe_pressure_ratings_full.csv")
@@ -5691,6 +5610,7 @@ elif tool_selection == "Manual Calculation":
     
         # 1) Pipe material
         with col2:
+        col1, col2, col3, col4 = st.columns(4)
             if refrigerant == "R717":
                 excluded_materials = ["Copper ASTM", " Copper EN12735", "K65 Copper", "Reflok Aluminium"]
                 pipe_materials = sorted(m for m in pipe_data["Material"].dropna().unique()
