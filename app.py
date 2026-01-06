@@ -28,16 +28,6 @@ div[data-testid="stMetricDelta"] > div {
 </style>
 """, unsafe_allow_html=True)
 
-def get_active_circuit_context():
-    return st.session_state.setdefault("active_circuit", {
-        "mode": None,          # dry suction / wet suction / liquid / discharge / pumped
-        "circuit": None,       # Suction / Liquid / Discharge / Pumped
-        "refrigerant": None,
-        "pipe_material": None,
-        "pipe_size": None,
-        "gauge": None,
-    })
-
 st.set_page_config(page_title="Micropipe - Refrigeration Pipe Sizing", layout="wide")
 st.title("MicroPipe")
 
@@ -62,8 +52,6 @@ st.sidebar.image("assets/logo.png", use_container_width=True)
 
 def system_pressure_checker_ui():
 
-    ctx = st.session_state.get("active_circuit", {})
-
     pipe_data = pd.read_csv("data/pipe_pressure_ratings_full.csv")
 
     required_cols = {"Material", "Nominal Size (inch)", "Nominal Size (mm)", "ID_mm"}
@@ -77,38 +65,17 @@ def system_pressure_checker_ui():
     with col1:
 
         st.markdown("### System Pressure Checker")
-
-        refrigerant_list = [
-            "R404A", "R134a", "R407F", "R744", "R744 TC", "R410A",
-            "R407C", "R507A", "R448A", "R449A", "R22", "R32",
-            "R454A", "R454C", "R455A", "R407A",
-            "R290", "R1270", "R600a", "R717",
-            "R1234ze", "R1234yf",
-            "R12", "R11",
-            "R454B", "R450A", "R513A",
-            "R23", "R508B", "R502",
-        ]
     
-        refrigerant = st.selectbox(
-            "Refrigerant",
-            refrigerant_list,
-            index=refrigerant_list.index(ctx["refrigerant"])
-            if ctx.get("refrigerant") in refrigerant_list else 0,
-            disabled=True
-        )
+        refrigerant = st.selectbox("Refrigerant", [
+            "R404A", "R134a", "R407F", "R744", "R744 TC", "R410A",
+            "R407C", "R507A", "R448A", "R449A", "R22", "R32", "R454A", "R454C", "R455A", "R407A",
+            "R290", "R1270", "R600a", "R717", "R1234ze", "R1234yf", "R12", "R11", "R454B", "R450A", "R513A", "R23", "R508B", "R502"
+        ])
 
-        circuit_map = ["Suction", "Liquid", "Discharge", "Pumped"]
-        
         circuit = st.selectbox(
             "Circuit Type",
-            circuit_map,
-            index=circuit_map.index(ctx["circuit"])
-            if ctx.get("circuit") in circuit_map else 0,
-            disabled=True
+            ["Suction", "Liquid", "Discharge", "Pumped"],
         )
-
-        if refrigerant == "R744 TC" and circuit == "Suction":
-            refrigerant = "R744"
 
         if circuit == "Discharge":
             mwp_options = 150
@@ -216,14 +183,7 @@ def system_pressure_checker_ui():
         )
     
         pipe_materials = sorted(pipe_data["Material"].dropna().unique())
-        
-        selected_material = st.selectbox(
-            "Pipe Material",
-            pipe_materials,
-            index=pipe_materials.index(ctx["pipe_material"])
-            if ctx.get("pipe_material") in pipe_materials else 0,
-            disabled=True
-        )
+        selected_material = st.selectbox("Pipe Material", pipe_materials)
     
         def material_to_pipe_index(material: str) -> int:
             m = (material or "").strip().lower()
@@ -272,14 +232,7 @@ def system_pressure_checker_ui():
     
         material_df["Nominal Size (inch)"] = material_df["Nominal Size (inch)"].astype(str)
         pipe_sizes = sorted(material_df["Nominal Size (inch)"].dropna().unique())
-        
-        selected_size = st.selectbox(
-            "Nominal Pipe Size (inch)",
-            pipe_sizes,
-            index=pipe_sizes.index(ctx["pipe_size"])
-            if ctx.get("pipe_size") in pipe_sizes else 0,
-            disabled=True
-        )
+        selected_size = st.selectbox("Nominal Pipe Size (inch)", pipe_sizes)
     
         size_df = material_df[material_df["Nominal Size (inch)"] == str(selected_size)].copy()
         if size_df.empty:
@@ -291,13 +244,7 @@ def system_pressure_checker_ui():
             # Only prompt for gauge if multiple gauge options exist
             gauges = sorted(size_df["Gauge"].dropna().unique())
             if len(gauges) > 1:
-                gauge = st.selectbox(
-                    "Gauge",
-                    gauges,
-                    index=gauges.index(ctx["gauge"])
-                    if ctx.get("gauge") in gauges else 0,
-                    disabled=True
-                )
+                gauge = st.selectbox("Gauge", gauges)
                 selected_row = size_df[size_df["Gauge"] == gauge].iloc[0]
             else:
                 gauge = gauges[0]
@@ -463,25 +410,12 @@ if tool_selection == "Pipe Network Builder":
 elif tool_selection == "Pressure ↔ Temperature Converter":
     st.subheader("Saturation Pressure ↔ Temperature Tool")
     converter = PressureTemperatureConverter()
-    ctx = st.session_state.get("active_circuit", {})
 
-    refrigerant_list = [
-        "R404A", "R134a", "R407F", "R744", "R744 TC", "R410A",
-        "R407C", "R507A", "R448A", "R449A", "R22", "R32",
-        "R454A", "R454C", "R455A", "R407A",
-        "R290", "R1270", "R600a", "R717",
-        "R1234ze", "R1234yf",
-        "R12", "R11",
-        "R454B", "R450A", "R513A",
-        "R23", "R508B", "R502",
-    ]
-
-    refrigerant = st.selectbox(
-        "Refrigerant",
-        refrigerant_list,
-        index=refrigerant_list.index(ctx["refrigerant"])
-        if ctx.get("refrigerant") in refrigerant_list else 0,
-    )
+    refrigerant = st.selectbox("Refrigerant", [
+        "R404A", "R134a", "R407F", "R744", "R410A",
+        "R407C", "R507A", "R448A", "R449A", "R22", "R32", "R454A", "R454C", "R455A", "R407A",
+        "R290", "R1270", "R600a", "R717", "R1234ze", "R1234yf", "R12", "R11", "R454B", "R450A", "R513A", "R23", "R508B", "R502"
+    ])
     
     col1, col2, col3 = st.columns(3)
 
@@ -530,25 +464,12 @@ elif tool_selection == "Pressure ↔ Temperature Converter":
 elif tool_selection == "Pressure Drop ↔ Temperature Penalty":
     st.subheader("Pressure Drop ⇄ Temperature Penalty Tool")
     converter = PressureTemperatureConverter()
-    ctx = st.session_state.get("active_circuit", {})
 
-    refrigerant_list = [
-        "R404A", "R134a", "R407F", "R744", "R744 TC", "R410A",
-        "R407C", "R507A", "R448A", "R449A", "R22", "R32",
-        "R454A", "R454C", "R455A", "R407A",
-        "R290", "R1270", "R600a", "R717",
-        "R1234ze", "R1234yf",
-        "R12", "R11",
-        "R454B", "R450A", "R513A",
-        "R23", "R508B", "R502",
-    ]
-
-    refrigerant = st.selectbox(
-        "Refrigerant",
-        refrigerant_list,
-        index=refrigerant_list.index(ctx["refrigerant"])
-        if ctx.get("refrigerant") in refrigerant_list else 0,
-    )
+    refrigerant = st.selectbox("Refrigerant", [
+        "R404A", "R134a", "R407F", "R744", "R410A",
+        "R407C", "R507A", "R448A", "R449A", "R22", "R32", "R454A", "R454C", "R455A", "R407A",
+        "R290", "R1270", "R600a", "R717", "R1234ze", "R1234yf", "R12", "R11", "R454B", "R450A", "R513A", "R23", "R508B", "R502"
+    ])
     T_sat = st.number_input("Saturation Temperature (°C)", value=-10.0)
     
     col1, col2 = st.columns(2)
@@ -581,28 +502,15 @@ elif tool_selection == "System Pressure Checker":
 
 elif tool_selection == "Oil Return Checker":
     st.subheader("Oil Return Checker")
-    ctx = st.session_state.get("active_circuit", {})
     
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
-        refrigerant_list = [
+        refrigerant = st.selectbox("Refrigerant", [
             "R404A", "R134a", "R407F", "R744", "R744 TC", "R410A",
-            "R407C", "R507A", "R448A", "R449A", "R22", "R32",
-            "R454A", "R454C", "R455A", "R407A",
-            "R290", "R1270", "R600a", "R717",
-            "R1234ze", "R1234yf",
-            "R12", "R11",
-            "R454B", "R450A", "R513A",
-            "R23", "R508B", "R502",
-        ]
-    
-        refrigerant = st.selectbox(
-            "Refrigerant",
-            refrigerant_list,
-            index=refrigerant_list.index(ctx["refrigerant"])
-            if ctx.get("refrigerant") in refrigerant_list else 0,
-        )
+            "R407C", "R507A", "R448A", "R449A", "R22", "R32", "R454A", "R454C", "R455A", "R407A",
+            "R290", "R1270", "R600a", "R717", "R1234ze", "R1234yf", "R12", "R11", "R454B", "R450A", "R513A", "R23", "R508B", "R502"
+        ])
 
     # Load pipe data
     pipe_data = pd.read_csv("data/pipe_pressure_ratings_full.csv")
@@ -637,12 +545,7 @@ elif tool_selection == "Oil Return Checker":
         else:
             pipe_materials = sorted(pipe_data["Material"].dropna().unique())
 
-        selected_material = st.selectbox(
-            "Pipe Material",
-            pipe_materials,
-            index=pipe_materials.index(ctx["pipe_material"])
-            if ctx.get("pipe_material") in pipe_materials else 0,
-        )
+        selected_material = st.selectbox("Pipe Material", pipe_materials, key="material")
     
     # detect material change
     material_changed = ss.get("last_material") is not None and ss.last_material != selected_material
@@ -1354,43 +1257,19 @@ elif tool_selection == "Oil Return Checker":
 
 elif tool_selection == "Manual Calculation":
     st.subheader("Manual Calculation")
-
-    ctx = get_active_circuit_context()
-
-    modes = ["Dry Suction", "Liquid", "Discharge", "Drain", "Pumped Liquid", "Wet Suction"]
     
-    mode = st.radio(
-        "",
-        modes,
-        index=modes.index(ctx["mode"]) if ctx.get("mode") in modes else 0,
-        horizontal=True,
-        label_visibility="collapsed"
-    )
+    mode = st.radio("", ["Dry Suction", "Liquid", "Discharge", "Drain", "Pumped Liquid", "Wet Suction"], index=0, horizontal=True, label_visibility="collapsed")
     
     if mode == "Dry Suction":
-
-        ctx = st.session_state.get("active_circuit", {})
         
         col1, col2, col3, col4 = st.columns(4)
     
         with col1:
-            refrigerant_list = [
+            refrigerant = st.selectbox("Refrigerant", [
                 "R404A", "R134a", "R407F", "R744", "R744 TC", "R410A",
-                "R407C", "R507A", "R448A", "R449A", "R22", "R32",
-                "R454A", "R454C", "R455A", "R407A",
-                "R290", "R1270", "R600a", "R717",
-                "R1234ze", "R1234yf",
-                "R12", "R11",
-                "R454B", "R450A", "R513A",
-                "R23", "R508B", "R502",
-            ]
-        
-            refrigerant = st.selectbox(
-                "Refrigerant",
-                refrigerant_list,
-                index=refrigerant_list.index(ctx["refrigerant"])
-                if ctx.get("refrigerant") in refrigerant_list else 0,
-            )
+                "R407C", "R507A", "R448A", "R449A", "R22", "R32", "R454A", "R454C", "R455A", "R407A",
+                "R290", "R1270", "R600a", "R717", "R1234ze", "R1234yf", "R12", "R11", "R454B", "R450A", "R513A", "R23", "R508B", "R502"
+            ])
     
         # Load pipe data
         pipe_data = pd.read_csv("data/pipe_pressure_ratings_full.csv")
@@ -1425,12 +1304,7 @@ elif tool_selection == "Manual Calculation":
             else:
                 pipe_materials = sorted(pipe_data["Material"].dropna().unique())
     
-            selected_material = st.selectbox(
-                "Pipe Material",
-                pipe_materials,
-                index=pipe_materials.index(ctx["pipe_material"])
-                if ctx.get("pipe_material") in pipe_materials else 0,
-            )
+            selected_material = st.selectbox("Pipe Material", pipe_materials, key="material")
         
         # detect material change
         material_changed = ss.get("last_material") is not None and ss.last_material != selected_material
@@ -2949,29 +2823,15 @@ elif tool_selection == "Manual Calculation":
                 st.error(f"{message}")
     
     if mode == "Liquid":
-
-        ctx = st.session_state.get("active_circuit", {})
         
         col1, col2, col3, col4 = st.columns(4)
     
         with col1:
-            refrigerant_list = [
+            refrigerant = st.selectbox("Refrigerant", [
                 "R404A", "R134a", "R407F", "R744", "R744 TC", "R410A",
-                "R407C", "R507A", "R448A", "R449A", "R22", "R32",
-                "R454A", "R454C", "R455A", "R407A",
-                "R290", "R1270", "R600a", "R717",
-                "R1234ze", "R1234yf",
-                "R12", "R11",
-                "R454B", "R450A", "R513A",
-                "R23", "R508B", "R502",
-            ]
-        
-            refrigerant = st.selectbox(
-                "Refrigerant",
-                refrigerant_list,
-                index=refrigerant_list.index(ctx["refrigerant"])
-                if ctx.get("refrigerant") in refrigerant_list else 0,
-            )
+                "R407C", "R507A", "R448A", "R449A", "R22", "R32", "R454A", "R454C", "R455A", "R407A",
+                "R290", "R1270", "R600a", "R717", "R1234ze", "R1234yf", "R12", "R11", "R454B", "R450A", "R513A", "R23", "R508B", "R502"
+            ])
     
         # Load pipe data
         pipe_data = pd.read_csv("data/pipe_pressure_ratings_full.csv")
@@ -3006,12 +2866,7 @@ elif tool_selection == "Manual Calculation":
             else:
                 pipe_materials = sorted(pipe_data["Material"].dropna().unique())
     
-            selected_material = st.selectbox(
-                "Pipe Material",
-                pipe_materials,
-                index=pipe_materials.index(ctx["pipe_material"])
-                if ctx.get("pipe_material") in pipe_materials else 0,
-            )
+            selected_material = st.selectbox("Pipe Material", pipe_materials, key="material")
         
         # detect material change
         material_changed = ss.get("last_material") is not None and ss.last_material != selected_material
@@ -3616,28 +3471,14 @@ elif tool_selection == "Manual Calculation":
         from utils.refrigerant_enthalpies import RefrigerantEnthalpies
         from utils.supercompliq_co2 import RefrigerantProps
 
-        ctx = st.session_state.get("active_circuit", {})
-
         col1, col2, col3, col4 = st.columns(4)
     
         with col1:
-            refrigerant_list = [
+            refrigerant = st.selectbox("Refrigerant", [
                 "R404A", "R134a", "R407F", "R744", "R744 TC", "R410A",
-                "R407C", "R507A", "R448A", "R449A", "R22", "R32",
-                "R454A", "R454C", "R455A", "R407A",
-                "R290", "R1270", "R600a", "R717",
-                "R1234ze", "R1234yf",
-                "R12", "R11",
-                "R454B", "R450A", "R513A",
-                "R23", "R508B", "R502",
-            ]
-        
-            refrigerant = st.selectbox(
-                "Refrigerant",
-                refrigerant_list,
-                index=refrigerant_list.index(ctx["refrigerant"])
-                if ctx.get("refrigerant") in refrigerant_list else 0,
-            )
+                "R407C", "R507A", "R448A", "R449A", "R22", "R32", "R454A", "R454C", "R455A", "R407A",
+                "R290", "R1270", "R600a", "R717", "R1234ze", "R1234yf", "R12", "R11", "R454B", "R450A", "R513A", "R23", "R508B", "R502"
+            ])
         
         # Load pipe data
         pipe_data = pd.read_csv("data/pipe_pressure_ratings_full.csv")
@@ -3672,12 +3513,7 @@ elif tool_selection == "Manual Calculation":
             else:
                 pipe_materials = sorted(pipe_data["Material"].dropna().unique())
     
-            selected_material = st.selectbox(
-                "Pipe Material",
-                pipe_materials,
-                index=pipe_materials.index(ctx["pipe_material"])
-                if ctx.get("pipe_material") in pipe_materials else 0,
-            )
+            selected_material = st.selectbox("Pipe Material", pipe_materials, key="material")
         
         # detect material change
         material_changed = ss.get("last_material") is not None and ss.last_material != selected_material
@@ -4277,29 +4113,14 @@ elif tool_selection == "Manual Calculation":
         from utils.refrigerant_entropies import RefrigerantEntropies
         from utils.refrigerant_enthalpies import RefrigerantEnthalpies
 
-        ctx = st.session_state.get("active_circuit", {})
-
         col1, col2, col3, col4 = st.columns(4)
     
         with col1:
-            refrigerant_list = [
-                "R404A", "R134a", "R407F", "R744", "R744 TC", "R410A",
-                "R407C", "R507A", "R448A", "R449A", "R22", "R32",
-                "R454A", "R454C", "R455A", "R407A",
-                "R290", "R1270", "R600a", "R717",
-                "R1234ze", "R1234yf",
-                "R12", "R11",
-                "R454B", "R450A", "R513A",
-                "R23", "R508B", "R502",
-            ]
-        
-            refrigerant = st.selectbox(
-                "Refrigerant",
-                refrigerant_list,
-                index=refrigerant_list.index(ctx["refrigerant"])
-                if ctx.get("refrigerant") in refrigerant_list else 0,
-                disabled=True
-            )
+            refrigerant = st.selectbox("Refrigerant", [
+                "R404A", "R134a", "R407F", "R744", "R410A",
+                "R407C", "R507A", "R448A", "R449A", "R22", "R32", "R454A", "R454C", "R455A", "R407A",
+                "R290", "R1270", "R600a", "R717", "R1234ze", "R1234yf", "R12", "R11", "R454B", "R450A", "R513A", "R23", "R508B", "R502"
+            ], disabled=True)
         
         # Load pipe data
         pipe_data = pd.read_csv("data/pipe_pressure_ratings_full.csv")
@@ -4706,8 +4527,6 @@ elif tool_selection == "Manual Calculation":
 
     if mode == "Wet Suction":
 
-        ctx = st.session_state.get("active_circuit", {})
-
         def find_pipe_diameter(PD, Vis, Den, MassF, choice, surface_roughness):
         
             import math
@@ -4762,23 +4581,11 @@ elif tool_selection == "Manual Calculation":
         col1, col2, col3, col4 = st.columns(4)
     
         with col1:
-            refrigerant_list = [
-                "R404A", "R134a", "R407F", "R744", "R744 TC", "R410A",
-                "R407C", "R507A", "R448A", "R449A", "R22", "R32",
-                "R454A", "R454C", "R455A", "R407A",
-                "R290", "R1270", "R600a", "R717",
-                "R1234ze", "R1234yf",
-                "R12", "R11",
-                "R454B", "R450A", "R513A",
-                "R23", "R508B", "R502",
-            ]
-        
-            refrigerant = st.selectbox(
-                "Refrigerant",
-                refrigerant_list,
-                index=refrigerant_list.index(ctx["refrigerant"])
-                if ctx.get("refrigerant") in refrigerant_list else 0
-            )
+            refrigerant = st.selectbox("Refrigerant", [
+                "R404A", "R134a", "R407F", "R744", "R410A",
+                "R407C", "R507A", "R448A", "R449A", "R22", "R32", "R454A", "R454C", "R455A", "R407A",
+                "R290", "R1270", "R600a", "R717", "R1234ze", "R1234yf", "R12", "R11", "R454B", "R450A", "R513A", "R23", "R508B", "R502"
+            ])
     
         # Load pipe data
         pipe_data = pd.read_csv("data/pipe_pressure_ratings_full.csv")
@@ -4813,12 +4620,7 @@ elif tool_selection == "Manual Calculation":
             else:
                 pipe_materials = sorted(pipe_data["Material"].dropna().unique())
     
-            selected_material = st.selectbox(
-                "Pipe Material",
-                pipe_materials,
-                index=pipe_materials.index(ctx["pipe_material"])
-                if ctx.get("pipe_material") in pipe_materials else 0,
-            )
+            selected_material = st.selectbox("Pipe Material", pipe_materials, key="material")
         
         # detect material change
         material_changed = ss.get("last_material") is not None and ss.last_material != selected_material
@@ -5328,29 +5130,15 @@ elif tool_selection == "Manual Calculation":
             st.metric("Velocity Pressure PD", f"{dp_plf_ws:.2f}kPa")
 
     if mode == "Pumped Liquid":
-
-        ctx = st.session_state.get("active_circuit", {})
         
         col1, col2, col3, col4 = st.columns(4)
     
         with col1:
-            refrigerant_list = [
-                "R404A", "R134a", "R407F", "R744", "R744 TC", "R410A",
-                "R407C", "R507A", "R448A", "R449A", "R22", "R32",
-                "R454A", "R454C", "R455A", "R407A",
-                "R290", "R1270", "R600a", "R717",
-                "R1234ze", "R1234yf",
-                "R12", "R11",
-                "R454B", "R450A", "R513A",
-                "R23", "R508B", "R502",
-            ]
-        
-            refrigerant = st.selectbox(
-                "Refrigerant",
-                refrigerant_list,
-                index=refrigerant_list.index(ctx["refrigerant"])
-                if ctx.get("refrigerant") in refrigerant_list else 0
-            )
+            refrigerant = st.selectbox("Refrigerant", [
+                "R404A", "R134a", "R407F", "R744", "R410A",
+                "R407C", "R507A", "R448A", "R449A", "R22", "R32", "R454A", "R454C", "R455A", "R407A",
+                "R290", "R1270", "R600a", "R717", "R1234ze", "R1234yf", "R12", "R11", "R454B", "R450A", "R513A", "R23", "R508B", "R502"
+            ])
     
         # Load pipe data
         pipe_data = pd.read_csv("data/pipe_pressure_ratings_full.csv")
@@ -5385,12 +5173,7 @@ elif tool_selection == "Manual Calculation":
             else:
                 pipe_materials = sorted(pipe_data["Material"].dropna().unique())
     
-            selected_material = st.selectbox(
-                "Pipe Material",
-                pipe_materials,
-                index=pipe_materials.index(ctx["pipe_material"])
-                if ctx.get("pipe_material") in pipe_materials else 0,
-            )
+            selected_material = st.selectbox("Pipe Material", pipe_materials, key="material")
         
         # detect material change
         material_changed = ss.get("last_material") is not None and ss.last_material != selected_material
@@ -5827,23 +5610,3 @@ elif tool_selection == "Manual Calculation":
                 
             with col7:
                 st.metric("Velocity Pressure PD", f"{dp_plf_kPa:.2f}kPa")
-    
-    ctx = get_active_circuit_context()
-    
-    mode_to_circuit = {
-        "Dry Suction": "Suction",
-        "Wet Suction": "Suction",
-        "Liquid": "Liquid",
-        "Discharge": "Discharge",
-        "Pumped Liquid": "Pumped",
-        # "Drain" intentionally excluded
-    }
-    
-    ctx.update({
-        "mode": mode,
-        "circuit": mode_to_circuit.get(mode),
-        "refrigerant": refrigerant,
-        "pipe_material": selected_material,
-        "pipe_size": selected_size,
-        "gauge": locals().get("selected_gauge"),
-    })
