@@ -295,18 +295,15 @@ def system_pressure_checker_ui():
                 return
         
         else:
-            st.info("Single-pipe nominal size is ignored in Double Riser Mode.")
             selected_size = pipe_sizes[0]
             gauge = None
             od_mm = None
             id_mm = None
 
         if double_trouble:
-            st.markdown("#### Double Riser Pipe Sizes")
         
             dr_col1, dr_col2 = st.columns(2)
         
-            # sensible defaults: large = first option, small = second option if available
             default_large_index = 0
             default_small_index = 1 if len(pipe_sizes) > 1 else 0
         
