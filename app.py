@@ -1492,15 +1492,20 @@ elif tool_selection == "Oil Return Checker":
 
 elif tool_selection == "Manual Calculation":
     st.subheader("Manual Calculation")
-
-    ctx = pressure_checker_inputs(
-        refrigerant=refrigerant,
-        circuit=circuit,
-        dp_standard=dp_standard,
-    )
     
-    refrigerant_eff = ctx["refrigerant"]
-    mwp_temp_c = ctx["mwp_temp_c"]
+    mode = st.radio("", ["Dry Suction", "Liquid", "Discharge", "Drain", "Pumped Liquid", "Wet Suction"], index=0, horizontal=True, label_visibility="collapsed")
+
+    def circuit_for_manual_mode(mode: str) -> str:
+        return {
+            "Dry Suction": "Suction",
+            "Wet Suction": "Suction",
+            "Discharge": "Discharge",
+            "Liquid": "Liquid",
+            "Pumped Liquid": "Pumped",
+            "Drain": "Liquid",  # main/branch low-side liquid
+        }[mode]
+
+    circuit = circuit_for_manual_mode(mode)
 
     cola, colb, colc = st.columns(3)
 
@@ -1521,7 +1526,7 @@ elif tool_selection == "Manual Calculation":
         )
 
     with colc:
-        if refrigerant_eff == "R744 TC":
+       if refrigerant_eff == "R744 TC":
             design_temp_c = None
             r744_tc_pressure_bar_g = st.number_input(
                 "R744 Transcritical Design Pressure (bar(g))",
@@ -1529,6 +1534,7 @@ elif tool_selection == "Manual Calculation":
                 max_value=150.0,
                 step=5.0,
                 value=120.0,
+                key="manual_r744_tc_pressure",
             )
         else:
             if circuit in ("Suction", "Pumped"):
@@ -1538,6 +1544,7 @@ elif tool_selection == "Manual Calculation":
                     max_value=ctx["range_max_low"],
                     value=ctx["default_low_dt"],
                     step=1.0,
+                    key="manual_design_temp_low",
                 )
             else:
                 design_temp_c = st.number_input(
@@ -1546,39 +1553,12 @@ elif tool_selection == "Manual Calculation":
                     max_value=ctx["range_max_high"],
                     value=ctx["default_high_dt"],
                     step=1.0,
+                    key="manual_design_temp_high",
                 )
-        
+                
             r744_tc_pressure_bar_g = None
     
-    mode = st.radio("", ["Dry Suction", "Liquid", "Discharge", "Drain", "Pumped Liquid", "Wet Suction"], index=0, horizontal=True, label_visibility="collapsed")
-
-    if mode == "Dry suction":
-        circuit = "Suction"
-    elif mode == "Wet suction":
-        circuit = "Suction"
-    elif mode == "Liquid":
-        circuit = "Liquid"
-    elif mode == "Pumped liquid":
-        circuit = "Pumped"
-    elif mode == "Discharge":
-        circuit = "Discharge"
-    elif mode == "Drain":
-        circuit = "Pumped"
-    
     if mode == "Dry Suction":
-
-        def circuit_for_manual_mode(mode: str) -> str:
-            return {
-                "Dry Suction": "Suction",
-                "Wet Suction": "Suction",
-                "Discharge": "Discharge",
-                "Liquid": "Liquid",
-                "Pumped Liquid": "Pumped",
-                "Drain": "Liquid",  # main/branch low-side liquid
-            }[mode]
-
-        circuit = circuit_for_manual_mode(mode)
-        mwp_temp_c = 150 if circuit == "Discharge" else 50
 
         col1, col2, col3, col4 = st.columns(4)
     
@@ -1589,18 +1569,13 @@ elif tool_selection == "Manual Calculation":
                 "R290", "R1270", "R600a", "R717", "R1234ze", "R1234yf", "R12", "R11", "R454B", "R450A", "R513A", "R23", "R508B", "R502"
             ])
 
-        if refrigerant == "R744 TC":
-            r744_tc_pressure_bar_g = st.number_input(
-                "R744 Transcritical design pressure (bar(g))",
-                min_value=0.0, max_value=200.0, value=120.0, step=1.0
-            )
-            design_temp_c = 0.0
-        else:
-            design_temp_c = st.number_input(
-                "Design Temperature (°C)",
-                min_value=-100.0, max_value=200.0, value=50.0, step=1.0
-            )
-            r744_tc_pressure_bar_g = None
+        ctx = pressure_checker_inputs(
+            refrigerant=refrigerant,
+            circuit=circuit,
+            dp_standard=dp_standard,
+        )
+        refrigerant_eff = ctx["refrigerant"]
+        mwp_temp_c = ctx["mwp_temp_c"]
         
         # Load pipe data
         pipe_data = pd.read_csv("data/pipe_pressure_ratings_full.csv")
@@ -3219,19 +3194,6 @@ elif tool_selection == "Manual Calculation":
                 st.error(f"{message}")
     
     if mode == "Liquid":
-
-        def circuit_for_manual_mode(mode: str) -> str:
-            return {
-                "Dry Suction": "Suction",
-                "Wet Suction": "Suction",
-                "Discharge": "Discharge",
-                "Liquid": "Liquid",
-                "Pumped Liquid": "Pumped",
-                "Drain": "Liquid",  # main/branch low-side liquid
-            }[mode]
-
-        circuit = circuit_for_manual_mode(mode)
-        mwp_temp_c = 150 if circuit == "Discharge" else 50
         
         col1, col2, col3, col4 = st.columns(4)
     
@@ -3242,18 +3204,13 @@ elif tool_selection == "Manual Calculation":
                 "R290", "R1270", "R600a", "R717", "R1234ze", "R1234yf", "R12", "R11", "R454B", "R450A", "R513A", "R23", "R508B", "R502"
             ])
 
-        if refrigerant == "R744 TC":
-            r744_tc_pressure_bar_g = st.number_input(
-                "R744 Transcritical design pressure (bar(g))",
-                min_value=0.0, max_value=200.0, value=120.0, step=1.0
-            )
-            design_temp_c = 0.0
-        else:
-            design_temp_c = st.number_input(
-                "Design Temperature (°C)",
-                min_value=-100.0, max_value=200.0, value=50.0, step=1.0
-            )
-            r744_tc_pressure_bar_g = None
+        ctx = pressure_checker_inputs(
+            refrigerant=refrigerant,
+            circuit=circuit,
+            dp_standard=dp_standard,
+        )
+        refrigerant_eff = ctx["refrigerant"]
+        mwp_temp_c = ctx["mwp_temp_c"]
         
         # Load pipe data
         pipe_data = pd.read_csv("data/pipe_pressure_ratings_full.csv")
@@ -3915,19 +3872,6 @@ elif tool_selection == "Manual Calculation":
         from utils.refrigerant_enthalpies import RefrigerantEnthalpies
         from utils.supercompliq_co2 import RefrigerantProps
 
-        def circuit_for_manual_mode(mode: str) -> str:
-            return {
-                "Dry Suction": "Suction",
-                "Wet Suction": "Suction",
-                "Discharge": "Discharge",
-                "Liquid": "Liquid",
-                "Pumped Liquid": "Pumped",
-                "Drain": "Liquid",  # main/branch low-side liquid
-            }[mode]
-
-        circuit = circuit_for_manual_mode(mode)
-        mwp_temp_c = 150 if circuit == "Discharge" else 50
-
         col1, col2, col3, col4 = st.columns(4)
     
         with col1:
@@ -3937,18 +3881,13 @@ elif tool_selection == "Manual Calculation":
                 "R290", "R1270", "R600a", "R717", "R1234ze", "R1234yf", "R12", "R11", "R454B", "R450A", "R513A", "R23", "R508B", "R502"
             ])
         
-        if refrigerant == "R744 TC":
-            r744_tc_pressure_bar_g = st.number_input(
-                "R744 Transcritical design pressure (bar(g))",
-                min_value=0.0, max_value=200.0, value=120.0, step=1.0
-            )
-            design_temp_c = 0.0
-        else:
-            design_temp_c = st.number_input(
-                "Design Temperature (°C)",
-                min_value=-100.0, max_value=200.0, value=50.0, step=1.0
-            )
-            r744_tc_pressure_bar_g = None
+        ctx = pressure_checker_inputs(
+            refrigerant=refrigerant,
+            circuit=circuit,
+            dp_standard=dp_standard,
+        )
+        refrigerant_eff = ctx["refrigerant"]
+        mwp_temp_c = ctx["mwp_temp_c"]
         
         # Load pipe data
         pipe_data = pd.read_csv("data/pipe_pressure_ratings_full.csv")
@@ -4605,19 +4544,6 @@ elif tool_selection == "Manual Calculation":
         from utils.refrigerant_entropies import RefrigerantEntropies
         from utils.refrigerant_enthalpies import RefrigerantEnthalpies
 
-        def circuit_for_manual_mode(mode: str) -> str:
-            return {
-                "Dry Suction": "Suction",
-                "Wet Suction": "Suction",
-                "Discharge": "Discharge",
-                "Liquid": "Liquid",
-                "Pumped Liquid": "Pumped",
-                "Drain": "Liquid",  # main/branch low-side liquid
-            }[mode]
-
-        circuit = circuit_for_manual_mode(mode)
-        mwp_temp_c = 150 if circuit == "Discharge" else 50
-
         col1, col2, col3, col4 = st.columns(4)
     
         with col1:
@@ -4627,21 +4553,13 @@ elif tool_selection == "Manual Calculation":
                 "R290", "R1270", "R600a", "R717", "R1234ze", "R1234yf", "R12", "R11", "R454B", "R450A", "R513A", "R23", "R508B", "R502"
             ], disabled=True)
         
-        if refrigerant == "R744 TC":
-            r744_tc_pressure_bar_g = st.number_input(
-                "R744 Transcritical design pressure (bar(g))",
-                min_value=0.0, max_value=200.0, value=120.0, step=1.0
-            )
-            design_temp_c = 0.0
-        else:
-            design_temp_c = st.number_input(
-                "Design Temperature (°C)",
-                min_value=-100.0, max_value=200.0, value=50.0, step=1.0
-            )
-            r744_tc_pressure_bar_g = None
-
-        circuit = "Liquid"
-        mwp_temp_c = 50
+        ctx = pressure_checker_inputs(
+            refrigerant=refrigerant,
+            circuit=circuit,
+            dp_standard=dp_standard,
+        )
+        refrigerant_eff = ctx["refrigerant"]
+        mwp_temp_c = ctx["mwp_temp_c"]
         
         pipe_index = material_to_pipe_index(selected_material)
         
@@ -5096,19 +5014,6 @@ elif tool_selection == "Manual Calculation":
 
     if mode == "Wet Suction":
 
-        def circuit_for_manual_mode(mode: str) -> str:
-            return {
-                "Dry Suction": "Suction",
-                "Wet Suction": "Suction",
-                "Discharge": "Discharge",
-                "Liquid": "Liquid",
-                "Pumped Liquid": "Pumped",
-                "Drain": "Liquid",  # main/branch low-side liquid
-            }[mode]
-
-        circuit = circuit_for_manual_mode(mode)
-        mwp_temp_c = 150 if circuit == "Discharge" else 50
-
         def find_pipe_diameter(PD, Vis, Den, MassF, choice, surface_roughness):
         
             import math
@@ -5169,18 +5074,13 @@ elif tool_selection == "Manual Calculation":
                 "R290", "R1270", "R600a", "R717", "R1234ze", "R1234yf", "R12", "R11", "R454B", "R450A", "R513A", "R23", "R508B", "R502"
             ])
     
-        if refrigerant == "R744 TC":
-            r744_tc_pressure_bar_g = st.number_input(
-                "R744 Transcritical design pressure (bar(g))",
-                min_value=0.0, max_value=200.0, value=120.0, step=1.0
-            )
-            design_temp_c = 0.0
-        else:
-            design_temp_c = st.number_input(
-                "Design Temperature (°C)",
-                min_value=-100.0, max_value=200.0, value=50.0, step=1.0
-            )
-            r744_tc_pressure_bar_g = None
+        ctx = pressure_checker_inputs(
+            refrigerant=refrigerant,
+            circuit=circuit,
+            dp_standard=dp_standard,
+        )
+        refrigerant_eff = ctx["refrigerant"]
+        mwp_temp_c = ctx["mwp_temp_c"]
         
         # Load pipe data
         pipe_data = pd.read_csv("data/pipe_pressure_ratings_full.csv")
@@ -5747,19 +5647,6 @@ elif tool_selection == "Manual Calculation":
             st.metric("Velocity Pressure PD", f"{dp_plf_ws:.2f}kPa")
 
     if mode == "Pumped Liquid":
-
-        def circuit_for_manual_mode(mode: str) -> str:
-            return {
-                "Dry Suction": "Suction",
-                "Wet Suction": "Suction",
-                "Discharge": "Discharge",
-                "Liquid": "Liquid",
-                "Pumped Liquid": "Pumped",
-                "Drain": "Liquid",  # main/branch low-side liquid
-            }[mode]
-
-        circuit = circuit_for_manual_mode(mode)
-        mwp_temp_c = 150 if circuit == "Discharge" else 50
         
         col1, col2, col3, col4 = st.columns(4)
     
@@ -5770,18 +5657,13 @@ elif tool_selection == "Manual Calculation":
                 "R290", "R1270", "R600a", "R717", "R1234ze", "R1234yf", "R12", "R11", "R454B", "R450A", "R513A", "R23", "R508B", "R502"
             ])
 
-        if refrigerant == "R744 TC":
-            r744_tc_pressure_bar_g = st.number_input(
-                "R744 Transcritical design pressure (bar(g))",
-                min_value=0.0, max_value=200.0, value=120.0, step=1.0
-            )
-            design_temp_c = 0.0
-        else:
-            design_temp_c = st.number_input(
-                "Design Temperature (°C)",
-                min_value=-100.0, max_value=200.0, value=50.0, step=1.0
-            )
-            r744_tc_pressure_bar_g = None
+        ctx = pressure_checker_inputs(
+            refrigerant=refrigerant,
+            circuit=circuit,
+            dp_standard=dp_standard,
+        )
+        refrigerant_eff = ctx["refrigerant"]
+        mwp_temp_c = ctx["mwp_temp_c"]
 
         # Load pipe data
         pipe_data = pd.read_csv("data/pipe_pressure_ratings_full.csv")
