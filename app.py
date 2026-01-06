@@ -274,6 +274,7 @@ def system_pressure_checker_ui():
             return
 
     from utils.system_pressure_checker import system_pressure_check
+    from utils.system_pressure_checker import system_pressure_check_double_riser
     converter = PressureTemperatureConverter()
 
     if st.session_state.get("double_trouble"):
