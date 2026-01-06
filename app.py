@@ -1536,7 +1536,7 @@ elif tool_selection == "Manual Calculation":
                 value=120.0,
                 key="manual_r744_tc_pressure",
             )
-        else:
+       else:
             if circuit in ("Suction", "Pumped"):
                 design_temp_c = st.number_input(
                     "Design Temperature (°C)",
