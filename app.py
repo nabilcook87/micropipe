@@ -60,6 +60,8 @@ def system_pressure_checker_ui():
         st.error(f"Pipe CSV missing required columns: {sorted(missing)}")
         return
 
+    double_trouble = st.checkbox("Double Riser Mode", key="double_trouble")
+    
     col1, col2 = st.columns(2)
 
     with col1:
@@ -277,7 +279,7 @@ def system_pressure_checker_ui():
     from utils.system_pressure_checker import system_pressure_check_double_riser
     converter = PressureTemperatureConverter()
 
-    if st.session_state.get("double_trouble"):
+    if double_trouble:
         result = system_pressure_check_double_riser(
             refrigerant=refrigerant,
             design_temp_c=design_temp_c,
