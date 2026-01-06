@@ -1526,7 +1526,7 @@ elif tool_selection == "Manual Calculation":
         )
 
     with colc:
-       if refrigerant_eff == "R744 TC":
+       if refrigerant == "R744 TC":
             design_temp_c = None
             r744_tc_pressure_bar_g = st.number_input(
                 "R744 Transcritical Design Pressure (bar(g))",
