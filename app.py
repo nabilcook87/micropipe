@@ -2,11 +2,79 @@
 import streamlit as st
 from utils.network_builder import NetworkBuilder
 from utils.pressure_temp_converter import PressureTemperatureConverter
-from utils.system_pressure_checker import system_pressure_check
+from utils.system_pressure_checker import system_pressure_check, system_pressure_check_double_riser
 import pandas as pd
 import math
 import bisect
 import numpy as np
+
+def material_to_pipe_index(material: str) -> int:
+    m = (material or "").strip().lower()
+
+    # --- Copper ---
+    if "en12735" in m or ("copper" in m and "12735" in m):
+        return 1
+    if "b280" in m or ("copper" in m and "astm" in m):
+        return 6
+    if "k65" in m:
+        return 8
+
+    # --- Aluminium ---
+    if "aluminium" in m or "aluminum" in m or "6061" in m:
+        return 7
+
+    # --- Stainless MUST come before steel ---
+    if "stainless" in m:
+        if "sch10" in m or "sch 10" in m or "schedule 10" in m:
+            return 3
+        if "sch40" in m or "sch 40" in m or "schedule 40" in m:
+            return 4
+        raise ValueError(f"Unmapped stainless schedule: {material!r}")
+
+    # --- Carbon steel (explicitly excludes stainless now) ---
+    if "steel" in m:
+        if "sch40" in m or "sch 40" in m or "schedule 40" in m:
+            return 2
+        if "sch80" in m or "sch 80" in m or "schedule 80" in m:
+            return 5
+        raise ValueError(f"Unmapped steel schedule: {material!r}")
+
+    raise ValueError(f"Unmapped Material value: {material!r}")
+
+def render_pressure_result(result: dict):
+    if not result:
+        return
+
+    design_p = result["design_pressure_bar_g"]
+    mwp = result["mwp_bar"]
+
+    st.markdown("### Pressure Check Result")
+
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Design Pressure (bar(g))", f"{design_p:.2f}")
+
+    # mwp can be float OR dict (steel weld cases)
+    if isinstance(mwp, dict):
+        worst = min(mwp.values()) if mwp else float("nan")
+        c2.metric("MWP (governing) (bar(g))", f"{worst:.2f}")
+        passed = all(v >= design_p for v in mwp.values())
+        margin = worst - design_p
+    else:
+        c2.metric("MWP (bar(g))", f"{mwp:.2f}")
+        passed = mwp >= design_p
+        margin = mwp - design_p
+
+    c3.metric("Margin (bar)", f"{margin:.2f}")
+
+    if passed:
+        st.success("PASS: MWP ≥ Design pressure")
+    else:
+        st.error("FAIL: MWP < Design pressure")
+
+def governing_mwp(mwp):
+    if isinstance(mwp, dict):
+        return min(mwp.values()) if mwp else float("nan")
+    return mwp
 
 # Make metric numbers & labels smaller
 st.markdown("""
@@ -1357,11 +1425,50 @@ elif tool_selection == "Oil Return Checker":
 
 elif tool_selection == "Manual Calculation":
     st.subheader("Manual Calculation")
+
+    with st.expander("Pressure Check (Design Pressure + MWP)", expanded=True):
+        dp_standard = st.selectbox(
+            "Design pressure standard",
+            ["EN 378", "ASHRAE 15"],   # use the exact list you use in checker UI
+            key="manual_dp_standard",
+        )
+    
+        copper_calc = st.selectbox(
+            "Copper calculation",
+            ["EN 14276 / EN 12735", "ASME / ASTM"],  # use exact labels from checker UI
+            key="manual_copper_calc",
+        )
     
     mode = st.radio("", ["Dry Suction", "Liquid", "Discharge", "Drain", "Pumped Liquid", "Wet Suction"], index=0, horizontal=True, label_visibility="collapsed")
     
     if mode == "Dry Suction":
+
+        def circuit_for_manual_mode(mode: str) -> str:
+            return {
+                "Dry Suction": "Suction",
+                "Wet Suction": "Suction",
+                "Discharge": "Discharge",
+                "Liquid": "Liquid",
+                "Pumped Liquid": "Pumped",
+                "Drain": "Pumped",  # main/branch low-side liquid
+            }[mode]
+
+        circuit = circuit_for_manual_mode(mode)
+        mwp_temp_c = 150 if circuit == "Discharge" else 50
         
+        if refrigerant == "R744 TC":
+            r744_tc_pressure_bar_g = st.number_input(
+                "R744 Transcritical design pressure (bar(g))",
+                min_value=0.0, max_value=200.0, value=120.0, step=1.0
+            )
+            design_temp_c = 0.0
+        else:
+            design_temp_c = st.number_input(
+                "Design Temperature (°C)",
+                min_value=-100.0, max_value=200.0, value=50.0, step=1.0
+            )
+            r744_tc_pressure_bar_g = None
+
         col1, col2, col3, col4 = st.columns(4)
     
         with col1:
@@ -1485,6 +1592,28 @@ elif tool_selection == "Manual Calculation":
             selected_pipe_row = gauge_options[gauge_options["Gauge"] == selected_gauge].iloc[0]
         else:
             selected_pipe_row = gauge_options.iloc[0]
+
+        pipe_index = material_to_pipe_index(selected_material)
+        
+        # you already have selected_gauge sometimes; otherwise None
+        gauge = st.session_state.get("gauge")  # or whatever that mode uses
+        od_mm, id_mm = get_dimensions_for_row(selected_pipe_row, pipe_index, gauge, copper_calc)
+        
+        result = system_pressure_check(
+            refrigerant=refrigerant,
+            design_temp_c=design_temp_c,
+            mwp_temp_c=mwp_temp_c,
+            circuit=circuit,
+            pipe_index=pipe_index,
+            od_mm=od_mm,
+            id_mm=id_mm,
+            gauge=gauge,
+            copper_calc=copper_calc,
+            r744_tc_pressure_bar_g=r744_tc_pressure_bar_g,
+            dp_standard=dp_standard,
+        )
+        
+        render_pressure_result(result)
     
         # Pipe parameters
         pipe_size_inch = selected_pipe_row["Nominal Size (inch)"]
@@ -1682,6 +1811,49 @@ elif tool_selection == "Manual Calculation":
             gauge_small = None
             if g_small_opts:
                 gauge_small = st.selectbox("Small Riser Gauge", g_small_opts, key="gauge_small", disabled=disable_pipes)
+
+        # build selected_pipe_row_large
+        rows_large = material_df[material_df["Nominal Size (inch)"].astype(str).str.strip() == str(manual_large)]
+        if "Gauge" in rows_large.columns and rows_large["Gauge"].notna().any():
+            row_large = rows_large[rows_large["Gauge"] == gauge_large].iloc[0]
+        else:
+            row_large = rows_large.iloc[0]
+        
+        # build selected_pipe_row_small
+        rows_small = material_df[material_df["Nominal Size (inch)"].astype(str).str.strip() == str(manual_small)]
+        if "Gauge" in rows_small.columns and rows_small["Gauge"].notna().any():
+            row_small = rows_small[rows_small["Gauge"] == gauge_small].iloc[0]
+        else:
+            row_small = rows_small.iloc[0]
+        
+        pipe_index_large = material_to_pipe_index(selected_material)
+        pipe_index_small = pipe_index_large  # same material
+        
+        od_large, id_large = get_dimensions_for_row(row_large, pipe_index_large, gauge_large, copper_calc)
+        od_small, id_small = get_dimensions_for_row(row_small, pipe_index_small, gauge_small, copper_calc)
+        
+        result = system_pressure_check_double_riser(
+            refrigerant=refrigerant,
+            design_temp_c=design_temp_c,
+            mwp_temp_c=mwp_temp_c,
+            circuit="Suction",
+            dp_standard=dp_standard,
+        
+            pipe_index_a=pipe_index_large,
+            od_mm_a=od_large,
+            id_mm_a=id_large,
+            gauge_a=gauge_large,
+        
+            pipe_index_b=pipe_index_small,
+            od_mm_b=od_small,
+            id_mm_b=id_small,
+            gauge_b=gauge_small,
+        
+            copper_calc=copper_calc,
+            r744_tc_pressure_bar_g=r744_tc_pressure_bar_g,
+        )
+        
+        render_pressure_result(result)
         
         from utils.refrigerant_properties import RefrigerantProperties
         from utils.refrigerant_densities import RefrigerantDensities
@@ -2923,6 +3095,32 @@ elif tool_selection == "Manual Calculation":
                 st.error(f"{message}")
     
     if mode == "Liquid":
+
+        def circuit_for_manual_mode(mode: str) -> str:
+            return {
+                "Dry Suction": "Suction",
+                "Wet Suction": "Suction",
+                "Discharge": "Discharge",
+                "Liquid": "Liquid",
+                "Pumped Liquid": "Pumped",
+                "Drain": "Pumped",  # main/branch low-side liquid
+            }[mode]
+
+        circuit = circuit_for_manual_mode(mode)
+        mwp_temp_c = 150 if circuit == "Discharge" else 50
+        
+        if refrigerant == "R744 TC":
+            r744_tc_pressure_bar_g = st.number_input(
+                "R744 Transcritical design pressure (bar(g))",
+                min_value=0.0, max_value=200.0, value=120.0, step=1.0
+            )
+            design_temp_c = 0.0
+        else:
+            design_temp_c = st.number_input(
+                "Design Temperature (°C)",
+                min_value=-100.0, max_value=200.0, value=50.0, step=1.0
+            )
+            r744_tc_pressure_bar_g = None
         
         col1, col2, col3, col4 = st.columns(4)
     
@@ -3041,6 +3239,28 @@ elif tool_selection == "Manual Calculation":
             selected_pipe_row = gauge_options[gauge_options["Gauge"] == selected_gauge].iloc[0]
         else:
             selected_pipe_row = gauge_options.iloc[0]
+
+        pipe_index = material_to_pipe_index(selected_material)
+        
+        # you already have selected_gauge sometimes; otherwise None
+        gauge = st.session_state.get("gauge")  # or whatever that mode uses
+        od_mm, id_mm = get_dimensions_for_row(selected_pipe_row, pipe_index, gauge, copper_calc)
+        
+        result = system_pressure_check(
+            refrigerant=refrigerant,
+            design_temp_c=design_temp_c,
+            mwp_temp_c=mwp_temp_c,
+            circuit=circuit,
+            pipe_index=pipe_index,
+            od_mm=od_mm,
+            id_mm=id_mm,
+            gauge=gauge,
+            copper_calc=copper_calc,
+            r744_tc_pressure_bar_g=r744_tc_pressure_bar_g,
+            dp_standard=dp_standard,
+        )
+        
+        render_pressure_result(result)
     
         # Pipe parameters
         pipe_size_inch = selected_pipe_row["Nominal Size (inch)"]
@@ -3571,6 +3791,32 @@ elif tool_selection == "Manual Calculation":
         from utils.refrigerant_enthalpies import RefrigerantEnthalpies
         from utils.supercompliq_co2 import RefrigerantProps
 
+        def circuit_for_manual_mode(mode: str) -> str:
+            return {
+                "Dry Suction": "Suction",
+                "Wet Suction": "Suction",
+                "Discharge": "Discharge",
+                "Liquid": "Liquid",
+                "Pumped Liquid": "Pumped",
+                "Drain": "Pumped",  # main/branch low-side liquid
+            }[mode]
+
+        circuit = circuit_for_manual_mode(mode)
+        mwp_temp_c = 150 if circuit == "Discharge" else 50
+        
+        if refrigerant == "R744 TC":
+            r744_tc_pressure_bar_g = st.number_input(
+                "R744 Transcritical design pressure (bar(g))",
+                min_value=0.0, max_value=200.0, value=120.0, step=1.0
+            )
+            design_temp_c = 0.0
+        else:
+            design_temp_c = st.number_input(
+                "Design Temperature (°C)",
+                min_value=-100.0, max_value=200.0, value=50.0, step=1.0
+            )
+            r744_tc_pressure_bar_g = None
+
         col1, col2, col3, col4 = st.columns(4)
     
         with col1:
@@ -3684,6 +3930,28 @@ elif tool_selection == "Manual Calculation":
             selected_pipe_row = gauge_options[gauge_options["Gauge"] == selected_gauge].iloc[0]
         else:
             selected_pipe_row = gauge_options.iloc[0]
+
+        pipe_index = material_to_pipe_index(selected_material)
+        
+        # you already have selected_gauge sometimes; otherwise None
+        gauge = st.session_state.get("gauge")  # or whatever that mode uses
+        od_mm, id_mm = get_dimensions_for_row(selected_pipe_row, pipe_index, gauge, copper_calc)
+        
+        result = system_pressure_check(
+            refrigerant=refrigerant,
+            design_temp_c=design_temp_c,
+            mwp_temp_c=mwp_temp_c,
+            circuit=circuit,
+            pipe_index=pipe_index,
+            od_mm=od_mm,
+            id_mm=id_mm,
+            gauge=gauge,
+            copper_calc=copper_calc,
+            r744_tc_pressure_bar_g=r744_tc_pressure_bar_g,
+            dp_standard=dp_standard,
+        )
+        
+        render_pressure_result(result)
     
         # Pipe parameters
         pipe_size_inch = selected_pipe_row["Nominal Size (inch)"]
@@ -4213,6 +4481,83 @@ elif tool_selection == "Manual Calculation":
         from utils.refrigerant_entropies import RefrigerantEntropies
         from utils.refrigerant_enthalpies import RefrigerantEnthalpies
 
+        def circuit_for_manual_mode(mode: str) -> str:
+            return {
+                "Dry Suction": "Suction",
+                "Wet Suction": "Suction",
+                "Discharge": "Discharge",
+                "Liquid": "Liquid",
+                "Pumped Liquid": "Pumped",
+                "Drain": "Pumped",  # main/branch low-side liquid
+            }[mode]
+
+        circuit = circuit_for_manual_mode(mode)
+        mwp_temp_c = 150 if circuit == "Discharge" else 50
+        
+        if refrigerant == "R744 TC":
+            r744_tc_pressure_bar_g = st.number_input(
+                "R744 Transcritical design pressure (bar(g))",
+                min_value=0.0, max_value=200.0, value=120.0, step=1.0
+            )
+            design_temp_c = 0.0
+        else:
+            design_temp_c = st.number_input(
+                "Design Temperature (°C)",
+                min_value=-100.0, max_value=200.0, value=50.0, step=1.0
+            )
+            r744_tc_pressure_bar_g = None
+
+        circuit = "Pumped"
+        mwp_temp_c = 50
+        
+        pipe_index = material_to_pipe_index(selected_material)
+        
+        g_main = st.session_state.get("gauge")
+        od_main, id_main = get_dimensions_for_row(selected_pipe_row, pipe_index, g_main, copper_calc)
+        
+        g_branch = st.session_state.get("gauge_2")
+        od_branch, id_branch = get_dimensions_for_row(selected_pipe_row_2, pipe_index, g_branch, copper_calc)
+        
+        res_main = system_pressure_check(
+            refrigerant=refrigerant,
+            design_temp_c=design_temp_c,
+            mwp_temp_c=mwp_temp_c,
+            circuit=circuit,
+            pipe_index=pipe_index,
+            od_mm=od_main,
+            id_mm=id_main,
+            gauge=g_main,
+            copper_calc=copper_calc,
+            r744_tc_pressure_bar_g=r744_tc_pressure_bar_g,
+            dp_standard=dp_standard,
+        )
+        
+        res_branch = system_pressure_check(
+            refrigerant=refrigerant,
+            design_temp_c=design_temp_c,
+            mwp_temp_c=mwp_temp_c,
+            circuit=circuit,
+            pipe_index=pipe_index,
+            od_mm=od_branch,
+            id_mm=id_branch,
+            gauge=g_branch,
+            copper_calc=copper_calc,
+            r744_tc_pressure_bar_g=r744_tc_pressure_bar_g,
+            dp_standard=dp_standard,
+        )
+        
+        # Combine (governing)
+        design_p = res_main["design_pressure_bar_g"]
+        mwp_gov = min(governing_mwp(res_main["mwp_bar"]), governing_mwp(res_branch["mwp_bar"]))
+        
+        combined = dict(res_main)
+        combined["mwp_bar"] = mwp_gov
+        combined["pass"] = mwp_gov >= design_p
+        combined["margin_bar"] = mwp_gov - design_p
+        
+        st.markdown("#### Drain: Governing of Main + Branch")
+        render_pressure_result(combined)
+
         col1, col2, col3, col4 = st.columns(4)
     
         with col1:
@@ -4627,6 +4972,32 @@ elif tool_selection == "Manual Calculation":
 
     if mode == "Wet Suction":
 
+        def circuit_for_manual_mode(mode: str) -> str:
+            return {
+                "Dry Suction": "Suction",
+                "Wet Suction": "Suction",
+                "Discharge": "Discharge",
+                "Liquid": "Liquid",
+                "Pumped Liquid": "Pumped",
+                "Drain": "Pumped",  # main/branch low-side liquid
+            }[mode]
+
+        circuit = circuit_for_manual_mode(mode)
+        mwp_temp_c = 150 if circuit == "Discharge" else 50
+        
+        if refrigerant == "R744 TC":
+            r744_tc_pressure_bar_g = st.number_input(
+                "R744 Transcritical design pressure (bar(g))",
+                min_value=0.0, max_value=200.0, value=120.0, step=1.0
+            )
+            design_temp_c = 0.0
+        else:
+            design_temp_c = st.number_input(
+                "Design Temperature (°C)",
+                min_value=-100.0, max_value=200.0, value=50.0, step=1.0
+            )
+            r744_tc_pressure_bar_g = None
+
         def find_pipe_diameter(PD, Vis, Den, MassF, choice, surface_roughness):
         
             import math
@@ -4805,6 +5176,28 @@ elif tool_selection == "Manual Calculation":
             selected_pipe_row = gauge_options[gauge_options["Gauge"] == selected_gauge].iloc[0]
         else:
             selected_pipe_row = gauge_options.iloc[0]
+
+        pipe_index = material_to_pipe_index(selected_material)
+        
+        # you already have selected_gauge sometimes; otherwise None
+        gauge = st.session_state.get("gauge")  # or whatever that mode uses
+        od_mm, id_mm = get_dimensions_for_row(selected_pipe_row, pipe_index, gauge, copper_calc)
+        
+        result = system_pressure_check(
+            refrigerant=refrigerant,
+            design_temp_c=design_temp_c,
+            mwp_temp_c=mwp_temp_c,
+            circuit=circuit,
+            pipe_index=pipe_index,
+            od_mm=od_mm,
+            id_mm=id_mm,
+            gauge=gauge,
+            copper_calc=copper_calc,
+            r744_tc_pressure_bar_g=r744_tc_pressure_bar_g,
+            dp_standard=dp_standard,
+        )
+        
+        render_pressure_result(result)
     
         # Pipe parameters
         pipe_size_inch = selected_pipe_row["Nominal Size (inch)"]
@@ -5230,6 +5623,32 @@ elif tool_selection == "Manual Calculation":
             st.metric("Velocity Pressure PD", f"{dp_plf_ws:.2f}kPa")
 
     if mode == "Pumped Liquid":
+
+        def circuit_for_manual_mode(mode: str) -> str:
+            return {
+                "Dry Suction": "Suction",
+                "Wet Suction": "Suction",
+                "Discharge": "Discharge",
+                "Liquid": "Liquid",
+                "Pumped Liquid": "Pumped",
+                "Drain": "Pumped",  # main/branch low-side liquid
+            }[mode]
+
+        circuit = circuit_for_manual_mode(mode)
+        mwp_temp_c = 150 if circuit == "Discharge" else 50
+        
+        if refrigerant == "R744 TC":
+            r744_tc_pressure_bar_g = st.number_input(
+                "R744 Transcritical design pressure (bar(g))",
+                min_value=0.0, max_value=200.0, value=120.0, step=1.0
+            )
+            design_temp_c = 0.0
+        else:
+            design_temp_c = st.number_input(
+                "Design Temperature (°C)",
+                min_value=-100.0, max_value=200.0, value=50.0, step=1.0
+            )
+            r744_tc_pressure_bar_g = None
         
         col1, col2, col3, col4 = st.columns(4)
     
@@ -5449,6 +5868,28 @@ elif tool_selection == "Manual Calculation":
             selected_pipe_row = gauge_options[gauge_options["Gauge"] == selected_gauge].iloc[0]
         else:
             selected_pipe_row = gauge_options.iloc[0]
+
+        pipe_index = material_to_pipe_index(selected_material)
+        
+        # you already have selected_gauge sometimes; otherwise None
+        gauge = st.session_state.get("gauge")  # or whatever that mode uses
+        od_mm, id_mm = get_dimensions_for_row(selected_pipe_row, pipe_index, gauge, copper_calc)
+        
+        result = system_pressure_check(
+            refrigerant=refrigerant,
+            design_temp_c=design_temp_c,
+            mwp_temp_c=mwp_temp_c,
+            circuit=circuit,
+            pipe_index=pipe_index,
+            od_mm=od_mm,
+            id_mm=id_mm,
+            gauge=gauge,
+            copper_calc=copper_calc,
+            r744_tc_pressure_bar_g=r744_tc_pressure_bar_g,
+            dp_standard=dp_standard,
+        )
+        
+        render_pressure_result(result)
     
         # Pipe parameters
         pipe_size_inch = selected_pipe_row["Nominal Size (inch)"]
