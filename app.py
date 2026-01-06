@@ -4395,32 +4395,46 @@ elif tool_selection == "Manual Calculation":
             return min(range(len(mm_list)), key=lambda i: abs(mm_list[i] - target_mm)) if mm_list else 0
 
         default_index = 0
-        if material_changed and "prev_pipe_mm" in ss:
-            default_index = _closest_index(ss.prev_pipe_mm)
-        elif "selected_size" in ss and ss.selected_size in pipe_sizes:
-            default_index = pipe_sizes.index(ss.selected_size)
         
-        # Apply auto-selected value if present
+        if "drain_main_size" not in ss:
+            discharge_size = (
+                st.session_state
+                .get("active_circuit", {})
+                .get("pipe_size_by_mode", {})
+                .get("Discharge")
+            )
+        
+            if discharge_size in pipe_sizes:
+                ss.drain_main_size = discharge_size
+            else:
+                discharge_mm = (
+                    st.session_state
+                    .get("active_circuit", {})
+                    .get("pipe_mm_by_mode", {})
+                    .get("Discharge")
+                )
+                if discharge_mm is not None:
+                    ss.drain_main_size = pipe_sizes[_closest_index(discharge_mm)]
+        
+        if ss.get("drain_main_size") in pipe_sizes:
+            default_index = pipe_sizes.index(ss.drain_main_size)
+        
+        elif material_changed and "drain_prev_pipe_mm" in ss:
+            default_index = _closest_index(ss.drain_prev_pipe_mm)
+        
         if "auto_selected_main" in ss and ss.auto_selected_main in pipe_sizes:
             default_index = pipe_sizes.index(ss.auto_selected_main)
             del ss.auto_selected_main
         
         with col1:
-
-            # --- Before main pipe selectbox ---
-            if "auto_selected_main" in st.session_state and st.session_state.auto_selected_main in pipe_sizes:
-                default_index = pipe_sizes.index(st.session_state.auto_selected_main)
-                del st.session_state.auto_selected_main  # clear after use
-
             selected_size = st.selectbox(
                 "Main Pipe Size (inch)",
                 pipe_sizes,
                 index=default_index,
-                key="selected_size",
+                key="drain_main_size",
             )
-    
-        # remember the selected size in mm for next material change
-        ss.prev_pipe_mm = float(mm_map.get(selected_size, float("nan")))
+        
+        ss.drain_prev_pipe_mm = float(mm_map.get(selected_size, float("nan")))
     
         # 3) Gauge (if applicable)
         gauge_options = material_df[material_df["Nominal Size (inch)"].astype(str).str.strip() == selected_size]
