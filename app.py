@@ -107,6 +107,9 @@ def system_pressure_checker_ui():
             disabled=True
         )
 
+        if refrigerant == "R744 TC" and circuit == "Suction":
+            refrigerant = "R744"
+
         if circuit == "Discharge":
             mwp_options = 150
         else:
