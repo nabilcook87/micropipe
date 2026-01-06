@@ -1522,7 +1522,7 @@ elif tool_selection == "Manual Calculation":
                 "Discharge": "Discharge",
                 "Liquid": "Liquid",
                 "Pumped Liquid": "Pumped",
-                "Drain": "Pumped",  # main/branch low-side liquid
+                "Drain": "Liquid",  # main/branch low-side liquid
             }[mode]
 
         circuit = circuit_for_manual_mode(mode)
@@ -3175,7 +3175,7 @@ elif tool_selection == "Manual Calculation":
                 "Discharge": "Discharge",
                 "Liquid": "Liquid",
                 "Pumped Liquid": "Pumped",
-                "Drain": "Pumped",  # main/branch low-side liquid
+                "Drain": "Liquid",  # main/branch low-side liquid
             }[mode]
 
         circuit = circuit_for_manual_mode(mode)
@@ -3870,7 +3870,7 @@ elif tool_selection == "Manual Calculation":
                 "Discharge": "Discharge",
                 "Liquid": "Liquid",
                 "Pumped Liquid": "Pumped",
-                "Drain": "Pumped",  # main/branch low-side liquid
+                "Drain": "Liquid",  # main/branch low-side liquid
             }[mode]
 
         circuit = circuit_for_manual_mode(mode)
@@ -4560,7 +4560,7 @@ elif tool_selection == "Manual Calculation":
                 "Discharge": "Discharge",
                 "Liquid": "Liquid",
                 "Pumped Liquid": "Pumped",
-                "Drain": "Pumped",  # main/branch low-side liquid
+                "Drain": "Liquid",  # main/branch low-side liquid
             }[mode]
 
         circuit = circuit_for_manual_mode(mode)
@@ -4588,7 +4588,7 @@ elif tool_selection == "Manual Calculation":
             )
             r744_tc_pressure_bar_g = None
 
-        circuit = "Pumped"
+        circuit = "Liquid"
         mwp_temp_c = 50
         
         pipe_index = material_to_pipe_index(selected_material)
@@ -5051,7 +5051,7 @@ elif tool_selection == "Manual Calculation":
                 "Discharge": "Discharge",
                 "Liquid": "Liquid",
                 "Pumped Liquid": "Pumped",
-                "Drain": "Pumped",  # main/branch low-side liquid
+                "Drain": "Liquid",  # main/branch low-side liquid
             }[mode]
 
         circuit = circuit_for_manual_mode(mode)
@@ -5703,7 +5703,7 @@ elif tool_selection == "Manual Calculation":
                 "Discharge": "Discharge",
                 "Liquid": "Liquid",
                 "Pumped Liquid": "Pumped",
-                "Drain": "Pumped",  # main/branch low-side liquid
+                "Drain": "Liquid",  # main/branch low-side liquid
             }[mode]
 
         circuit = circuit_for_manual_mode(mode)
