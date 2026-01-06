@@ -464,29 +464,63 @@ def system_pressure_check_double_riser(
     design_p = res_a["design_pressure_bar_g"]  # identical for both
 
     # --- Helper to extract governing MWP ---
-    def min_mwp(mwp):
-        if isinstance(mwp, dict):
-            return min(mwp.values())
-        return mwp
+    def min_mwp_val(x):
+        return min(x.values()) if isinstance(x, dict) else x
 
-    mwp_a = min_mwp(res_a["mwp_bar"])
-    mwp_b = min_mwp(res_b["mwp_bar"])
+    # Governing MWP at the selected reference temp
+    mwp_a = min_mwp_val(res_a["mwp_bar"])
+    mwp_b = min_mwp_val(res_b["mwp_bar"])
 
-    governing_mwp = min(mwp_a, mwp_b)
+    # If both are steel dicts, keep dict form by taking min per weld key
+    if isinstance(res_a["mwp_bar"], dict) and isinstance(res_b["mwp_bar"], dict):
+        mwp_bar = {}
+        for k in set(res_a["mwp_bar"]) | set(res_b["mwp_bar"]):
+            va = res_a["mwp_bar"].get(k)
+            vb = res_b["mwp_bar"].get(k)
+            if va is None:
+                mwp_bar[k] = vb
+            elif vb is None:
+                mwp_bar[k] = va
+            else:
+                mwp_bar[k] = min(va, vb)
+    else:
+        # otherwise return the governing float (worst case)
+        mwp_bar = min(mwp_a, mwp_b)
+
+    # Governing multi-temp table (so UI works unchanged)
+    mwp_multi_temp = {}
+    for t in (50, 100, 150):
+        a = res_a.get("mwp_multi_temp", {}).get(t)
+        b = res_b.get("mwp_multi_temp", {}).get(t)
+        if a is None and b is None:
+            continue
+        if a is None:
+            mwp_multi_temp[t] = min_mwp_val(b)
+        elif b is None:
+            mwp_multi_temp[t] = min_mwp_val(a)
+        else:
+            mwp_multi_temp[t] = min(min_mwp_val(a), min_mwp_val(b))
+
+    design_p = res_a["design_pressure_bar_g"]
+
+    # pass/margin compatible with your UI
+    if isinstance(mwp_bar, dict):
+        passes = {k: v >= design_p for k, v in mwp_bar.items()}
+        margin = {k: v - design_p for k, v in mwp_bar.items()}
+    else:
+        passes = mwp_bar >= design_p
+        margin = mwp_bar - design_p
 
     return {
         "design_pressure_bar_g": design_p,
         "pressure_limits_bar": res_a["pressure_limits_bar"],
-
-        # full detail retained
+        "mwp_bar": mwp_bar,
+        "mwp_multi_temp": mwp_multi_temp,
+        "pass": passes,
+        "margin_bar": margin,
+        # optional, handy for debugging:
         "branch_a": res_a,
         "branch_b": res_b,
-
-        # governing values
-        "mwp_bar": governing_mwp,
-        "pass": governing_mwp >= design_p,
-        "margin_bar": governing_mwp - design_p,
-        "governing_branch": "A" if mwp_a <= mwp_b else "B",
     }
 
 def pipe_stress_psi(temp_f: float) -> float:
