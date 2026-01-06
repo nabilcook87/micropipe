@@ -94,6 +94,55 @@ def governing_mwp(mwp):
         return min(mwp.values()) if mwp else float("nan")
     return mwp
 
+def pressure_checker_inputs(
+    *,
+    refrigerant: str,
+    circuit: str,
+    dp_standard: str,
+):
+    # 1) R744 TC suction override
+    if refrigerant == "R744 TC" and circuit == "Suction":
+        refrigerant = "R744"
+
+    # 2) MWP reference temp rule
+    mwp_temp_c = 150 if circuit == "Discharge" else 50
+
+    # 3) defaults
+    if refrigerant == "R744":
+        default_high_dt = 25.0
+        default_low_dt = 25.0
+    elif refrigerant in ("R23", "R508B"):
+        default_high_dt = 10.0
+        default_low_dt = 10.0
+    elif dp_standard == "BS EN 378":
+        default_high_dt = 55.0
+        default_low_dt = 32.0
+    else:
+        default_high_dt = 50.0
+        default_low_dt = 27.0
+
+    # 4) ranges
+    if refrigerant == "R744":
+        range_min_low, range_max_low = -20.0, 25.0
+        range_min_high, range_max_high = 0.0, 25.0
+    elif refrigerant in ("R23", "R508B"):
+        range_min_low, range_max_low = -60.0, 10.0
+        range_min_high, range_max_high = -30.0, 10.0
+    else:
+        range_min_low, range_max_low = 20.0, 50.0
+        range_min_high, range_max_high = 25.0, 60.0
+
+    return {
+        "refrigerant": refrigerant,
+        "mwp_temp_c": mwp_temp_c,
+        "default_high_dt": default_high_dt,
+        "default_low_dt": default_low_dt,
+        "range_min_low": range_min_low,
+        "range_max_low": range_max_low,
+        "range_min_high": range_min_high,
+        "range_max_high": range_max_high,
+    }
+
 # Make metric numbers & labels smaller
 st.markdown("""
 <style>
