@@ -1852,8 +1852,8 @@ elif tool_selection == "Manual Calculation":
         pipe_index_large = material_to_pipe_index(selected_material)
         pipe_index_small = pipe_index_large  # same material
         
-        od_large, id_large = get_dimensions_for_row(material_df, large_size, gauge_large)
-        od_small, id_small = get_dimensions_for_row(material_df, small_size, gauge_small)
+        od_large, id_large = get_dimensions_for_row(material_df, manual_large, gauge_large)
+        od_small, id_small = get_dimensions_for_row(material_df, manual_small, gauge_small)
         
         result = system_pressure_check_double_riser(
             refrigerant=refrigerant,
