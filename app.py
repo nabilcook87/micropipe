@@ -689,11 +689,11 @@ elif tool_selection == "Oil Return Checker":
         selected_size = st.selectbox(
             "Nominal Pipe Size (inch)",
             pipe_sizes,
-            index=pipe_sizes.index(ctx["pipe_size"])
-            if ctx.get("pipe_size") in pipe_sizes else default_index,
+            index=default_index,
+            key="selected_size",
             disabled=disable_valves,
         )
-    
+
     ss.prev_pipe_mm = float(mm_map.get(selected_size, float("nan")))
 
     # 3) Gauge (if applicable)
@@ -1495,8 +1495,8 @@ elif tool_selection == "Manual Calculation":
             selected_size = st.selectbox(
                 "Nominal Pipe Size (inch)",
                 pipe_sizes,
-                index=pipe_sizes.index(ctx["pipe_size"])
-                if ctx.get("pipe_size") in pipe_sizes else default_index,
+                index=default_index,
+                key="selected_size",
                 disabled=disable_valves,
             )
 
@@ -3066,10 +3066,10 @@ elif tool_selection == "Manual Calculation":
             selected_size = st.selectbox(
                 "Nominal Pipe Size (inch)",
                 pipe_sizes,
-                index=pipe_sizes.index(ctx["pipe_size"])
-                if ctx.get("pipe_size") in pipe_sizes else default_index,
+                index=default_index,
+                key="selected_size",
             )
-
+    
         # remove the one-shot flag so future reruns don't keep forcing it
         if st.session_state.get("_selected_size_just_set"):
             del st.session_state["_selected_size_just_set"]
@@ -3729,8 +3729,8 @@ elif tool_selection == "Manual Calculation":
             selected_size = st.selectbox(
                 "Nominal Pipe Size (inch)",
                 pipe_sizes,
-                index=pipe_sizes.index(ctx["pipe_size"])
-                if ctx.get("pipe_size") in pipe_sizes else default_index,
+                index=default_index,
+                key="selected_size",
             )
     
         if st.session_state.get("_selected_size_just_set"):
@@ -4883,8 +4883,8 @@ elif tool_selection == "Manual Calculation":
             selected_size = st.selectbox(
                 "Nominal Pipe Size (inch)",
                 pipe_sizes,
-                index=pipe_sizes.index(ctx["pipe_size"])
-                if ctx.get("pipe_size") in pipe_sizes else default_index,
+                index=default_index,
+                key="selected_size",
             )
 
         # --- clean up one-shot flag ---
@@ -5550,8 +5550,8 @@ elif tool_selection == "Manual Calculation":
             selected_size = st.selectbox(
                 "Nominal Pipe Size (inch)",
                 pipe_sizes,
-                index=pipe_sizes.index(ctx["pipe_size"])
-                if ctx.get("pipe_size") in pipe_sizes else default_index,
+                index=default_index,
+                key="selected_size",
             )
         
         # remember the selected size in mm for next material change
