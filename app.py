@@ -4302,7 +4302,8 @@ elif tool_selection == "Manual Calculation":
                 st.metric("Compression Ratio", f"{compratio:.2f}")
 
     if mode == "Drain":
-
+        
+        ss = st.session_state
         from utils.refrigerant_properties import RefrigerantProperties
         from utils.refrigerant_densities import RefrigerantDensities
         from utils.refrigerant_viscosities import RefrigerantViscosities
