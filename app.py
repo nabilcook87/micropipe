@@ -71,6 +71,24 @@ def render_pressure_result(result: dict):
     else:
         st.error("FAIL: MWP < Design pressure")
 
+def pipe_params_from_selection(material_df, size_inch: str, gauge: int | None):
+    rows = material_df[
+        material_df["Nominal Size (inch)"].astype(str).str.strip() == str(size_inch)
+    ]
+
+    if rows.empty:
+        raise ValueError(f"No pipe data for size {size_inch}")
+
+    if "Gauge" in rows.columns and gauge is not None:
+        row = rows[rows["Gauge"] == gauge].iloc[0]
+    else:
+        row = rows.iloc[0]
+
+    od_mm = float(row["Nominal Size (mm)"])
+    id_mm = float(row["ID_mm"]) if pd.notna(row["ID_mm"]) else None
+
+    return od_mm, id_mm
+
 def governing_mwp(mwp):
     if isinstance(mwp, dict):
         return min(mwp.values()) if mwp else float("nan")
