@@ -276,19 +276,41 @@ def system_pressure_checker_ui():
     from utils.system_pressure_checker import system_pressure_check
     converter = PressureTemperatureConverter()
 
-    result = system_pressure_check(
-        refrigerant=refrigerant,
-        design_temp_c=design_temp_c,
-        circuit=circuit,
-        pipe_index=pipe_index,
-        od_mm=od_mm,
-        id_mm=id_mm,
-        gauge=gauge,
-        copper_calc=copper_calc,
-        r744_tc_pressure_bar_g=r744_tc_pressure_bar_g,
-        mwp_temp_c=mwp_temp_c,
-        dp_standard=dp_standard,
-    )
+    if st.session_state.get("double_trouble"):
+        result = system_pressure_check_double_riser(
+            refrigerant=refrigerant,
+            design_temp_c=design_temp_c,
+            mwp_temp_c=mwp_temp_c,
+            circuit=circuit,
+            dp_standard=dp_standard,
+    
+            pipe_index_a=pipe_index_large,
+            od_mm_a=od_mm_large,
+            id_mm_a=id_mm_large,
+            gauge_a=gauge_large,
+    
+            pipe_index_b=pipe_index_small,
+            od_mm_b=od_mm_small,
+            id_mm_b=id_mm_small,
+            gauge_b=gauge_small,
+    
+            copper_calc=copper_calc,
+            r744_tc_pressure_bar_g=r744_tc_pressure_bar_g,
+        )
+    else:
+        result = system_pressure_check(
+            refrigerant=refrigerant,
+            design_temp_c=design_temp_c,
+            circuit=circuit,
+            pipe_index=pipe_index,
+            od_mm=od_mm,
+            id_mm=id_mm,
+            gauge=gauge,
+            copper_calc=copper_calc,
+            r744_tc_pressure_bar_g=r744_tc_pressure_bar_g,
+            mwp_temp_c=mwp_temp_c,
+            dp_standard=dp_standard,
+        )
 
     limits = result["pressure_limits_bar"]
     mwp_multi = result.get("mwp_multi_temp", {})
