@@ -1493,19 +1493,6 @@ elif tool_selection == "Oil Return Checker":
 elif tool_selection == "Manual Calculation":
     st.subheader("Manual Calculation")
 
-    if mode == "Dry suction":
-        circuit = "Suction"
-    elif mode == "Wet suction":
-        circuit = "Suction"
-    elif mode == "Liquid":
-        circuit = "Liquid"
-    elif mode == "Pumped liquid":
-        circuit = "Pumped"
-    elif mode == "Discharge":
-        circuit = "Discharge"
-    elif mode == "Drain":
-        circuit = "Pumped"
-
     ctx = pressure_checker_inputs(
         refrigerant=refrigerant,
         circuit=circuit,
@@ -1564,6 +1551,19 @@ elif tool_selection == "Manual Calculation":
             r744_tc_pressure_bar_g = None
     
     mode = st.radio("", ["Dry Suction", "Liquid", "Discharge", "Drain", "Pumped Liquid", "Wet Suction"], index=0, horizontal=True, label_visibility="collapsed")
+
+    if mode == "Dry suction":
+        circuit = "Suction"
+    elif mode == "Wet suction":
+        circuit = "Suction"
+    elif mode == "Liquid":
+        circuit = "Liquid"
+    elif mode == "Pumped liquid":
+        circuit = "Pumped"
+    elif mode == "Discharge":
+        circuit = "Discharge"
+    elif mode == "Drain":
+        circuit = "Pumped"
     
     if mode == "Dry Suction":
 
