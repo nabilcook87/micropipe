@@ -1444,16 +1444,21 @@ elif tool_selection == "Oil Return Checker":
 elif tool_selection == "Manual Calculation":
     st.subheader("Manual Calculation")
 
-    with st.expander("Pressure Check (Design Pressure + MWP)", expanded=True):
+    cola, colb = st.columns(2)
+
+    with cola:
         dp_standard = st.selectbox(
-            "Design pressure standard",
-            ["EN 378", "ASHRAE 15"],   # use the exact list you use in checker UI
+            "Design Pressure Standard",
+            ["BS EN 378", "ASME B31.5 - 2006"],
+            index=0,
             key="manual_dp_standard",
         )
-    
+
+    with colb:
         copper_calc = st.selectbox(
-            "Copper calculation",
-            ["EN 14276 / EN 12735", "ASME / ASTM"],  # use exact labels from checker UI
+            "Copper MWP Calculation Standard",
+            ["BS1306", "DKI"],
+            index=0,
             key="manual_copper_calc",
         )
     
