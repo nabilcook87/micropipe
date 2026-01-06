@@ -1493,7 +1493,29 @@ elif tool_selection == "Oil Return Checker":
 elif tool_selection == "Manual Calculation":
     st.subheader("Manual Calculation")
 
-    cola, colb = st.columns(2)
+    if manual_mode == "Dry suction":
+        circuit = "Suction"
+    elif manual_mode == "Wet suction":
+        circuit = "Suction"
+    elif manual_mode == "Liquid":
+        circuit = "Liquid"
+    elif manual_mode == "Pumped liquid":
+        circuit = "Pumped"
+    elif manual_mode == "Discharge":
+        circuit = "Discharge"
+    elif manual_mode == "Drain":
+        circuit = "Pumped"
+
+    ctx = pressure_checker_inputs(
+        refrigerant=refrigerant,
+        circuit=circuit,
+        dp_standard=dp_standard,
+    )
+    
+    refrigerant_eff = ctx["refrigerant"]
+    mwp_temp_c = ctx["mwp_temp_c"]
+
+    cola, colb, colc = st.columns(3)
 
     with cola:
         dp_standard = st.selectbox(
@@ -1510,6 +1532,36 @@ elif tool_selection == "Manual Calculation":
             index=0,
             key="manual_copper_calc",
         )
+
+    with colc:
+        if refrigerant_eff == "R744 TC":
+            design_temp_c = None
+            r744_tc_pressure_bar_g = st.number_input(
+                "R744 Transcritical Design Pressure (bar(g))",
+                min_value=75.0,
+                max_value=150.0,
+                step=5.0,
+                value=120.0,
+            )
+        else:
+            if circuit in ("Suction", "Pumped"):
+                design_temp_c = st.number_input(
+                    "Design Temperature (°C)",
+                    min_value=ctx["range_min_low"],
+                    max_value=ctx["range_max_low"],
+                    value=ctx["default_low_dt"],
+                    step=1.0,
+                )
+            else:
+                design_temp_c = st.number_input(
+                    "Design Temperature (°C)",
+                    min_value=ctx["range_min_high"],
+                    max_value=ctx["range_max_high"],
+                    value=ctx["default_high_dt"],
+                    step=1.0,
+                )
+        
+            r744_tc_pressure_bar_g = None
     
     mode = st.radio("", ["Dry Suction", "Liquid", "Discharge", "Drain", "Pumped Liquid", "Wet Suction"], index=0, horizontal=True, label_visibility="collapsed")
     
