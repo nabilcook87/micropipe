@@ -5609,8 +5609,8 @@ elif tool_selection == "Manual Calculation":
         ss = st.session_state
     
         # 1) Pipe material
-        with col2:
         col1, col2, col3, col4 = st.columns(4)
+        with col2:
             if refrigerant == "R717":
                 excluded_materials = ["Copper ASTM", " Copper EN12735", "K65 Copper", "Reflok Aluminium"]
                 pipe_materials = sorted(m for m in pipe_data["Material"].dropna().unique()
