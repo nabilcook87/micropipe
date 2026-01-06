@@ -252,72 +252,78 @@ def system_pressure_checker_ui():
             return
     
         material_df = pipe_data[pipe_data["Material"] == selected_material].copy()
-    
+        
         material_df["Nominal Size (inch)"] = material_df["Nominal Size (inch)"].astype(str)
         pipe_sizes = sorted(material_df["Nominal Size (inch)"].dropna().unique())
-        selected_size = st.selectbox("Nominal Pipe Size (inch)", pipe_sizes)
-    
-        size_df = material_df[material_df["Nominal Size (inch)"] == str(selected_size)].copy()
-        if size_df.empty:
-            st.error("No rows found for the selected material + nominal size.")
-            return
-    
-        gauge = None
-        if "Gauge" in size_df.columns and size_df["Gauge"].notna().any():
-            # Only prompt for gauge if multiple gauge options exist
-            gauges = sorted(size_df["Gauge"].dropna().unique())
-            if len(gauges) > 1:
-                gauge = st.selectbox("Gauge", gauges)
-                selected_row = size_df[size_df["Gauge"] == gauge].iloc[0]
-            else:
-                gauge = gauges[0]
-                selected_row = size_df.iloc[0]
-        else:
-            selected_row = size_df.iloc[0]
-    
-        try:
-            od_mm = float(selected_row["Nominal Size (mm)"])
-        except Exception:
-            st.error("Could not parse OD from 'Nominal Size (mm)'.")
-            return
-    
-        id_mm = None
-        if pd.notna(selected_row["ID_mm"]):
-            try:
-                id_mm = float(selected_row["ID_mm"])
-            except Exception:
-                st.error("Could not parse ID from 'ID_mm'.")
+        
+        if not double_trouble:
+            selected_size = st.selectbox("Nominal Pipe Size (inch)", pipe_sizes, key="single_size")
+        
+            size_df = material_df[material_df["Nominal Size (inch)"] == str(selected_size)].copy()
+            if size_df.empty:
+                st.error("No rows found for the selected material + nominal size.")
                 return
-    
-        if pipe_index != 1 and id_mm is None:
-            st.error("This pipe type requires ID_mm in the CSV to calculate wall thickness.")
-            return
+        
+            gauge = None
+            if "Gauge" in size_df.columns and size_df["Gauge"].notna().any():
+                gauges = sorted(size_df["Gauge"].dropna().unique())
+                if len(gauges) > 1:
+                    gauge = st.selectbox("Gauge", gauges, key="single_gauge")
+                    selected_row = size_df[size_df["Gauge"] == gauge].iloc[0]
+                else:
+                    gauge = gauges[0]
+                    selected_row = size_df.iloc[0]
+            else:
+                selected_row = size_df.iloc[0]
+        
+            try:
+                od_mm = float(selected_row["Nominal Size (mm)"])
+            except Exception:
+                st.error("Could not parse OD from 'Nominal Size (mm)'.")
+                return
+        
+            id_mm = None
+            if pd.notna(selected_row["ID_mm"]):
+                try:
+                    id_mm = float(selected_row["ID_mm"])
+                except Exception:
+                    st.error("Could not parse ID from 'ID_mm'.")
+                    return
+        
+            if pipe_index != 1 and id_mm is None:
+                st.error("This pipe type requires ID_mm in the CSV to calculate wall thickness.")
+                return
+        
+        else:
+            st.info("Single-pipe nominal size is ignored in Double Riser Mode.")
+            selected_size = pipe_sizes[0]
+            gauge = None
+            od_mm = None
+            id_mm = None
 
         if double_trouble:
             st.markdown("#### Double Riser Pipe Sizes")
         
             dr_col1, dr_col2 = st.columns(2)
         
+            # sensible defaults: large = first option, small = second option if available
+            default_large_index = 0
+            default_small_index = 1 if len(pipe_sizes) > 1 else 0
+        
             with dr_col1:
                 large_size = st.selectbox(
                     "Large Riser Size (inch)",
                     pipe_sizes,
-                    index=pipe_sizes.index(selected_size),
+                    index=default_large_index,
                     key="large_riser_size",
                 )
         
                 gauge_large = None
-                large_df = material_df[
-                    material_df["Nominal Size (inch)"].astype(str) == str(large_size)
-                ]
+                large_df = material_df[material_df["Nominal Size (inch)"] == str(large_size)]
                 if "Gauge" in large_df.columns and large_df["Gauge"].notna().any():
                     gauges_large = sorted(large_df["Gauge"].dropna().unique())
                     if len(gauges_large) > 1:
-                        gauge_large = st.selectbox(
-                            "Large Riser Gauge",
-                            gauges_large,
-                            key="large_riser_gauge",
-                        )
+                        gauge_large = st.selectbox("Large Riser Gauge", gauges_large, key="large_riser_gauge")
                     else:
                         gauge_large = gauges_large[0]
         
@@ -325,35 +331,24 @@ def system_pressure_checker_ui():
                 small_size = st.selectbox(
                     "Small Riser Size (inch)",
                     pipe_sizes,
-                    index=max(pipe_sizes.index(selected_size) - 1, 0),
+                    index=default_small_index,
                     key="small_riser_size",
                 )
         
                 gauge_small = None
-                small_df = material_df[
-                    material_df["Nominal Size (inch)"].astype(str) == str(small_size)
-                ]
+                small_df = material_df[material_df["Nominal Size (inch)"] == str(small_size)]
                 if "Gauge" in small_df.columns and small_df["Gauge"].notna().any():
                     gauges_small = sorted(small_df["Gauge"].dropna().unique())
                     if len(gauges_small) > 1:
-                        gauge_small = st.selectbox(
-                            "Small Riser Gauge",
-                            gauges_small,
-                            key="small_riser_gauge",
-                        )
+                        gauge_small = st.selectbox("Small Riser Gauge", gauges_small, key="small_riser_gauge")
                     else:
                         gauge_small = gauges_small[0]
         
-            # ---- Convert selections into parameters ----
             pipe_index_large = pipe_index
             pipe_index_small = pipe_index
         
-            od_mm_large, id_mm_large = pipe_params_from_selection(
-                material_df, large_size, gauge_large
-            )
-            od_mm_small, id_mm_small = pipe_params_from_selection(
-                material_df, small_size, gauge_small
-            )
+            od_mm_large, id_mm_large = pipe_params_from_selection(material_df, large_size, gauge_large)
+            od_mm_small, id_mm_small = pipe_params_from_selection(material_df, small_size, gauge_small)
 
     from utils.system_pressure_checker import system_pressure_check
     from utils.system_pressure_checker import system_pressure_check_double_riser
