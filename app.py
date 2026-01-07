@@ -48,7 +48,7 @@ def render_pressure_result(result: dict):
     design_p = result["design_pressure_bar_g"]
     mwp = result["mwp_bar"]
 
-    c1, c2, c3 = st.columns(3)
+    c1, c2, c3, c4 = st.columns(4)
     c1.metric("Design Pressure (bar(g))", f"{design_p:.2f}")
 
     # mwp can be float OR dict (steel weld cases)
@@ -63,11 +63,11 @@ def render_pressure_result(result: dict):
         margin = mwp - design_p
 
     c3.metric("Margin (bar)", f"{margin:.2f}")
-
-    if passed:
-        st.success("PASS: MWP ≥ Design pressure")
-    else:
-        st.error("FAIL: MWP < Design pressure")
+    with c4:
+        if passed:
+            st.success("PASS: MWP ≥ Design pressure")
+        else:
+            st.error("FAIL: MWP < Design pressure")
 
 def get_dimensions_for_row(material_df, size_inch: str, gauge: int | None):
     rows = material_df[
