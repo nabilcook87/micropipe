@@ -4515,54 +4515,6 @@ elif tool_selection == "Manual Calculation":
         from utils.refrigerant_entropies import RefrigerantEntropies
         from utils.refrigerant_enthalpies import RefrigerantEnthalpies
         
-        pipe_index = material_to_pipe_index(selected_material)
-        
-        g_main = st.session_state.get("gauge")
-        od_main, id_main = get_dimensions_for_row(material_df, selected_size, g_main)
-        
-        g_branch = st.session_state.get("gauge_2")
-        od_branch, id_branch = get_dimensions_for_row(material_df, selected_size_2, g_branch)
-        
-        res_main = system_pressure_check(
-            refrigerant=refrigerant,
-            design_temp_c=design_temp_c,
-            mwp_temp_c=mwp_temp_c,
-            circuit=circuit,
-            pipe_index=pipe_index,
-            od_mm=od_main,
-            id_mm=id_main,
-            gauge=g_main,
-            copper_calc=copper_calc,
-            r744_tc_pressure_bar_g=r744_tc_pressure_bar_g,
-            dp_standard=dp_standard,
-        )
-        
-        res_branch = system_pressure_check(
-            refrigerant=refrigerant,
-            design_temp_c=design_temp_c,
-            mwp_temp_c=mwp_temp_c,
-            circuit=circuit,
-            pipe_index=pipe_index,
-            od_mm=od_branch,
-            id_mm=id_branch,
-            gauge=g_branch,
-            copper_calc=copper_calc,
-            r744_tc_pressure_bar_g=r744_tc_pressure_bar_g,
-            dp_standard=dp_standard,
-        )
-        
-        # Combine (governing)
-        design_p = res_main["design_pressure_bar_g"]
-        mwp_gov = min(governing_mwp(res_main["mwp_bar"]), governing_mwp(res_branch["mwp_bar"]))
-        
-        combined = dict(res_main)
-        combined["mwp_bar"] = mwp_gov
-        combined["pass"] = mwp_gov >= design_p
-        combined["margin_bar"] = mwp_gov - design_p
-        
-        st.markdown("#### Drain: Governing of Main + Branch")
-        render_pressure_result(combined)
-        
         # Load pipe data
         pipe_data = pd.read_csv("data/pipe_pressure_ratings_full.csv")
     
@@ -4775,6 +4727,55 @@ elif tool_selection == "Manual Calculation":
                 "Please choose a larger main pipe or a smaller branch pipe."
             )
             invalid_pipe_selection = True
+
+        if not invalid_pipe_selection:
+        
+            pipe_index = material_to_pipe_index(selected_material)
+        
+            g_main = selected_gauge if "selected_gauge" in locals() else None
+            g_branch = selected_gauge_2 if "selected_gauge_2" in locals() else None
+        
+            od_main, id_main = get_dimensions_for_row(material_df, selected_size, g_main)
+            od_branch, id_branch = get_dimensions_for_row(material_df_2, selected_size_2, g_branch)
+        
+            res_main = system_pressure_check(
+                refrigerant=refrigerant_eff if "refrigerant_eff" in locals() else refrigerant,
+                design_temp_c=design_temp_c,
+                mwp_temp_c=mwp_temp_c,
+                circuit=circuit,
+                pipe_index=pipe_index,
+                od_mm=od_main,
+                id_mm=id_main,
+                gauge=g_main,
+                copper_calc=copper_calc,
+                r744_tc_pressure_bar_g=r744_tc_pressure_bar_g,
+                dp_standard=dp_standard,
+            )
+        
+            res_branch = system_pressure_check(
+                refrigerant=refrigerant_eff if "refrigerant_eff" in locals() else refrigerant,
+                design_temp_c=design_temp_c,
+                mwp_temp_c=mwp_temp_c,
+                circuit=circuit,
+                pipe_index=pipe_index,
+                od_mm=od_branch,
+                id_mm=id_branch,
+                gauge=g_branch,
+                copper_calc=copper_calc,
+                r744_tc_pressure_bar_g=r744_tc_pressure_bar_g,
+                dp_standard=dp_standard,
+            )
+        
+            design_p = res_main["design_pressure_bar_g"]
+            mwp_gov = min(governing_mwp(res_main["mwp_bar"]), governing_mwp(res_branch["mwp_bar"]))
+        
+            combined = dict(res_main)
+            combined["mwp_bar"] = mwp_gov
+            combined["pass"] = mwp_gov >= design_p
+            combined["margin_bar"] = mwp_gov - design_p
+        
+            st.markdown("#### Drain: Governing of Main + Branch")
+            render_pressure_result(combined)
         
         with col3:
             
