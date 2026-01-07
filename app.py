@@ -79,7 +79,11 @@ def get_dimensions_for_row(material_df, size_inch: str, gauge: int | None):
     if rows.empty:
         raise ValueError(f"No pipe data for size {size_inch}")
 
-    if "Gauge" in rows.columns and gauge is not None:
+    if (
+        gauge is not None
+        and "Gauge" in rows.columns
+        and gauge in rows["Gauge"].dropna().unique()
+    ):
         row = rows[rows["Gauge"] == gauge].iloc[0]
     else:
         row = rows.iloc[0]
