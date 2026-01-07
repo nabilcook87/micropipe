@@ -1696,22 +1696,6 @@ elif tool_selection == "Manual Calculation":
         # you already have selected_gauge sometimes; otherwise None
         gauge = st.session_state.get("gauge")  # or whatever that mode uses
         od_mm, id_mm = get_dimensions_for_row(material_df, selected_size, gauge)
-        
-        result = system_pressure_check(
-            refrigerant=refrigerant,
-            design_temp_c=design_temp_c,
-            mwp_temp_c=mwp_temp_c,
-            circuit=circuit,
-            pipe_index=pipe_index,
-            od_mm=od_mm,
-            id_mm=id_mm,
-            gauge=gauge,
-            copper_calc=copper_calc,
-            r744_tc_pressure_bar_g=r744_tc_pressure_bar_g,
-            dp_standard=dp_standard,
-        )
-        
-        render_pressure_result(result)
     
         # Pipe parameters
         pipe_size_inch = selected_pipe_row["Nominal Size (inch)"]
@@ -1929,28 +1913,42 @@ elif tool_selection == "Manual Calculation":
         
         od_large, id_large = get_dimensions_for_row(material_df, manual_large, gauge_large)
         od_small, id_small = get_dimensions_for_row(material_df, manual_small, gauge_small)
-        
-        result = system_pressure_check_double_riser(
-            refrigerant=refrigerant,
-            design_temp_c=design_temp_c,
-            mwp_temp_c=mwp_temp_c,
-            circuit="Suction",
-            dp_standard=dp_standard,
-        
-            pipe_index_a=pipe_index_large,
-            od_mm_a=od_large,
-            id_mm_a=id_large,
-            gauge_a=gauge_large,
-        
-            pipe_index_b=pipe_index_small,
-            od_mm_b=od_small,
-            id_mm_b=id_small,
-            gauge_b=gauge_small,
-        
-            copper_calc=copper_calc,
-            r744_tc_pressure_bar_g=r744_tc_pressure_bar_g,
-        )
-        
+
+        if st.session_state.get("double_trouble"):
+            result = system_pressure_check_double_riser(
+                refrigerant=refrigerant,
+                design_temp_c=design_temp_c,
+                mwp_temp_c=mwp_temp_c,
+                circuit="Suction",
+                dp_standard=dp_standard,
+            
+                pipe_index_a=pipe_index_large,
+                od_mm_a=od_large,
+                id_mm_a=id_large,
+                gauge_a=gauge_large,
+            
+                pipe_index_b=pipe_index_small,
+                od_mm_b=od_small,
+                id_mm_b=id_small,
+                gauge_b=gauge_small,
+            
+                copper_calc=copper_calc,
+                r744_tc_pressure_bar_g=r744_tc_pressure_bar_g,
+            )
+        else:
+            result = system_pressure_check(
+                refrigerant=refrigerant,
+                design_temp_c=design_temp_c,
+                mwp_temp_c=mwp_temp_c,
+                circuit=circuit,
+                pipe_index=pipe_index,
+                od_mm=od_mm,
+                id_mm=id_mm,
+                gauge=gauge,
+                copper_calc=copper_calc,
+                r744_tc_pressure_bar_g=r744_tc_pressure_bar_g,
+                dp_standard=dp_standard,
+            )
         render_pressure_result(result)
         
         from utils.refrigerant_properties import RefrigerantProperties
