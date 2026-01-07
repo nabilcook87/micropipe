@@ -1491,8 +1491,7 @@ elif tool_selection == "Oil Return Checker":
         st.error(f"{message}")
 
 elif tool_selection == "Manual Calculation":
-    st.subheader("Manual Calculation")
-    
+
     mode = st.radio("", ["Dry Suction", "Liquid", "Discharge", "Drain", "Pumped Liquid", "Wet Suction"], index=0, horizontal=True, label_visibility="collapsed")
 
     def circuit_for_manual_mode(mode: str) -> str:
