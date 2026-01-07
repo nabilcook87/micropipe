@@ -1439,8 +1439,6 @@ elif tool_selection == "Oil Return Checker":
             large_duty = M_largeprop * evap_capacity_kw
             MaxCaps = MOR_large * large_duty / 100
     
-    st.subheader("Results")
-    
     if velocity_m_sfinal:
         col1, col2, col3, col4 = st.columns(4)
 
@@ -3081,8 +3079,6 @@ elif tool_selection == "Manual Calculation":
         
         if error_message:
             st.error(error_message)
-        
-        st.subheader("Results")
     
         if velocity_m_sfinal:
             col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
@@ -3790,8 +3786,6 @@ elif tool_selection == "Manual Calculation":
                             f"Best achievable ΔT = {best_dt:.3f} K (must be ≤ {max_penalty:.3f} K)  \n"
                             "➡ Relax the Max Penalty or choose a different material/length/fittings."
                         )
-        
-        st.subheader("Results")
     
         if velocity_m_s:
             col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
@@ -4452,8 +4446,6 @@ elif tool_selection == "Manual Calculation":
                             f"Best achievable ΔT = {best_dt:.3f} K (must be ≤ {max_penalty:.3f} K)  \n"
                             "➡ Relax the Max Penalty or change material/length/fittings."
                         )
-        
-        st.subheader("Results")
     
         if velocity_m_s:
             col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
@@ -4939,8 +4931,6 @@ elif tool_selection == "Manual Calculation":
                     st.warning("⚠️ No branch pipe found with velocity ≤ 0.55 m/s")
             
                 st.rerun()
-    
-            st.subheader("Results")
     
             col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
             
@@ -5535,8 +5525,6 @@ elif tool_selection == "Manual Calculation":
                         f"❌ No pipe meets ΔT ≤ {max_penalty:.3f} K.  \n"
                         f"Best achievable ΔT = {best_dt:.3f} K."
                     )
-        
-        st.subheader("Results")
     
         col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
     
@@ -6028,8 +6016,6 @@ elif tool_selection == "Manual Calculation":
                         f"❌ No pipe meets the pressure-drop limit.\n"
                         f"Best achievable: {best_dp:.2f} kPa (limit {max_ppd_kpa:.2f} kPa)."
                     )
-        
-        st.subheader("Results")
     
         if velocity_m_s:
             col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
