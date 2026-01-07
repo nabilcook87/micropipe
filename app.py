@@ -48,8 +48,6 @@ def render_pressure_result(result: dict):
     design_p = result["design_pressure_bar_g"]
     mwp = result["mwp_bar"]
 
-    st.markdown("### Pressure Check Result")
-
     c1, c2, c3 = st.columns(3)
     c1.metric("Design Pressure (bar(g))", f"{design_p:.2f}")
 
