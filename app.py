@@ -59,22 +59,21 @@ def render_pressure_result(result: dict):
     if not pipes:
         pipes.append((result))
 
-    cols = st.columns(len(pipes))
-
-    for col, (res) in zip(cols, pipes):
+    for res in pipes:
         mwp_val = res["mwp_bar"]
         mwp_num = governing_mwp(mwp_val)
         margin = mwp_num - design_p
         passed = mwp_num >= design_p
 
-        with col:
-            st.metric("MWP (bar(g))", f"{mwp_num:.2f}")
-            st.metric("Margin (bar)", f"{margin:.2f}")
-
-            if passed:
-                st.success("PASS")
-            else:
-                st.error("FAIL")
+    with col2:
+        st.metric("MWP (bar(g))", f"{mwp_num:.2f}")
+    with col3:
+        st.metric("Margin (bar)", f"{margin:.2f}")
+    with col4:
+        if passed:
+            st.success("PASS")
+        else:
+            st.error("FAIL")
 
 def get_dimensions_for_row(material_df, size_inch: str, gauge: int | None):
     rows = material_df[
