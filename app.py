@@ -47,33 +47,42 @@ def render_pressure_result(result: dict):
 
     col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
 
+    design_p = result["design_pressure_bar_g"]
     with col1:
-        design_p = result["design_pressure_bar_g"]
         st.metric("Design Pressure (bar(g))", f"{design_p:.2f}")
 
     pipes = []
     if "branch_a" in result:
-        pipes.append((result["branch_a"]))
+        pipes.append(result["branch_a"])
     if "branch_b" in result:
-        pipes.append((result["branch_b"]))
+        pipes.append(result["branch_b"])
     if not pipes:
-        pipes.append((result))
+        pipes.append(result)
 
-    for res in pipes:
-        mwp_val = res["mwp_bar"]
-        mwp_num = governing_mwp(mwp_val)
-        margin = mwp_num - design_p
-        passed = mwp_num >= design_p
+    res1 = pipes[0]
+    mwp1 = governing_mwp(res1["mwp_bar"])
+    margin1 = mwp1 - design_p
+    pass1 = mwp1 >= design_p
 
     with col2:
-        st.metric("MWP (bar(g))", f"{mwp_num:.2f}")
+        st.metric("MWP (bar(g))", f"{mwp1:.2f}")
     with col3:
-        st.metric("Margin (bar)", f"{margin:.2f}")
+        st.metric("Margin (bar)", f"{margin1:.2f}")
     with col4:
-        if passed:
-            st.success("PASS")
-        else:
-            st.error("FAIL")
+        st.success("PASS") if pass1 else st.error("FAIL")
+
+    if len(pipes) > 1:
+        res2 = pipes[1]
+        mwp2 = governing_mwp(res2["mwp_bar"])
+        margin2 = mwp2 - design_p
+        pass2 = mwp2 >= design_p
+
+        with col5:
+            st.metric("MWP (bar(g))", f"{mwp2:.2f}")
+        with col6:
+            st.metric("Margin (bar)", f"{margin2:.2f}")
+        with col7:
+            st.success("PASS") if pass2 else st.error("FAIL")
 
 def get_dimensions_for_row(material_df, size_inch: str, gauge: int | None):
     rows = material_df[
