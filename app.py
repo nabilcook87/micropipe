@@ -45,17 +45,17 @@ def render_pressure_result(result: dict):
     if not result:
         return
 
-    design_p = result["design_pressure_bar_g"]
+    col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
 
-    st.metric("Design Pressure (bar(g))", f"{design_p:.2f}")
+    with col1:
+        design_p = result["design_pressure_bar_g"]
+        st.metric("Design Pressure (bar(g))", f"{design_p:.2f}")
 
     pipes = []
-
     if "branch_a" in result:
         pipes.append((result["branch_a"]))
     if "branch_b" in result:
         pipes.append((result["branch_b"]))
-
     if not pipes:
         pipes.append((result))
 
