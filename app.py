@@ -3310,6 +3310,19 @@ elif tool_selection == "Manual Calculation":
         
         # remember the selected size in mm for next material change
         ss.prev_pipe_mm = float(mm_map.get(selected_size, float("nan")))
+
+        # --- consume any deferred gauge from Auto-select ---
+        if "_next_gauge" in st.session_state:
+            g = st.session_state.pop("_next_gauge")
+        
+            # Only apply if the current size actually has that gauge option
+            rows = material_df[
+                material_df["Nominal Size (inch)"].astype(str).str.strip() == str(selected_size)
+            ]
+            if "Gauge" in rows.columns and rows["Gauge"].notna().any():
+                valid_gauges = set(rows["Gauge"].dropna().unique())
+                if g in valid_gauges:
+                    st.session_state["gauge"] = g
     
         # 3) Gauge (if applicable)
         gauge_options = material_df[material_df["Nominal Size (inch)"].astype(str).str.strip() == selected_size]
