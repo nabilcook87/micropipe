@@ -69,7 +69,10 @@ def render_pressure_result(result: dict):
     with col3:
         st.metric("Margin (bar)", f"{margin1:.2f}")
     with col4:
-        st.success("PASS") if pass1 else st.error("FAIL")
+        if pass1:
+            st.success("PASS")
+        else:
+            st.error("FAIL")
 
     if len(pipes) > 1:
         res2 = pipes[1]
@@ -82,7 +85,10 @@ def render_pressure_result(result: dict):
         with col6:
             st.metric("Margin (bar)", f"{margin2:.2f}")
         with col7:
-            st.success("PASS") if pass2 else st.error("FAIL")
+            if pass2:
+                st.success("PASS")
+            else:
+                st.error("FAIL")
 
 def get_dimensions_for_row(material_df, size_inch: str, gauge: int | None):
     rows = material_df[
