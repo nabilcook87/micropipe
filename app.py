@@ -61,7 +61,7 @@ def render_pressure_result(result: dict):
 
     cols = st.columns(len(pipes))
 
-    for col, (label, res) in zip(cols, pipes):
+    for col, (res) in zip(cols, pipes):
         mwp_val = res["mwp_bar"]
         mwp_num = governing_mwp(mwp_val)
         margin = mwp_num - design_p
