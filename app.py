@@ -52,12 +52,12 @@ def render_pressure_result(result: dict):
     pipes = []
 
     if "branch_a" in result:
-        pipes.append(("Pipe A", result["branch_a"]))
+        pipes.append(("", result["branch_a"]))
     if "branch_b" in result:
-        pipes.append(("Pipe B", result["branch_b"]))
+        pipes.append(("", result["branch_b"]))
 
     if not pipes:
-        pipes.append(("Pipe", result))
+        pipes.append(("", result))
 
     cols = st.columns(len(pipes))
 
