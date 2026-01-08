@@ -46,28 +46,37 @@ def render_pressure_result(result: dict):
         return
 
     design_p = result["design_pressure_bar_g"]
-    mwp = result["mwp_bar"]
 
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Design Pressure (bar(g))", f"{design_p:.2f}")
+    st.markdown("### Pressure Check Results")
+    st.metric("Design Pressure (bar(g))", f"{design_p:.2f}")
 
-    # mwp can be float OR dict (steel weld cases)
-    if isinstance(mwp, dict):
-        worst = min(mwp.values()) if mwp else float("nan")
-        c2.metric("MWP (governing) (bar(g))", f"{worst:.2f}")
-        passed = all(v >= design_p for v in mwp.values())
-        margin = worst - design_p
-    else:
-        c2.metric("MWP (bar(g))", f"{mwp:.2f}")
-        passed = mwp >= design_p
-        margin = mwp - design_p
+    pipes = []
 
-    c3.metric("Margin (bar)", f"{margin:.2f}")
-    with c4:
-        if passed:
-            st.success("PASS: MWP ≥ Design pressure")
-        else:
-            st.error("FAIL: MWP < Design pressure")
+    if "branch_a" in result:
+        pipes.append(("Pipe A", result["branch_a"]))
+    if "branch_b" in result:
+        pipes.append(("Pipe B", result["branch_b"]))
+
+    if not pipes:
+        pipes.append(("Pipe", result))
+
+    cols = st.columns(len(pipes))
+
+    for col, (label, res) in zip(cols, pipes):
+        mwp_val = res["mwp_bar"]
+        mwp_num = governing_mwp(mwp_val)
+        margin = mwp_num - design_p
+        passed = mwp_num >= design_p
+
+        with col:
+            st.markdown(f"**{label}**")
+            st.metric("MWP (bar(g))", f"{mwp_num:.2f}")
+            st.metric("Margin (bar)", f"{margin:.2f}")
+
+            if passed:
+                st.success("PASS")
+            else:
+                st.error("FAIL")
 
 def get_dimensions_for_row(material_df, size_inch: str, gauge: int | None):
     rows = material_df[
@@ -4754,15 +4763,9 @@ elif tool_selection == "Manual Calculation":
                 dp_standard=dp_standard,
             )
         
-            design_p = res_main["design_pressure_bar_g"]
-            mwp_gov = min(governing_mwp(res_main["mwp_bar"]), governing_mwp(res_branch["mwp_bar"]))
-        
             combined = dict(res_main)
-            combined["mwp_bar"] = mwp_gov
-            combined["pass"] = mwp_gov >= design_p
-            combined["margin_bar"] = mwp_gov - design_p
-        
-            st.markdown("#### Drain: Governing of Main + Branch")
+            combined["branch_a"] = res_main
+            combined["branch_b"] = res_branch
             render_pressure_result(combined)
         
         with col3:
