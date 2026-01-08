@@ -68,7 +68,6 @@ def render_pressure_result(result: dict):
         passed = mwp_num >= design_p
 
         with col:
-            st.markdown(f"**{label}**")
             st.metric("MWP (bar(g))", f"{mwp_num:.2f}")
             st.metric("Margin (bar)", f"{margin:.2f}")
 
