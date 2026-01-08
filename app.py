@@ -47,7 +47,6 @@ def render_pressure_result(result: dict):
 
     design_p = result["design_pressure_bar_g"]
 
-    st.markdown("### Pressure Check Results")
     st.metric("Design Pressure (bar(g))", f"{design_p:.2f}")
 
     pipes = []
