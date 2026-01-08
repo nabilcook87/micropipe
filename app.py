@@ -3851,7 +3851,7 @@ elif tool_selection == "Manual Calculation":
                                     r744_tc_pressure_bar_g=r744_tc_pressure_bar_g,
                                 )
                     
-                                st.session_state["gauge"] = best_gauge
+                                st.session_state["_next_gauge"] = best_gauge
                         
                         st.success(
                             f"✅ Selected liquid pipe size: **{best['size']}**  \n"
@@ -3912,7 +3912,7 @@ elif tool_selection == "Manual Calculation":
                                     r744_tc_pressure_bar_g=r744_tc_pressure_bar_g,
                                 )
                     
-                                st.session_state["gauge"] = best_gauge
+                                st.session_state["_next_gauge"] = best_gauge
                         
                         st.success(
                             f"✅ Selected liquid pipe size: **{best['size']}**  \n"
