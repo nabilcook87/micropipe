@@ -4857,6 +4857,9 @@ elif tool_selection == "Manual Calculation":
     
         # remember the selected size in mm for next material change
         ss.prev_pipe_mm = float(mm_map.get(selected_size, float("nan")))
+    
+        # 3) Gauge (if applicable)
+        gauge_options = material_df[material_df["Nominal Size (inch)"].astype(str).str.strip() == selected_size]
 
         if "_next_gauge_main" in st.session_state:
             g = st.session_state.pop("_next_gauge_main")
@@ -4865,9 +4868,7 @@ elif tool_selection == "Manual Calculation":
                 valid = set(rows["Gauge"].dropna())
                 if g in valid:
                     st.session_state["gauge"] = g
-    
-        # 3) Gauge (if applicable)
-        gauge_options = material_df[material_df["Nominal Size (inch)"].astype(str).str.strip() == selected_size]
+        
         if "Gauge" in gauge_options.columns and gauge_options["Gauge"].notna().any():
             gauges = sorted(gauge_options["Gauge"].dropna().unique())
             with col2:
@@ -4960,6 +4961,11 @@ elif tool_selection == "Manual Calculation":
 
         ss.prev_pipe_mm_2 = float(mm_map_2.get(selected_size_2, float("nan")))
 
+        # 5️⃣ Gauge selector (if applicable)
+        gauge_options_2 = material_df_2[
+            material_df_2["Nominal Size (inch)"].astype(str).str.strip() == selected_size_2
+        ]
+
         if "_next_gauge_branch" in st.session_state:
             g = st.session_state.pop("_next_gauge_branch")
             rows = gauge_options_2
@@ -4967,11 +4973,6 @@ elif tool_selection == "Manual Calculation":
                 valid = set(rows["Gauge"].dropna())
                 if g in valid:
                     st.session_state["gauge_2"] = g
-
-        # 5️⃣ Gauge selector (if applicable)
-        gauge_options_2 = material_df_2[
-            material_df_2["Nominal Size (inch)"].astype(str).str.strip() == selected_size_2
-        ]
 
         if "Gauge" in gauge_options_2.columns and gauge_options_2["Gauge"].notna().any():
             gauges_2 = sorted(gauge_options_2["Gauge"].dropna().unique())
