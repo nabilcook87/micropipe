@@ -5836,6 +5836,33 @@ elif tool_selection == "Manual Calculation":
                 if valid:
                     best = min(valid, key=lambda x: mm_map[x["size"]])  # smallest ID that passes
                     st.session_state["_next_selected_size"] = best["size"]
+
+                    # 🔹 Auto-select gauge for Copper EN12735
+                    if selected_material.strip() == "Copper EN12735":
+                        rows = material_df[
+                            material_df["Nominal Size (inch)"].astype(str).str.strip() == best["size"]
+                        ]
+                
+                        if "Gauge" in rows.columns and rows["Gauge"].notna().any():
+                            gauges = sorted(rows["Gauge"].dropna().unique())
+                
+                            best_gauge = _auto_select_copper_gauge(
+                                material_df=material_df,
+                                size_inch=best["size"],
+                                gauges=gauges,
+                                design_pressure=result["design_pressure_bar_g"],
+                                refrigerant=refrigerant,
+                                design_temp_c=design_temp_c,
+                                mwp_temp_c=mwp_temp_c,
+                                circuit=circuit,
+                                pipe_index=pipe_index,
+                                copper_calc=copper_calc,
+                                dp_standard=dp_standard,
+                                r744_tc_pressure_bar_g=r744_tc_pressure_bar_g,
+                            )
+                
+                            st.session_state["_next_gauge"] = best_gauge
+                    
                     st.success(
                         f"✅ Auto-selected pipe: **{best['size']}**  \n"
                         f"ΔT = {best['dt']:.3f} K ≤ {max_penalty:.3f} K"
