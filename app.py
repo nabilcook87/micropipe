@@ -4857,6 +4857,14 @@ elif tool_selection == "Manual Calculation":
     
         # remember the selected size in mm for next material change
         ss.prev_pipe_mm = float(mm_map.get(selected_size, float("nan")))
+
+        if "_next_gauge_main" in st.session_state:
+            g = st.session_state.pop("_next_gauge_main")
+            rows = gauge_options
+            if "Gauge" in rows.columns:
+                valid = set(rows["Gauge"].dropna())
+                if g in valid:
+                    st.session_state["gauge"] = g
     
         # 3) Gauge (if applicable)
         gauge_options = material_df[material_df["Nominal Size (inch)"].astype(str).str.strip() == selected_size]
@@ -4951,6 +4959,14 @@ elif tool_selection == "Manual Calculation":
             )
 
         ss.prev_pipe_mm_2 = float(mm_map_2.get(selected_size_2, float("nan")))
+
+        if "_next_gauge_branch" in st.session_state:
+            g = st.session_state.pop("_next_gauge_branch")
+            rows = gauge_options_2
+            if "Gauge" in rows.columns:
+                valid = set(rows["Gauge"].dropna())
+                if g in valid:
+                    st.session_state["gauge_2"] = g
 
         # 5️⃣ Gauge selector (if applicable)
         gauge_options_2 = material_df_2[
