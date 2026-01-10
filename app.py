@@ -6347,6 +6347,60 @@ elif tool_selection == "Manual Calculation":
 
         max_ppd_kpa = max_ppd * 100
 
+        def _auto_select_copper_gauge(
+            *,
+            material_df,
+            size_inch,
+            gauges,
+            design_pressure,
+            refrigerant,
+            design_temp_c,
+            mwp_temp_c,
+            circuit,
+            pipe_index,
+            copper_calc,
+            dp_standard,
+            r744_tc_pressure_bar_g,
+        ):
+            """
+            Return:
+            - highest gauge where MWP >= design pressure
+            - else lowest gauge
+            """
+        
+            passing = []
+        
+            for g in sorted(gauges):
+                try:
+                    od_mm, id_mm = get_dimensions_for_row(material_df, size_inch, g)
+        
+                    res = system_pressure_check(
+                        refrigerant=refrigerant,
+                        design_temp_c=design_temp_c,
+                        mwp_temp_c=mwp_temp_c,
+                        circuit=circuit,
+                        pipe_index=pipe_index,
+                        od_mm=od_mm,
+                        id_mm=id_mm,
+                        gauge=g,
+                        copper_calc=copper_calc,
+                        r744_tc_pressure_bar_g=r744_tc_pressure_bar_g,
+                        dp_standard=dp_standard,
+                    )
+        
+                    mwp_val = governing_mwp(res["mwp_bar"])
+        
+                    if mwp_val >= design_pressure:
+                        passing.append(g)
+        
+                except Exception:
+                    continue
+        
+            if passing:
+                return max(passing)
+            else:
+                return min(gauges)
+
         # -------- Auto-select smallest pipe size meeting dp ≤ max_ppd_kpa --------
         if st.button("Auto-select"):
             results = []
