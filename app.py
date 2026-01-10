@@ -5241,6 +5241,56 @@ elif tool_selection == "Manual Calculation":
                     if vel_branch_calc <= target_velocity:
                         best_branch = size
                         break
+
+                if best_main:
+                    gauges_main = sorted(
+                        material_df[
+                            material_df["Nominal Size (inch)"].astype(str).str.strip() == best_main
+                        ]["Gauge"].dropna().unique()
+                    )
+            
+                    if gauges_main:
+                        best_gauge_main = _auto_select_copper_gauge(
+                            material_df=material_df,
+                            size_inch=best_main,
+                            gauges=gauges_main,
+                            design_pressure=res_main["design_pressure_bar_g"],
+                            refrigerant=refrigerant,
+                            design_temp_c=design_temp_c,
+                            mwp_temp_c=mwp_temp_c,
+                            circuit=circuit,
+                            pipe_index=pipe_index,
+                            copper_calc=copper_calc,
+                            dp_standard=dp_standard,
+                            r744_tc_pressure_bar_g=r744_tc_pressure_bar_g,
+                        )
+            
+                        st.session_state["_next_gauge_main"] = best_gauge_main
+            
+                if best_branch:
+                    gauges_branch = sorted(
+                        material_df_2[
+                            material_df_2["Nominal Size (inch)"].astype(str).str.strip() == best_branch
+                        ]["Gauge"].dropna().unique()
+                    )
+            
+                    if gauges_branch:
+                        best_gauge_branch = _auto_select_copper_gauge(
+                            material_df=material_df_2,
+                            size_inch=best_branch,
+                            gauges=gauges_branch,
+                            design_pressure=res_main["design_pressure_bar_g"],
+                            refrigerant=refrigerant,
+                            design_temp_c=design_temp_c,
+                            mwp_temp_c=mwp_temp_c,
+                            circuit=circuit,
+                            pipe_index=pipe_index,
+                            copper_calc=copper_calc,
+                            dp_standard=dp_standard,
+                            r744_tc_pressure_bar_g=r744_tc_pressure_bar_g,
+                        )
+            
+                        st.session_state["_next_gauge_branch"] = best_gauge_branch
             
                 # ✅ Store in temp state (safe names that are not bound to widgets)
                 if best_main:
